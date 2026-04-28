@@ -36,3 +36,4 @@ backend/uploads/payment_proofs/
 # Cursor/terminals
 .cursor/
 terminals/
+.vercel

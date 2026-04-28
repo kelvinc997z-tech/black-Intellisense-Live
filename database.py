@@ -6,6 +6,9 @@ from dotenv import load_dotenv
 load_dotenv()
 
 DATABASE_URL = os.environ.get("POSTGRES_URL", os.environ.get("DATABASE_URL", "postgresql+asyncpg://postgres:password@localhost/dbname"))
+
+print(f"DEBUG: Initial URL scheme: {DATABASE_URL.split(':')[0]}")
+
 # Vercel Postgres usually provides POSTGRES_URL, but we need to ensure it uses asyncpg driver
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql+asyncpg://", 1)
@@ -15,6 +18,8 @@ elif DATABASE_URL.startswith("postgresql://"):
 # asyncpg uses ssl=require instead of sslmode=require
 if "sslmode=require" in DATABASE_URL:
     DATABASE_URL = DATABASE_URL.replace("sslmode=require", "ssl=require")
+
+print(f"DEBUG: Final URL scheme: {DATABASE_URL.split(':')[0]}")
 
 engine = create_async_engine(DATABASE_URL, echo=True)
 SessionLocal = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)

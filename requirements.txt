@@ -1,8 +1,9 @@
 # Core dependencies
 fastapi==0.110.1
 uvicorn==0.25.0
-sqlalchemy[asyncio]==2.0.29
+sqlalchemy==2.0.29
 asyncpg==0.29.0
+greenlet==3.0.3
 python-dotenv==1.2.1
 python-jose[cryptography]==3.5.0
 passlib[bcrypt]==1.7.4

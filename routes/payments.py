@@ -12,7 +12,7 @@ import os
 
 router = APIRouter()
 
-UPLOAD_DIR = "./uploads/payment_proofs"
+UPLOAD_DIR = "/tmp/uploads/payment_proofs"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 @router.post("/upload")

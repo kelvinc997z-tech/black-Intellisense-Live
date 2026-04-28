@@ -1,9 +1,17 @@
 {
   "version": 2,
-  "public": true,
-  "rewrites": [
-    { "source": "/api/(.*)", "destination": "backend/index.py" },
-    { "source": "/admin/(.*)", "destination": "frontend/$1" },
-    { "source": "/((?!admin|api).*)", "destination": "intellitrade-frontend/$1" }
-  ]
+  "experimentalServices": {
+    "admin": {
+      "entrypoint": "frontend",
+      "routePrefix": "/admin"
+    },
+    "client": {
+      "entrypoint": "intellitrade-frontend",
+      "routePrefix": "/"
+    },
+    "backend": {
+      "entrypoint": "backend",
+      "routePrefix": "/api"
+    }
+  }
 }

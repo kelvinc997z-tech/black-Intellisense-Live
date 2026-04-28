@@ -1,9 +1,11 @@
 from fastapi import APIRouter, HTTPException, Depends, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from models import UserCreate, UserLogin, Token, User, UserRole
+from models import UserCreate, UserLogin, Token, User, UserRole, Web3Login, Web3NonceRequest
 from utils.auth import verify_password, get_password_hash, create_access_token, decode_token
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
+from eth_account.messages import encode_defunct
+from eth_account import Account
 
 router = APIRouter()
 security = HTTPBearer()
@@ -229,3 +231,85 @@ async def reset_client_user():
         }
         await db.users.insert_one(client_doc)
         return {"message": "Client user created", "email": "client@blackintellisense.com"}
+
+@router.post("/web3/nonce")
+async def get_web3_nonce(request: Web3NonceRequest):
+    from server import get_db
+    db = get_db()
+    
+    nonce = str(uuid.uuid4())
+    # Store or update nonce for this address with expiration
+    await db.nonces.update_one(
+        {"address": request.address.lower()},
+        {"$set": {
+            "nonce": nonce, 
+            "created_at": datetime.now(timezone.utc)
+        }},
+        upsert=True
+    )
+    return {"nonce": nonce}
+
+@router.post("/web3/login", response_model=Token)
+async def web3_login(credentials: Web3Login):
+    from server import get_db
+    db = get_db()
+    
+    address = credentials.address.lower()
+    
+    # 1. Verify nonce
+    stored = await db.nonces.find_one({"address": address})
+    if not stored or stored["nonce"] != credentials.nonce:
+        raise HTTPException(status_code=401, detail="Invalid or expired nonce")
+    
+    # Check expiry (e.g., 5 minutes)
+    if datetime.now(timezone.utc) - stored["created_at"].replace(tzinfo=timezone.utc) > timedelta(minutes=5):
+        await db.nonces.delete_one({"address": address})
+        raise HTTPException(status_code=401, detail="Nonce expired")
+
+    # 2. Verify signature
+    message = encode_defunct(text=f"Welcome to Black IntelliSense! Sign this message to login.\nNonce: {credentials.nonce}")
+    try:
+        recovered_address = Account.recover_message(message, signature=credentials.signature)
+        if recovered_address.lower() != address:
+            raise HTTPException(status_code=401, detail="Invalid signature")
+    except Exception:
+        raise HTTPException(status_code=401, detail="Signature verification failed")
+
+    # 3. Cleanup nonce
+    await db.nonces.delete_one({"address": address})
+
+    # 4. Find or Create User
+    user = await db.users.find_one({"web3_address": address})
+    if not user:
+        # Check if user with same email exists (optional, but let's just create new)
+        user_id = str(uuid.uuid4())
+        user_doc = {
+            "id": user_id,
+            "email": f"{address[:10]}@web3.com", # Placeholder
+            "web3_address": address,
+            "full_name": f"Web3 User {address[:6]}",
+            "role": "counterparty",
+            "is_active": True,
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        await db.users.insert_one(user_doc)
+        user = user_doc
+
+    if not user.get("is_active", True):
+        raise HTTPException(status_code=403, detail="Account is inactive")
+
+    access_token = create_access_token(
+        data={"user_id": user["id"], "email": user.get("email"), "role": user["role"]}
+    )
+    
+    user_obj = User(
+        id=user["id"],
+        email=user.get("email", f"{address[:10]}@web3.com"),
+        full_name=user["full_name"],
+        role=user["role"],
+        company=user.get("company"),
+        is_active=user.get("is_active", True),
+        created_at=datetime.fromisoformat(user["created_at"]) if isinstance(user["created_at"], str) else user["created_at"]
+    )
+    
+    return Token(access_token=access_token, user=user_obj)

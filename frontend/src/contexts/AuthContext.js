@@ -28,6 +28,17 @@ export const AuthProvider = ({ children }) => {
     return userData;
   };
 
+  const loginWithWeb3 = async (address, signature, nonce) => {
+    const response = await api.post('/auth/web3/login', { address, signature, nonce });
+    const { access_token, user: userData } = response.data;
+    
+    localStorage.setItem('token', access_token);
+    localStorage.setItem('user', JSON.stringify(userData));
+    setUser(userData);
+    
+    return userData;
+  };
+
   const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
@@ -38,6 +49,7 @@ export const AuthProvider = ({ children }) => {
     user,
     loading,
     login,
+    loginWithWeb3,
     logout,
     isAuthenticated: !!user,
   };

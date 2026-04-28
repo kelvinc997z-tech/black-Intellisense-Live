@@ -28,6 +28,17 @@ export const AuthProvider = ({ children }) => {
     return userData;
   };
 
+  const loginWithWeb3 = async (address, signature, nonce) => {
+    const response = await api.post('/auth/web3/login', { address, signature, nonce });
+    const { access_token, user: userData } = response.data;
+    
+    localStorage.setItem('intellitrade_token', access_token);
+    localStorage.setItem('intellitrade_user', JSON.stringify(userData));
+    setUser(userData);
+    
+    return userData;
+  };
+
   const logout = () => {
     localStorage.removeItem('intellitrade_token');
     localStorage.removeItem('intellitrade_user');
@@ -38,6 +49,7 @@ export const AuthProvider = ({ children }) => {
     user,
     loading,
     login,
+    loginWithWeb3,
     logout,
     isAuthenticated: !!user,
   };

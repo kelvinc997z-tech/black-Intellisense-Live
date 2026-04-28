@@ -2,13 +2,16 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'sonner';
+import { ethers } from 'ethers';
+import api from '../lib/api';
 
 const Login = () => {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, loginWithWeb3 } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [web3Loading, setWeb3Loading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -22,6 +25,40 @@ const Login = () => {
       toast.error(error.response?.data?.detail || 'Login failed');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleWeb3Login = async () => {
+    if (!window.ethereum) {
+      toast.error('MetaMask not detected! Please install MetaMask.');
+      return;
+    }
+
+    setWeb3Loading(true);
+    try {
+      // 1. Get account
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const accounts = await provider.send("eth_requestAccounts", []);
+      const address = accounts[0];
+
+      // 2. Get nonce from backend
+      const nonceRes = await api.post('/auth/web3/nonce', { address });
+      const nonce = nonceRes.data.nonce;
+
+      // 3. Sign message
+      const signer = await provider.getSigner();
+      const message = `Welcome to Black IntelliSense! Sign this message to login.\nNonce: ${nonce}`;
+      const signature = await signer.signMessage(message);
+
+      // 4. Login to backend
+      await loginWithWeb3(address, signature, nonce);
+      toast.success('Web3 Login Successful!');
+      navigate('/trading');
+    } catch (error) {
+      console.error(error);
+      toast.error(error.response?.data?.detail || 'MetaMask Login failed');
+    } finally {
+      setWeb3Loading(false);
     }
   };
 
@@ -46,14 +83,13 @@ const Login = () => {
             </p>
           </div>
 
-          <form data-testid="login-form" onSubmit={handleSubmit} className="space-y-6">
+          <form data-testid="login-form" onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-foreground mb-2">
                 Email Address
               </label>
               <input
                 id="email"
-                data-testid="email-input"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -69,7 +105,6 @@ const Login = () => {
               </label>
               <input
                 id="password"
-                data-testid="password-input"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -80,14 +115,28 @@ const Login = () => {
             </div>
 
             <button
-              data-testid="login-submit-btn"
               type="submit"
-              disabled={loading}
+              disabled={loading || web3Loading}
               className="w-full rounded-sm bg-primary px-4 py-3 font-medium tracking-wide text-primary-foreground shadow-[0_0_10px_rgba(6,182,212,0.3)] transition-colors hover:bg-primary/90 disabled:opacity-50"
             >
               {loading ? 'Signing In...' : 'Sign In to Trade'}
             </button>
           </form>
+
+          <div className="mt-4 flex items-center justify-between">
+            <div className="h-px w-full bg-border"></div>
+            <span className="px-3 text-xs text-muted-foreground whitespace-nowrap">OR</span>
+            <div className="h-px w-full bg-border"></div>
+          </div>
+
+          <button
+            onClick={handleWeb3Login}
+            disabled={loading || web3Loading}
+            className="mt-4 w-full flex items-center justify-center space-x-3 rounded-sm border border-orange-500/50 bg-orange-500/10 px-4 py-3 font-medium text-orange-400 transition-colors hover:bg-orange-500/20 disabled:opacity-50"
+          >
+            <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg" alt="MetaMask" className="h-5 w-5" />
+            <span>{web3Loading ? 'Connecting...' : 'Login with MetaMask'}</span>
+          </button>
 
           <div className="mt-6 text-center text-xs text-muted-foreground">
             <p>Secure OTC Trading Platform</p>

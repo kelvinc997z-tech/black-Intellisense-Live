@@ -21,10 +21,10 @@ starlette
 email-validator
 bcrypt
 cryptography
-pillow
-pytesseract
-numpy
-pdf2image
+# pillow
+# pytesseract
+# numpy
+# pdf2image
 # Web3
 eth-account
 toolz

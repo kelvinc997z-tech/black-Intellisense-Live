@@ -1,6 +1,9 @@
 from fastapi import APIRouter, HTTPException, Depends, status
-from models import ExchangeAPIConfig, OrderBook, OrderBookEntry
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, update
+from models import ExchangeAPIConfig, OrderBook, OrderBookEntry, DBExchangeAPIConfig
 from routes.auth import get_current_user, require_admin
+from database import get_db
 import uuid
 from datetime import datetime, timezone
 from typing import List, Dict
@@ -40,21 +43,21 @@ def generate_mock_order_book(exchange: str, symbol: str = "BTC/USDT") -> OrderBo
     )
 
 @router.get("/order-book/{exchange}/{symbol}")
-async def get_order_book(exchange: str, symbol: str, current_user: dict = Depends(get_current_user)):
+async def get_order_book(exchange: str, symbol: str, db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
     """
     Get live order book from exchange
     TODO: Replace mock data with real exchange API integration
     Configure API keys in /api/api-trade/config
     """
-    from server import get_db
-    db = get_db()
-    
     # Check if user has configured this exchange
-    config = await db.exchange_api_configs.find_one({
-        "user_id": current_user["user_id"],
-        "exchange": exchange.lower(),
-        "is_active": True
-    })
+    result = await db.execute(
+        select(DBExchangeAPIConfig).where(
+            DBExchangeAPIConfig.user_id == current_user["user_id"],
+            DBExchangeAPIConfig.exchange == exchange.lower(),
+            DBExchangeAPIConfig.is_active == True
+        )
+    )
+    config = result.scalar_one_or_none()
     
     if not config:
         # Return mock data if no config
@@ -66,49 +69,45 @@ async def get_order_book(exchange: str, symbol: str, current_user: dict = Depend
         }
     
     # TODO: Add real exchange API integration here
-    # if config["is_live"]:
-    #     order_book = fetch_real_order_book(config["api_key"], config["api_secret"], symbol)
-    # else:
     order_book = generate_mock_order_book(exchange, symbol)
     
     return {
         "order_book": order_book,
-        "is_live": config.get("is_live", False),
-        "message": "Live data" if config.get("is_live") else "Demo mode"
+        "is_live": config.is_live,
+        "message": "Live data" if config.is_live else "Demo mode"
     }
 
 @router.get("/config")
-async def get_api_configs(current_user: dict = Depends(get_current_user)):
-    from server import get_db
-    db = get_db()
+async def get_api_configs(db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
+    result = await db.execute(select(DBExchangeAPIConfig).where(DBExchangeAPIConfig.user_id == current_user["user_id"]))
+    configs = result.scalars().all()
     
-    configs = await db.exchange_api_configs.find({"user_id": current_user["user_id"]}).to_list(100)
-    
-    # Mask API secrets
+    # Prepare list for response
+    response_configs = []
     for config in configs:
-        if "api_secret" in config:
-            config["api_secret"] = "*" * 20
+        config_dict = ExchangeAPIConfig.model_validate(config).model_dump()
+        if "api_secret" in config_dict:
+            config_dict["api_secret"] = "*" * 20
+        response_configs.append(config_dict)
     
-    return {"configs": configs}
+    return {"configs": response_configs}
 
 @router.post("/config")
-async def create_api_config(exchange: str, api_key: str, api_secret: str, is_live: bool = False, current_user: dict = Depends(get_current_user)):
-    from server import get_db
-    db = get_db()
-    
+async def create_api_config(exchange: str, api_key: str, api_secret: str, is_live: bool = False, db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
     config_id = str(uuid.uuid4())
-    config_doc = {
-        "id": config_id,
-        "user_id": current_user["user_id"],
-        "exchange": exchange.lower(),
-        "api_key": api_key,
-        "api_secret": api_secret,
-        "is_live": is_live,
-        "is_active": True,
-        "created_at": datetime.now(timezone.utc).isoformat()
-    }
+    config_doc = DBExchangeAPIConfig(
+        id=config_id,
+        user_id=current_user["user_id"],
+        exchange=exchange.lower(),
+        api_key=api_key,
+        api_secret=api_secret,
+        is_live=is_live,
+        is_active=True,
+        created_at=datetime.now(timezone.utc)
+    )
     
-    await db.exchange_api_configs.insert_one(config_doc)
+    db.add(config_doc)
+    await db.commit()
     
     return {
         "message": "API configuration saved successfully",
@@ -117,23 +116,21 @@ async def create_api_config(exchange: str, api_key: str, api_secret: str, is_liv
     }
 
 @router.patch("/config/{config_id}")
-async def update_api_config(config_id: str, is_live: bool = None, is_active: bool = None, current_user: dict = Depends(get_current_user)):
-    from server import get_db
-    db = get_db()
-    
-    update_data = {}
-    if is_live is not None:
-        update_data["is_live"] = is_live
-    if is_active is not None:
-        update_data["is_active"] = is_active
-    
-    result = await db.exchange_api_configs.update_one(
-        {"id": config_id, "user_id": current_user["user_id"]},
-        {"$set": update_data}
+async def update_api_config(config_id: str, is_live: bool = None, is_active: bool = None, db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
+    result = await db.execute(
+        select(DBExchangeAPIConfig).where(DBExchangeAPIConfig.id == config_id, DBExchangeAPIConfig.user_id == current_user["user_id"])
     )
+    config = result.scalar_one_or_none()
     
-    if result.modified_count == 0:
+    if not config:
         raise HTTPException(status_code=404, detail="Configuration not found")
+    
+    if is_live is not None:
+        config.is_live = is_live
+    if is_active is not None:
+        config.is_active = is_active
+    
+    await db.commit()
     
     return {"message": "Configuration updated successfully"}
 

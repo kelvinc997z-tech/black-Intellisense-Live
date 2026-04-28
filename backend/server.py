@@ -1,76 +1,62 @@
 from fastapi import FastAPI, APIRouter
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
-from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import logging
 from pathlib import Path
 from contextlib import asynccontextmanager
+from database import engine, Base
 
 from routes import auth, exchanges, wallets, markup, prices, orders, trades, chat, payments, settlements, api_trade, p2p, assets, reports
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
-db = None
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global db
-    mongo_url = os.environ['MONGO_URL']
-    client = AsyncIOMotorClient(mongo_url)
-    db = client[os.environ['DB_NAME']]
-    
+    # Initialize database tables
     try:
-        await db.command("ping")
-        logging.info("Successfully connected to MongoDB")
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        logging.info("Successfully connected to PostgreSQL and created tables")
     except Exception as e:
-        logging.error(f"Failed to connect to MongoDB: {e}")
-        raise
+        logging.error(f"Failed to connect to PostgreSQL: {e}")
     
     yield
-    
-    client.close()
-    logging.info("MongoDB connection closed")
+    # Cleanup
+    await engine.dispose()
 
-app = FastAPI(title="Black IntelliSense API", lifespan=lifespan)
-
-api_router = APIRouter(prefix="/api")
-
-@api_router.get("/")
-async def root():
-    return {"message": "Black IntelliSense API", "version": "1.0.0"}
-
-api_router.include_router(auth.router, prefix="/auth", tags=["Authentication"])
-api_router.include_router(exchanges.router, prefix="/exchanges", tags=["Exchanges"])
-api_router.include_router(wallets.router, prefix="/wallets", tags=["Wallets"])
-api_router.include_router(markup.router, prefix="/markup", tags=["Markup Configuration"])
-api_router.include_router(prices.router, prefix="/prices", tags=["Price Feeds"])
-api_router.include_router(orders.router, prefix="/orders", tags=["Orders"])
-api_router.include_router(trades.router, prefix="/trades", tags=["Trades"])
-api_router.include_router(chat.router, prefix="/chat", tags=["Chat"])
-api_router.include_router(payments.router, prefix="/payments", tags=["Payments"])
-api_router.include_router(settlements.router, prefix="/settlements", tags=["Settlements"])
-api_router.include_router(api_trade.router, prefix="/api-trade", tags=["API Trade"])
-api_router.include_router(p2p.router, prefix="/p2p", tags=["P2P Trading"])
-api_router.include_router(assets.router, prefix="/assets", tags=["Assets"])
-api_router.include_router(reports.router, prefix="/reports", tags=["Reports"])
-
-app.include_router(api_router)
+app = FastAPI(
+    title="Black IntelliSense API",
+    description="Centralized API for Black IntelliSense Platforms",
+    version="1.0.0",
+    lifespan=lifespan
+)
 
 app.add_middleware(
     CORSMiddleware,
+    allow_origins=["*"],
     allow_credentials=True,
-    allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
+# Routes
+app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
+app.include_router(exchanges.router, prefix="/api/exchanges", tags=["Exchanges"])
+app.include_router(wallets.router, prefix="/api/wallets", tags=["Wallets"])
+app.include_router(markup.router, prefix="/api/markup", tags=["Markup"])
+app.include_router(prices.router, prefix="/api/prices", tags=["Prices"])
+app.include_router(orders.router, prefix="/api/orders", tags=["Orders"])
+app.include_router(trades.router, prefix="/api/trades", tags=["Trades"])
+app.include_router(chat.router, prefix="/api/chat", tags=["Chat"])
+app.include_router(payments.router, prefix="/api/payments", tags=["Payments"])
+app.include_router(settlements.router, prefix="/api/settlements", tags=["Settlements"])
+app.include_router(api_trade.router, prefix="/api/api-trade", tags=["API Trade"])
+app.include_router(p2p.router, prefix="/api/p2p", tags=["P2P"])
+app.include_router(assets.router, prefix="/api/assets", tags=["Assets"])
+app.include_router(reports.router, prefix="/api/reports", tags=["Reports"])
 
-def get_db():
-    return db
+@app.get("/")
+async def root():
+    return {"status": "online", "message": "Black IntelliSense API is running"}

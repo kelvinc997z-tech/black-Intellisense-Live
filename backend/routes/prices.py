@@ -1,6 +1,9 @@
 from fastapi import APIRouter, Depends
-from models import PriceFeed, ExchangeType
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+from models import PriceFeed, ExchangeType, DBMarkupConfig
 from routes.auth import get_current_user
+from database import get_db
 import uuid
 from datetime import datetime, timezone
 from typing import List
@@ -35,7 +38,7 @@ def generate_mock_price_feed(exchange: ExchangeType, base_price: float, symbol: 
         "ask_price": round(ask_price, 4),
         "spread": round(spread, 2),
         "volume_24h": random.uniform(150000, 700000),
-        "timestamp": datetime.now(timezone.utc).isoformat()
+        "timestamp": datetime.now(timezone.utc)
     }
 
 @router.get("/", response_model=List[PriceFeed])
@@ -49,12 +52,11 @@ async def get_price_feeds(current_user: dict = Depends(get_current_user)):
     return [PriceFeed(**feed) for feed in feeds]
 
 @router.get("/best")
-async def get_best_price(current_user: dict = Depends(get_current_user)):
-    from server import get_db
-    db = get_db()
+async def get_best_price(db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
+    result = await db.execute(select(DBMarkupConfig).where(DBMarkupConfig.user_id == current_user["user_id"]))
+    markup_config = result.scalar_one_or_none()
     
-    markup_config = await db.markup_configs.find_one({"user_id": current_user["user_id"]})
-    percentage_markup = markup_config.get("percentage_markup", 1.2) if markup_config else 1.2
+    percentage_markup = markup_config.percentage_markup if markup_config else 1.2
     
     # Fetch real USDT price
     real_price = await fetch_coinmarketcap_price()
@@ -95,7 +97,7 @@ async def get_price_history(current_user: dict = Depends(get_current_user)):
         # Add small random variation around real price
         price = real_price + random.uniform(-0.001, 0.001)
         history.append({
-            "timestamp": time_point.isoformat(),
+            "timestamp": time_point,
             "price": round(price, 4),
             "volume": random.uniform(10000, 50000)
         })

@@ -1,7 +1,10 @@
 from fastapi import APIRouter, HTTPException, Depends, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from models import UserCreate, UserLogin, Token, User, UserRole, Web3Login, Web3NonceRequest
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, update, delete
+from models import UserCreate, UserLogin, Token, User, UserRole, Web3Login, Web3NonceRequest, DBUser, DBNonce
 from utils.auth import verify_password, get_password_hash, create_access_token, decode_token
+from database import get_db
 import uuid
 from datetime import datetime, timezone, timedelta
 from eth_account.messages import encode_defunct
@@ -29,11 +32,9 @@ async def require_admin(current_user: dict = Depends(get_current_user)):
     return current_user
 
 @router.post("/register", response_model=User)
-async def register_user(user_data: UserCreate, admin: dict = Depends(require_admin)):
-    from server import get_db
-    db = get_db()
-    
-    existing = await db.users.find_one({"email": user_data.email})
+async def register_user(user_data: UserCreate, db: AsyncSession = Depends(get_db), admin: dict = Depends(require_admin)):
+    result = await db.execute(select(DBUser).where(DBUser.email == user_data.email))
+    existing = result.scalar_one_or_none()
     if existing:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -43,23 +44,10 @@ async def register_user(user_data: UserCreate, admin: dict = Depends(require_adm
     user_id = str(uuid.uuid4())
     hashed_password = get_password_hash(user_data.password)
     
-    user_doc = {
-        "id": user_id,
-        "email": user_data.email,
-        "password": hashed_password,
-        "full_name": user_data.full_name,
-        "role": user_data.role,
-        "company": user_data.company,
-        "is_active": True,
-        "created_at": datetime.now(timezone.utc).isoformat(),
-        "created_by": admin["user_id"]
-    }
-    
-    await db.users.insert_one(user_doc)
-    
-    return User(
+    user_doc = DBUser(
         id=user_id,
         email=user_data.email,
+        password=hashed_password,
         full_name=user_data.full_name,
         role=user_data.role,
         company=user_data.company,
@@ -67,206 +55,75 @@ async def register_user(user_data: UserCreate, admin: dict = Depends(require_adm
         created_at=datetime.now(timezone.utc),
         created_by=admin["user_id"]
     )
+    
+    db.add(user_doc)
+    await db.commit()
+    await db.refresh(user_doc)
+    
+    return user_doc
 
 @router.post("/login", response_model=Token)
-async def login(credentials: UserLogin):
-    from server import get_db
-    db = get_db()
+async def login(credentials: UserLogin, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(DBUser).where(DBUser.email == credentials.email))
+    user = result.scalar_one_or_none()
     
-    user = await db.users.find_one({"email": credentials.email})
-    if not user or not verify_password(credentials.password, user["password"]):
+    if not user or not verify_password(credentials.password, user.password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password"
         )
     
-    if not user.get("is_active", True):
+    if not user.is_active:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Account is inactive"
         )
     
     access_token = create_access_token(
-        data={"user_id": user["id"], "email": user["email"], "role": user["role"]}
+        data={"user_id": user.id, "email": user.email, "role": user.role.value}
     )
     
-    user_obj = User(
-        id=user["id"],
-        email=user["email"],
-        full_name=user["full_name"],
-        role=user["role"],
-        company=user.get("company"),
-        is_active=user.get("is_active", True),
-        created_at=datetime.fromisoformat(user["created_at"]) if isinstance(user["created_at"], str) else user["created_at"]
-    )
-    
-    return Token(access_token=access_token, user=user_obj)
+    return Token(access_token=access_token, user=User.model_validate(user))
 
 @router.get("/me", response_model=User)
-async def get_current_user_info(current_user: dict = Depends(get_current_user)):
-    from server import get_db
-    db = get_db()
+async def get_current_user_info(db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
+    result = await db.execute(select(DBUser).where(DBUser.id == current_user["user_id"]))
+    user = result.scalar_one_or_none()
     
-    user = await db.users.find_one({"id": current_user["user_id"]})
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found"
         )
     
-    return User(
-        id=user["id"],
-        email=user["email"],
-        full_name=user["full_name"],
-        role=user["role"],
-        company=user.get("company"),
-        is_active=user.get("is_active", True),
-        created_at=datetime.fromisoformat(user["created_at"]) if isinstance(user["created_at"], str) else user["created_at"]
-    )
-
-@router.post("/create-admin")
-async def create_initial_admin():
-    from server import get_db
-    db = get_db()
-    
-    existing_admin = await db.users.find_one({"role": "admin"})
-    if existing_admin:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Admin already exists. Use /register with admin token."
-        )
-    
-    admin_id = str(uuid.uuid4())
-    hashed_password = get_password_hash("admin123")
-    
-    admin_doc = {
-        "id": admin_id,
-        "email": "admin@blackintellisense.com",
-        "password": hashed_password,
-        "full_name": "System Administrator",
-        "role": "admin",
-        "company": "Black IntelliSense",
-        "is_active": True,
-        "created_at": datetime.now(timezone.utc).isoformat()
-    }
-    
-    await db.users.insert_one(admin_doc)
-    
-    return {"message": "Admin created successfully", "email": "admin@blackintellisense.com", "password": "admin123"}
-
-@router.post("/reset-admin")
-async def reset_admin_password():
-    """
-    Development helper: ensures the default admin exists with password 'admin123'.
-    If an admin already exists, its password is reset to 'admin123'.
-    """
-    from server import get_db
-    db = get_db()
-    
-    admin = await db.users.find_one({"email": "admin@blackintellisense.com"})
-    hashed_password = get_password_hash("admin123")
-    
-    if admin:
-        await db.users.update_one(
-            {"email": "admin@blackintellisense.com"},
-            {
-                "$set": {
-                    "password": hashed_password,
-                    "role": "admin",
-                    "is_active": True
-                }
-            }
-        )
-        return {"message": "Admin password reset", "email": "admin@blackintellisense.com"}
-    else:
-        admin_id = str(uuid.uuid4())
-        admin_doc = {
-            "id": admin_id,
-            "email": "admin@blackintellisense.com",
-            "password": hashed_password,
-            "full_name": "System Administrator",
-            "role": "admin",
-            "company": "Black IntelliSense",
-            "is_active": True,
-            "created_at": datetime.now(timezone.utc).isoformat()
-        }
-        await db.users.insert_one(admin_doc)
-        return {"message": "Admin created", "email": "admin@blackintellisense.com"}
-
-@router.post("/reset-client")
-async def reset_client_user():
-    """
-    Development helper: ensures a market maker client exists with email client@blackintellisense.com
-    and password 'client123'. If exists, password and role are enforced.
-    """
-    from server import get_db
-    db = get_db()
-    
-    client = await db.users.find_one({"email": "client@blackintellisense.com"})
-    hashed_password = get_password_hash("client123")
-    
-    if client:
-        await db.users.update_one(
-            {"email": "client@blackintellisense.com"},
-            {
-                "$set": {
-                    "password": hashed_password,
-                    "role": "market_maker",
-                    "is_active": True
-                }
-            }
-        )
-        return {"message": "Client user reset", "email": "client@blackintellisense.com"}
-    else:
-        client_id = str(uuid.uuid4())
-        client_doc = {
-            "id": client_id,
-            "email": "client@blackintellisense.com",
-            "password": hashed_password,
-            "full_name": "Client Market Maker",
-            "role": "market_maker",
-            "company": "Black IntelliSense",
-            "is_active": True,
-            "created_at": datetime.now(timezone.utc).isoformat()
-        }
-        await db.users.insert_one(client_doc)
-        return {"message": "Client user created", "email": "client@blackintellisense.com"}
+    return User.model_validate(user)
 
 @router.post("/web3/nonce")
-async def get_web3_nonce(request: Web3NonceRequest):
-    from server import get_db
-    db = get_db()
-    
+async def get_web3_nonce(request: Web3NonceRequest, db: AsyncSession = Depends(get_db)):
     nonce = str(uuid.uuid4())
-    # Store or update nonce for this address with expiration
-    await db.nonces.update_one(
-        {"address": request.address.lower()},
-        {"$set": {
-            "nonce": nonce, 
-            "created_at": datetime.now(timezone.utc)
-        }},
-        upsert=True
-    )
+    address = request.address.lower()
+    
+    db_nonce = DBNonce(address=address, nonce=nonce, created_at=datetime.now(timezone.utc))
+    await db.merge(db_nonce)
+    await db.commit()
+    
     return {"nonce": nonce}
 
 @router.post("/web3/login", response_model=Token)
-async def web3_login(credentials: Web3Login):
-    from server import get_db
-    db = get_db()
-    
+async def web3_login(credentials: Web3Login, db: AsyncSession = Depends(get_db)):
     address = credentials.address.lower()
     
-    # 1. Verify nonce
-    stored = await db.nonces.find_one({"address": address})
-    if not stored or stored["nonce"] != credentials.nonce:
+    result = await db.execute(select(DBNonce).where(DBNonce.address == address))
+    stored = result.scalar_one_or_none()
+    
+    if not stored or stored.nonce != credentials.nonce:
         raise HTTPException(status_code=401, detail="Invalid or expired nonce")
     
-    # Check expiry (e.g., 5 minutes)
-    if datetime.now(timezone.utc) - stored["created_at"].replace(tzinfo=timezone.utc) > timedelta(minutes=5):
-        await db.nonces.delete_one({"address": address})
+    if datetime.now(timezone.utc) - stored.created_at.replace(tzinfo=timezone.utc) > timedelta(minutes=5):
+        await db.delete(stored)
+        await db.commit()
         raise HTTPException(status_code=401, detail="Nonce expired")
 
-    # 2. Verify signature
     message = encode_defunct(text=f"Welcome to Black IntelliSense! Sign this message to login.\nNonce: {credentials.nonce}")
     try:
         recovered_address = Account.recover_message(message, signature=credentials.signature)
@@ -275,41 +132,57 @@ async def web3_login(credentials: Web3Login):
     except Exception:
         raise HTTPException(status_code=401, detail="Signature verification failed")
 
-    # 3. Cleanup nonce
-    await db.nonces.delete_one({"address": address})
+    await db.delete(stored)
 
-    # 4. Find or Create User
-    user = await db.users.find_one({"web3_address": address})
+    result = await db.execute(select(DBUser).where(DBUser.web3_address == address))
+    user = result.scalar_one_or_none()
+    
     if not user:
-        # Check if user with same email exists (optional, but let's just create new)
         user_id = str(uuid.uuid4())
-        user_doc = {
-            "id": user_id,
-            "email": f"{address[:10]}@web3.com", # Placeholder
-            "web3_address": address,
-            "full_name": f"Web3 User {address[:6]}",
-            "role": "counterparty",
-            "is_active": True,
-            "created_at": datetime.now(timezone.utc).isoformat()
-        }
-        await db.users.insert_one(user_doc)
-        user = user_doc
+        user = DBUser(
+            id=user_id,
+            email=f"{address[:10]}@web3.com",
+            web3_address=address,
+            full_name=f"Web3 User {address[:6]}",
+            role=UserRole.COUNTERPARTY,
+            is_active=True,
+            created_at=datetime.now(timezone.utc)
+        )
+        db.add(user)
+        await db.commit()
+        await db.refresh(user)
 
-    if not user.get("is_active", True):
+    if not user.is_active:
         raise HTTPException(status_code=403, detail="Account is inactive")
 
     access_token = create_access_token(
-        data={"user_id": user["id"], "email": user.get("email"), "role": user["role"]}
+        data={"user_id": user.id, "email": user.email, "role": user.role.value}
     )
     
-    user_obj = User(
-        id=user["id"],
-        email=user.get("email", f"{address[:10]}@web3.com"),
-        full_name=user["full_name"],
-        role=user["role"],
-        company=user.get("company"),
-        is_active=user.get("is_active", True),
-        created_at=datetime.fromisoformat(user["created_at"]) if isinstance(user["created_at"], str) else user["created_at"]
-    )
+    return Token(access_token=access_token, user=User.model_validate(user))
+
+@router.post("/reset-admin")
+async def reset_admin_password(db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(DBUser).where(DBUser.email == "admin@blackintellisense.com"))
+    admin = result.scalar_one_or_none()
+    hashed_password = get_password_hash("admin123")
     
-    return Token(access_token=access_token, user=user_obj)
+    if admin:
+        admin.password = hashed_password
+        admin.role = UserRole.ADMIN
+        admin.is_active = True
+    else:
+        admin = DBUser(
+            id=str(uuid.uuid4()),
+            email="admin@blackintellisense.com",
+            password=hashed_password,
+            full_name="System Administrator",
+            role=UserRole.ADMIN,
+            company="Black IntelliSense",
+            is_active=True,
+            created_at=datetime.now(timezone.utc)
+        )
+        db.add(admin)
+    
+    await db.commit()
+    return {"message": "Admin user setup complete", "email": "admin@blackintellisense.com"}

@@ -1,6 +1,9 @@
 from fastapi import APIRouter, HTTPException, Depends, Response
-from fastapi.responses import StreamingResponse
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, or_
+from models import DBPaymentProof, DBTrade, DBSettlement
 from routes.auth import get_current_user, require_admin
+from database import get_db
 import csv
 import io
 from openpyxl import Workbook
@@ -14,38 +17,52 @@ from typing import List
 
 router = APIRouter()
 
-async def get_settlements_data(db, user_id: str = None):
+async def get_settlements_data(db: AsyncSession, user_id: str = None):
     """Fetch settlements data for export"""
-    query = {}
+    query = select(DBSettlement)
     if user_id:
-        query = {"$or": [{"user_id": user_id}, {"approved_by": user_id}]}
+        # Check if user is associated with the settlement as counterparty or approved by them
+        query = query.where(or_(DBSettlement.counterparty_id == user_id, DBSettlement.approved_by == user_id))
     
-    settlements = await db.settlements.find(query).to_list(1000)
+    result = await db.execute(query)
+    settlements = result.scalars().all()
     
-    # Enrich with additional data
-    for settlement in settlements:
+    # Convert to list of dicts for easier processing, enriching with related data
+    enriched_data = []
+    for s in settlements:
+        item = {
+            "id": s.id,
+            "trade_id": s.trade_id,
+            "status": s.status,
+            "approved_by": s.approved_by,
+            "created_at": s.created_at,
+            "approved_at": s.approved_at,
+            "amount": s.amount
+        }
+        
         # Get payment proof details
-        if settlement.get("payment_proof_id"):
-            proof = await db.payment_proofs.find_one({"id": settlement["payment_proof_id"]})
+        if s.payment_proof_id:
+            p_result = await db.execute(select(DBPaymentProof).where(DBPaymentProof.id == s.payment_proof_id))
+            proof = p_result.scalar_one_or_none()
             if proof:
-                settlement["reference_code"] = proof.get("reference_code", "N/A")
-                settlement["amount"] = proof.get("amount", 0)
+                item["reference_code"] = proof.reference_code
+                item["amount"] = proof.amount # Override with proof amount if available
         
         # Get trade details
-        if settlement.get("trade_id"):
-            trade = await db.trades.find_one({"id": settlement["trade_id"]})
+        if s.trade_id:
+            t_result = await db.execute(select(DBTrade).where(DBTrade.id == s.trade_id))
+            trade = t_result.scalar_one_or_none()
             if trade:
-                settlement["trade_symbol"] = trade.get("symbol", "N/A")
-                settlement["trade_amount"] = trade.get("amount", 0)
+                item["trade_symbol"] = trade.symbol
+                item["trade_amount"] = trade.amount
+        
+        enriched_data.append(item)
     
-    return settlements
+    return enriched_data
 
 @router.get("/settlements/csv")
-async def export_settlements_csv(current_user: dict = Depends(get_current_user)):
+async def export_settlements_csv(db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
     """Export settlements to CSV"""
-    from server import get_db
-    db = get_db()
-    
     settlements = await get_settlements_data(db, current_user["user_id"])
     
     # Create CSV in memory
@@ -90,11 +107,8 @@ async def export_settlements_csv(current_user: dict = Depends(get_current_user))
     )
 
 @router.get("/settlements/excel")
-async def export_settlements_excel(current_user: dict = Depends(get_current_user)):
+async def export_settlements_excel(db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
     """Export settlements to Excel"""
-    from server import get_db
-    db = get_db()
-    
     settlements = await get_settlements_data(db, current_user["user_id"])
     
     # Create workbook
@@ -119,7 +133,8 @@ async def export_settlements_excel(current_user: dict = Depends(get_current_user
     # Style headers
     for cell in ws[1]:
         cell.font = cell.font.copy(bold=True)
-        cell.fill = cell.fill.copy(fgColor="06B6D4")
+        # openpyxl uses Hex without #
+        # cell.fill = cell.fill.copy(fgColor="06B6D4") 
     
     # Add data
     for settlement in settlements:
@@ -162,11 +177,8 @@ async def export_settlements_excel(current_user: dict = Depends(get_current_user
     )
 
 @router.get("/settlements/pdf")
-async def export_settlements_pdf(current_user: dict = Depends(get_current_user)):
+async def export_settlements_pdf(db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
     """Export settlements to PDF"""
-    from server import get_db
-    db = get_db()
-    
     settlements = await get_settlements_data(db, current_user["user_id"])
     
     # Create PDF in memory
@@ -211,7 +223,7 @@ async def export_settlements_pdf(current_user: dict = Depends(get_current_user))
             str(settlement.get("trade_id", ""))[:12] + "...",
             settlement.get("trade_symbol", "N/A"),
             f"${settlement.get('amount', 0):.2f}",
-            settlement.get("status", "").upper(),
+            str(settlement.get("status", "")).upper(),
             str(settlement.get("created_at", ""))[:10]
         ])
     
@@ -243,16 +255,14 @@ async def export_settlements_pdf(current_user: dict = Depends(get_current_user))
     )
 
 @router.get("/payments/csv")
-async def export_payments_csv(current_user: dict = Depends(get_current_user)):
+async def export_payments_csv(db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
     """Export payment proofs to CSV"""
-    from server import get_db
-    db = get_db()
-    
-    query = {}
+    query = select(DBPaymentProof)
     if current_user.get("role") not in ["admin", "market_maker"]:
-        query = {"user_id": current_user["user_id"]}
+        query = query.where(DBPaymentProof.user_id == current_user["user_id"])
     
-    payments = await db.payment_proofs.find(query).to_list(1000)
+    result = await db.execute(query)
+    payments = result.scalars().all()
     
     output = io.StringIO()
     writer = csv.writer(output)
@@ -269,13 +279,13 @@ async def export_payments_csv(current_user: dict = Depends(get_current_user)):
     
     for payment in payments:
         writer.writerow([
-            payment.get("id", ""),
-            payment.get("trade_id", ""),
-            payment.get("reference_code", "N/A"),
-            payment.get("amount", 0),
-            payment.get("status", ""),
-            payment.get("file_name", ""),
-            payment.get("created_at", "")
+            payment.id,
+            payment.trade_id,
+            payment.reference_code or "N/A",
+            payment.amount,
+            payment.status,
+            payment.file_name,
+            payment.created_at
         ])
     
     output.seek(0)

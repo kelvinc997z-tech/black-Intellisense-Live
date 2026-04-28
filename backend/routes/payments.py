@@ -1,6 +1,9 @@
 from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, status
-from models import PaymentProof, PaymentStatus
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, desc
+from models import PaymentProof, PaymentStatus, DBPaymentProof
 from routes.auth import get_current_user
+from database import get_db
 import uuid
 from datetime import datetime, timezone
 from typing import List
@@ -16,11 +19,9 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 async def upload_payment_proof(
     trade_id: str,
     file: UploadFile = File(...),
+    db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
-    from server import get_db
-    db = get_db()
-    
     allowed_types = ["image/jpeg", "image/png", "image/jpg", "application/pdf"]
     if file.content_type not in allowed_types:
         raise HTTPException(
@@ -45,61 +46,60 @@ async def upload_payment_proof(
     }
     
     proof_id = str(uuid.uuid4())
-    proof_doc = {
-        "id": proof_id,
-        "trade_id": trade_id,
-        "user_id": current_user["user_id"],
-        "file_name": file.filename,
-        "file_url": f"/uploads/payment_proofs/{file_name}",
-        "ocr_data": mock_ocr_data,
-        "status": PaymentStatus.UPLOADED,
-        "reference_code": mock_ocr_data["reference_code"],
-        "amount": mock_ocr_data["amount"],
-        "created_at": datetime.now(timezone.utc).isoformat()
-    }
+    proof_doc = DBPaymentProof(
+        id=proof_id,
+        trade_id=trade_id,
+        user_id=current_user["user_id"],
+        file_name=file.filename,
+        file_url=f"/uploads/payment_proofs/{file_name}",
+        ocr_data=mock_ocr_data,
+        status=PaymentStatus.UPLOADED,
+        reference_code=mock_ocr_data["reference_code"],
+        amount=mock_ocr_data["amount"],
+        created_at=datetime.now(timezone.utc)
+    )
     
-    await db.payment_proofs.insert_one(proof_doc)
+    db.add(proof_doc)
+    await db.commit()
+    await db.refresh(proof_doc)
     
-    return PaymentProof(**proof_doc)
+    return proof_doc
 
 @router.get("/", response_model=List[PaymentProof])
-async def get_payment_proofs(current_user: dict = Depends(get_current_user)):
-    from server import get_db
-    db = get_db()
-    
+async def get_payment_proofs(db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
     # Role-based access: admins/market_makers see all, others see only their own
-    query = {}
+    query = select(DBPaymentProof)
     if current_user.get("role") not in ["admin", "market_maker"]:
-        query = {"user_id": current_user["user_id"]}
+        query = query.where(DBPaymentProof.user_id == current_user["user_id"])
     
-    proofs = await db.payment_proofs.find(query).sort("created_at", -1).limit(100).to_list(100)
+    result = await db.execute(query.order_by(desc(DBPaymentProof.created_at)).limit(100))
+    proofs = result.scalars().all()
     
-    return [PaymentProof(**proof) for proof in proofs]
+    return proofs
 
 @router.get("/trade/{trade_id}", response_model=List[PaymentProof])
-async def get_trade_payment_proofs(trade_id: str, current_user: dict = Depends(get_current_user)):
-    from server import get_db
-    db = get_db()
+async def get_trade_payment_proofs(trade_id: str, db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
+    result = await db.execute(
+        select(DBPaymentProof)
+        .where(DBPaymentProof.trade_id == trade_id)
+        .order_by(desc(DBPaymentProof.created_at))
+    )
+    proofs = result.scalars().all()
     
-    proofs = await db.payment_proofs.find({"trade_id": trade_id}).sort("created_at", -1).to_list(100)
-    
-    return [PaymentProof(**proof) for proof in proofs]
+    return proofs
 
 @router.patch("/{proof_id}/verify")
-async def verify_payment_proof(proof_id: str, current_user: dict = Depends(get_current_user)):
-    from server import get_db
-    db = get_db()
+async def verify_payment_proof(proof_id: str, db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
+    result = await db.execute(select(DBPaymentProof).where(DBPaymentProof.id == proof_id))
+    proof = result.scalar_one_or_none()
     
-    proof = await db.payment_proofs.find_one({"id": proof_id})
     if not proof:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Payment proof not found"
         )
     
-    await db.payment_proofs.update_one(
-        {"id": proof_id},
-        {"$set": {"status": PaymentStatus.VERIFIED}}
-    )
+    proof.status = PaymentStatus.VERIFIED
+    await db.commit()
     
     return {"message": "Payment verified successfully"}

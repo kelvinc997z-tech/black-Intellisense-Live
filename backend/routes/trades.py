@@ -1,6 +1,9 @@
 from fastapi import APIRouter, HTTPException, Depends, status
-from models import Trade
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, desc, or_
+from models import Trade, DBTrade
 from routes.auth import get_current_user
+from database import get_db
 import uuid
 from datetime import datetime, timezone
 from typing import List
@@ -9,24 +12,25 @@ import random
 router = APIRouter()
 
 @router.get("/", response_model=List[Trade])
-async def get_trades(current_user: dict = Depends(get_current_user)):
-    from server import get_db
-    db = get_db()
+async def get_trades(db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
+    result = await db.execute(
+        select(DBTrade)
+        .where(or_(DBTrade.buyer_id == current_user["user_id"], DBTrade.seller_id == current_user["user_id"]))
+        .order_by(desc(DBTrade.created_at))
+    )
+    trades = result.scalars().all()
     
-    trades = await db.trades.find(
-        {"$or": [{"buyer_id": current_user["user_id"]}, {"seller_id": current_user["user_id"]}]}
-    ).sort("created_at", -1).to_list(100)
-    
-    return [Trade(**trade) for trade in trades]
+    return trades
 
 @router.get("/recent")
-async def get_recent_activity(current_user: dict = Depends(get_current_user)):
-    from server import get_db
-    db = get_db()
-    
-    recent_trades = await db.trades.find(
-        {"$or": [{"buyer_id": current_user["user_id"]}, {"seller_id": current_user["user_id"]}]}
-    ).sort("created_at", -1).limit(10).to_list(10)
+async def get_recent_activity(db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
+    result = await db.execute(
+        select(DBTrade)
+        .where(or_(DBTrade.buyer_id == current_user["user_id"], DBTrade.seller_id == current_user["user_id"]))
+        .order_by(desc(DBTrade.created_at))
+        .limit(10)
+    )
+    recent_trades = result.scalars().all()
     
     if not recent_trades:
         mock_trades = []
@@ -43,23 +47,21 @@ async def get_recent_activity(current_user: dict = Depends(get_current_user)):
     activities = []
     for trade in recent_trades:
         activities.append({
-            "time": datetime.fromisoformat(trade["created_at"]).strftime("%I:%M %p") if isinstance(trade["created_at"], str) else trade["created_at"].strftime("%I:%M %p"),
-            "client": f"Client_{trade['buyer_id'][:4]}",
-            "type": "Buy" if trade["buyer_id"] == current_user["user_id"] else "Sell",
-            "amount": trade["amount"],
-            "status": trade["status"].title()
+            "time": trade.created_at.strftime("%I:%M %p"),
+            "client": f"Client_{trade.buyer_id[:4]}",
+            "type": "Buy" if trade.buyer_id == current_user["user_id"] else "Sell",
+            "amount": trade.amount,
+            "status": trade.status.title()
         })
     
     return {"activities": activities}
 
 @router.get("/stats")
-async def get_trade_stats(current_user: dict = Depends(get_current_user)):
-    from server import get_db
-    db = get_db()
-    
-    trades = await db.trades.find(
-        {"seller_id": current_user["user_id"]}
-    ).to_list(1000)
+async def get_trade_stats(db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
+    result = await db.execute(
+        select(DBTrade).where(DBTrade.seller_id == current_user["user_id"])
+    )
+    trades = result.scalars().all()
     
     if not trades:
         return {
@@ -70,11 +72,11 @@ async def get_trade_stats(current_user: dict = Depends(get_current_user)):
     
     today = datetime.now(timezone.utc).date()
     daily_volume = sum(
-        trade["total"] for trade in trades
-        if datetime.fromisoformat(trade["created_at"]).date() == today
+        trade.total for trade in trades
+        if trade.created_at.date() == today
     )
     
-    pending_settlements = sum(1 for trade in trades if trade["status"] == "pending")
+    pending_settlements = sum(1 for trade in trades if trade.status == "pending")
     
     return {
         "daily_volume": daily_volume,

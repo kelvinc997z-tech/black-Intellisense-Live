@@ -14,7 +14,7 @@
     }
   },
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "api/index.py" },
+    { "source": "/api/(.*)", "destination": "backend/index.py" },
     { "source": "/admin/(.*)", "destination": "frontend/$1" },
     { "source": "/((?!admin|api).*)", "destination": "intellitrade-frontend/$1" }
   ]

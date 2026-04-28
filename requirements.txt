@@ -23,6 +23,7 @@ bcrypt
 cryptography
 pillow
 pytesseract
+numpy
 pdf2image
 # Web3
 eth-account

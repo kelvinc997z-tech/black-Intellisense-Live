@@ -5,6 +5,14 @@
     { "src": "frontend/package.json", "use": "@vercel/static-build", "config": { "distDir": "build" } },
     { "src": "intellitrade-frontend/package.json", "use": "@vercel/static-build", "config": { "distDir": "build" } }
   ],
+  "env": {
+    "CI": "false"
+  },
+  "build": {
+    "env": {
+      "CI": "false"
+    }
+  },
   "rewrites": [
     { "source": "/api/(.*)", "destination": "api/index.py" },
     { "source": "/admin/(.*)", "destination": "frontend/$1" },

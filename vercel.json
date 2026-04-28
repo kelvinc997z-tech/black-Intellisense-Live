@@ -8,6 +8,7 @@
   "env": {
     "CI": "false"
   },
+  "cleanUrls": true,
   "rewrites": [
     { "source": "/api/(.*)", "destination": "index.py" },
     { "source": "/admin/(.*)", "destination": "frontend/$1" },

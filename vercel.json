@@ -1,17 +1,8 @@
 {
   "version": 2,
-  "builds": [
-    { "src": "index.py", "use": "@vercel/python" },
-    { "src": "frontend/package.json", "use": "@vercel/static-build", "config": { "distDir": "build" } },
-    { "src": "intellitrade-frontend/package.json", "use": "@vercel/static-build", "config": { "distDir": "build" } }
-  ],
-  "env": {
-    "CI": "false"
-  },
-  "cleanUrls": true,
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "index.py" },
-    { "source": "/admin/(.*)", "destination": "frontend/$1" },
-    { "source": "/((?!admin|api).*)", "destination": "intellitrade-frontend/$1" }
+    { "source": "/api/(.*)", "destination": "/api/index.py" },
+    { "source": "/admin/(.*)", "destination": "/frontend/$1" },
+    { "source": "/((?!admin|api).*)", "destination": "/intellitrade-frontend/$1" }
   ]
 }

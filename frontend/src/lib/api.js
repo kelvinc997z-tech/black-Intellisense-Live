@@ -3,10 +3,16 @@ import axios from 'axios';
 const isLocalhost =
   typeof window !== 'undefined' &&
   (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
-const backendBaseUrl = isLocalhost
-  ? 'http://localhost:8001'
-  : (process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001');
-const API_URL = backendBaseUrl + '/api';
+
+// On Vercel, if REACT_APP_BACKEND_URL is not set, we use current origin
+const getBaseUrl = () => {
+  if (isLocalhost) return 'http://localhost:8001';
+  if (process.env.REACT_APP_BACKEND_URL) return process.env.REACT_APP_BACKEND_URL;
+  return typeof window !== 'undefined' ? window.location.origin : '';
+};
+
+const backendBaseUrl = getBaseUrl();
+const API_URL = backendBaseUrl.endsWith('/api') ? backendBaseUrl : backendBaseUrl + '/api';
 
 const api = axios.create({
   baseURL: API_URL,

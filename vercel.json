@@ -7,8 +7,10 @@
   ],
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/index.py" },
+    { "source": "/admin", "destination": "/frontend/index.html" },
     { "source": "/admin/(.*)", "destination": "/frontend/$1" },
     { "source": "/login", "destination": "/intellitrade-frontend/index.html" },
+    { "source": "/", "destination": "/intellitrade-frontend/index.html" },
     { "source": "/((?!admin|api).*)", "destination": "/intellitrade-frontend/$1" }
   ]
 }

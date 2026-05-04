@@ -64,21 +64,32 @@ async def register_user(user_data: UserCreate, db: AsyncSession = Depends(get_db
 
 @router.post("/login", response_model=Token)
 async def login(credentials: UserLogin, db: AsyncSession = Depends(get_db)):
+    print(f"Login attempt for email: {credentials.email}")
     result = await db.execute(select(DBUser).where(DBUser.email == credentials.email))
     user = result.scalar_one_or_none()
     
-    if not user or not verify_password(credentials.password, user.password):
+    if not user:
+        print(f"Login failed: User {credentials.email} not found")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect email or password"
+        )
+    
+    if not verify_password(credentials.password, user.password):
+        print(f"Login failed: Incorrect password for {credentials.email}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password"
         )
     
     if not user.is_active:
+        print(f"Login failed: Account {credentials.email} is inactive")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Account is inactive"
         )
     
+    print(f"Login successful for: {credentials.email}")
     access_token = create_access_token(
         data={"user_id": user.id, "email": user.email, "role": user.role.value}
     )

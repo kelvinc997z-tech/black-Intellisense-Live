@@ -56,7 +56,3 @@ app.include_router(api_trade.router, prefix="/api/api-trade", tags=["API Trade"]
 app.include_router(p2p.router, prefix="/api/p2p", tags=["P2P"])
 app.include_router(assets.router, prefix="/api/assets", tags=["Assets"])
 app.include_router(reports.router, prefix="/api/reports", tags=["Reports"])
-
-@app.get("/")
-async def root():
-    return {"status": "online", "message": "Black IntelliSense API is running"}

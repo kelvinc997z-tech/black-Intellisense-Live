@@ -32,6 +32,7 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/admin" element={<Navigate to="/sense50" replace />} />
           <Route
             path="/sense50"
             element={

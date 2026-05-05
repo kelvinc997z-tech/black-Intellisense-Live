@@ -18,15 +18,17 @@ elif DATABASE_URL.startswith("postgresql://"):
 elif DATABASE_URL.startswith("postgresql+asyncpg://"):
     DATABASE_URL = DATABASE_URL.replace("postgresql+asyncpg://", "postgresql+psycopg://", 1)
 
-if "sslmode=require" in DATABASE_URL:
-    DATABASE_URL = DATABASE_URL.replace("sslmode=require", "ssl=require")
+# Ensure sslmode is set for Psycopg 3
+if "sslmode" not in DATABASE_URL:
+    if DATABASE_URL.endswith("/"):
+        DATABASE_URL += "?sslmode=require"
+    else:
+        separator = "&" if "?" in DATABASE_URL else "?"
+        DATABASE_URL += f"{separator}sslmode=require"
 
 engine = create_async_engine(
     DATABASE_URL, 
     echo=True,
-    connect_args={
-        "ssl": "require",
-    }
 )
 SessionLocal = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
 

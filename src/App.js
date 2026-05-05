@@ -130,6 +130,14 @@ function App() {
             }
           />
           <Route
+            path="/intellitrade/orders"
+            element={
+              <PrivateRoute>
+                <OrderManagementPage />
+              </PrivateRoute>
+            }
+          />
+          <Route
             path="/assets"
             element={
               <PrivateRoute>

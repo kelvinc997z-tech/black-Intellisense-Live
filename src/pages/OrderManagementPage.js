@@ -24,10 +24,12 @@ const OrderManagementPage = () => {
         api.get('/orders/pending/all'),
         api.get('/orders/')
       ]);
-      setPendingOrders(pendingRes.data);
-      setAllOrders(allRes.data);
+      setPendingOrders(Array.isArray(pendingRes.data) ? pendingRes.data : []);
+      setAllOrders(Array.isArray(allRes.data) ? allRes.data : []);
     } catch (error) {
       console.error('Error fetching orders:', error);
+      setPendingOrders([]);
+      setAllOrders([]);
     }
   };
 

@@ -14,18 +14,18 @@ router = APIRouter()
 security = HTTPBearer()
 
 def map_db_user_to_pydantic(db_user):
-    \"\"\"Helper to safely map SQLAlchemy DBUser to Pydantic User model\"\"\"
-    return User(
-        id=db_user.id,
-        email=db_user.email,
-        web3_address=db_user.web3_address,
-        full_name=db_user.full_name,
-        role=db_user.role.value if hasattr(db_user.role, 'value') else db_user.role,
-        company=db_user.company,
-        is_active=db_user.is_active,
-        created_at=db_user.created_at,
-        created_by=db_user.created_by
-    )
+    \"\"\"Helper to safely map SQLAlchemy DBUser to a dictionary for API response\"\"\"
+    return {
+        "id": db_user.id,
+        "email": db_user.email,
+        "web3_address": db_user.web3_address,
+        "full_name": db_user.full_name,
+        "role": db_user.role.value if hasattr(db_user.role, 'value') else db_user.role,
+        "company": db_user.company,
+        "is_active": db_user.is_active,
+        "created_at": db_user.created_at,
+        "created_by": db_user.created_by
+    }
 
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
     token = credentials.credentials

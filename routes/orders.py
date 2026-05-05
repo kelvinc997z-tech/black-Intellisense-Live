@@ -110,43 +110,48 @@ async def accept_order(order_id: str, db: AsyncSession = Depends(get_db), curren
             detail="Only pending orders can be accepted"
         )
     
-    # Update order status
-    order.status = OrderStatus.ACCEPTED
-    order.updated_at = datetime.now(timezone.utc)
-    order.accepted_by = current_user["user_id"]
-    order.accepted_at = datetime.now(timezone.utc)
-    
-    # Create trade record
-    trade_id = str(uuid.uuid4())
-    trade_doc = DBTrade(
-        id=trade_id,
-        order_id=order_id,
-        buyer_id=order.user_id if order.side == OrderSide.BUY else current_user["user_id"],
-        seller_id=current_user["user_id"] if order.side == OrderSide.BUY else order.user_id,
-        symbol=order.symbol,
-        amount=order.amount,
-        price=order.price,
-        total=order.total,
-        status="pending_payment",
-        created_at=datetime.now(timezone.utc)
-    )
-    db.add(trade_doc)
-    
-    # Create settlement record
-    settlement_id = str(uuid.uuid4())
-    settlement_doc = DBSettlement(
-        id=settlement_id,
-        trade_id=trade_id,
-        payment_proof_id=None,
-        status="pending",
-        order_id=order_id,
-        counterparty_id=order.user_id,
-        amount=order.total,
-        created_at=datetime.now(timezone.utc)
-    )
-    db.add(settlement_doc)
-    
-    await db.commit()
+    try:
+        # Update order status
+        order.status = OrderStatus.ACCEPTED
+        order.updated_at = datetime.now(timezone.utc)
+        order.accepted_by = current_user["user_id"]
+        order.accepted_at = datetime.now(timezone.utc)
+        
+        # Create trade record
+        trade_id = str(uuid.uuid4())
+        trade_doc = DBTrade(
+            id=trade_id,
+            order_id=order_id,
+            buyer_id=order.user_id if str(order.side) == OrderSide.BUY.value else current_user["user_id"],
+            seller_id=current_user["user_id"] if str(order.side) == OrderSide.BUY.value else order.user_id,
+            symbol=order.symbol,
+            amount=order.amount,
+            price=order.price,
+            total=order.total,
+            status="pending_payment",
+            created_at=datetime.now(timezone.utc)
+        )
+        db.add(trade_doc)
+        
+        # Create settlement record
+        settlement_id = str(uuid.uuid4())
+        settlement_doc = DBSettlement(
+            id=settlement_id,
+            trade_id=trade_id,
+            payment_proof_id=None,
+            status=SettlementStatus.PENDING,
+            order_id=order_id,
+            counterparty_id=order.user_id,
+            amount=order.total,
+            created_at=datetime.now(timezone.utc)
+        )
+        db.add(settlement_doc)
+        
+        await db.commit()
+    except Exception as e:
+        await db.rollback()
+        print(f"ACCEPT ORDER ERROR: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal Server Error during acceptance: {str(e)}")
     
     return {
         "message": "Order accepted successfully",

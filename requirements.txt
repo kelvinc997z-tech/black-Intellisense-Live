@@ -2,6 +2,7 @@ fastapi
 uvicorn
 sqlalchemy
 asyncpg
+asyncpg[all]
 psycopg2-binary
 greenlet
 aiofiles

@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'sonner';
 import { ethers } from 'ethers';
 import api from '../lib/api';
-import { ShieldCheck, Lock, Mail, Wallet } from 'lucide-react';
+import { ShieldCheck, Lock, Mail, LayoutDashboard, TrendingUp, ChevronRight } from 'lucide-react';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -13,6 +13,7 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [web3Loading, setWeb3Loading] = useState(false);
+  const [portalMode, setPortalMode] = useState('client'); // 'client' or 'admin'
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -20,9 +21,20 @@ const Login = () => {
 
     try {
       const userData = await login(email, password);
-      toast.success('Authentication successful. Welcome back.');
       
-      if (userData.role === 'admin') {
+      if (portalMode === 'admin' && userData.role !== 'admin') {
+        toast.error('Access Denied: Admin privileges required for Sense50.');
+        setLoading(false);
+        return;
+      }
+      
+      if (portalMode === 'client' && userData.role === 'admin') {
+        toast.info('Admin detected. Redirecting to Client Terminal...');
+      }
+
+      toast.success('Authentication successful.');
+      
+      if (portalMode === 'admin') {
         navigate('/sense50');
       } else {
         navigate('/trading');
@@ -53,9 +65,20 @@ const Login = () => {
       const message = `Welcome to Black IntelliSense! Sign this message to login.\nNonce: ${nonce}`;
       const signature = await signer.signMessage(message);
 
-      await loginWithWeb3(address, signature, nonce);
+      const userData = await loginWithWeb3(address, signature, nonce);
+      
+      if (portalMode === 'admin' && userData.role !== 'admin') {
+        toast.error('Access Denied: Admin privileges required for Sense50.');
+        setWeb3Loading(false);
+        return;
+      }
+
       toast.success('Web3 Identity Verified!');
-      navigate('/trading');
+      if (portalMode === 'admin') {
+        navigate('/sense50');
+      } else {
+        navigate('/trading');
+      }
     } catch (error) {
       console.error('Web3 Login Error:', error);
       const errorMsg = error.response?.data?.detail || error.message || 'MetaMask authentication failed';
@@ -76,7 +99,7 @@ const Login = () => {
       
       <div className="relative z-10 w-full max-w-md p-6">
         <div className="rounded-3xl border border-white/10 bg-slate-900/40 backdrop-blur-2xl p-8 shadow-2xl transition-all duration-500 hover:border-primary/30 group">
-          <div className="mb-10 text-center">
+          <div className="mb-8 text-center">
             <div className="mx-auto mb-6 flex items-center justify-center transition-transform duration-500 group-hover:scale-110">
               <div className="relative">
                 <img src="/assets/logo.png" alt="Black IntelliSense" className="h-20 w-auto drop-shadow-[0_0_15px_rgba(6,182,212,0.4)]" />
@@ -87,8 +110,34 @@ const Login = () => {
               Black <span className="text-primary">IntelliSense</span>
             </h1>
             <p className="text-xs text-slate-500 font-medium uppercase tracking-widest">
-              The Intelligence Between Liquidity and Markets
+              Secure Terminal Access
             </p>
+          </div>
+
+          {/* Portal Selection */}
+          <div className="mb-8 p-1 rounded-2xl bg-black/40 border border-white/5 flex gap-1">
+            <button
+              onClick={() => setPortalMode('client')}
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold transition-all duration-300 ${
+                portalMode === 'client' 
+                ? 'bg-primary text-white shadow-lg shadow-primary/20' 
+                : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'
+              }`}
+            >
+              <TrendingUp className="h-3.5 w-3.5" />
+              IntelliTrade
+            </button>
+            <button
+              onClick={() => setPortalMode('admin')}
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold transition-all duration-300 ${
+                portalMode === 'admin' 
+                ? 'bg-primary text-white shadow-lg shadow-primary/20' 
+                : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'
+              }`}
+            >
+              <LayoutDashboard className="h-3.5 w-3.5" />
+              Sense 50
+            </button>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
@@ -138,7 +187,8 @@ const Login = () => {
                 ) : (
                   <>
                     <ShieldCheck className="h-4 w-4" />
-                    <span>Authenticate</span>
+                    <span>Enter {portalMode === 'admin' ? 'Admin' : 'Client'} Terminal</span>
+                    <ChevronRight className="h-4 w-4 opacity-50 group-hover:translate-x-1 transition-transform" />
                   </>
                 )}
               </div>

@@ -128,7 +128,19 @@ async def login(credentials: UserLogin, db: AsyncSession = Depends(get_db)):
         data={"user_id": user.id, "email": user.email, "role": user.role.value}
     )
     
-    return Token(access_token=access_token, user=User.model_validate(user))
+    # Use manual mapping instead of model_validate to avoid Pydantic/SQLAlchemy proxy issues
+    user_data = {
+        "id": user.id,
+        "email": user.email,
+        "web3_address": user.web3_address,
+        "full_name": user.full_name,
+        "role": user.role.value if hasattr(user.role, 'value') else user.role,
+        "company": user.company,
+        "is_active": user.is_active,
+        "created_at": user.created_at
+    }
+    
+    return Token(access_token=access_token, user=User(**user_data))
 
 @router.get("/me", response_model=User)
 async def get_current_user_info(db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):

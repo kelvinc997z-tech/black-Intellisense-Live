@@ -2,8 +2,14 @@ import React, { useEffect, useState } from 'react';
 import Layout from '../components/layout/Layout';
 import api from '../lib/api';
 import { formatCurrency, formatNumber } from '../lib/utils';
-import { TrendingUp, TrendingDown, DollarSign, Activity, Clock } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
+import { 
+  TrendingUp, TrendingDown, DollarSign, Activity, Clock, 
+  Zap, ShieldAlert, Globe, Server, Cpu, ArrowUpRight 
+} from 'lucide-react';
+import { 
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, 
+  ResponsiveContainer, LineChart, Line 
+} from 'recharts';
 
 const Sense50Dashboard = () => {
   const [stats, setStats] = useState(null);
@@ -38,73 +44,96 @@ const Sense50Dashboard = () => {
   };
 
   if (loading) {
-    return <Layout><div className="text-center py-12">Loading...</div></Layout>;
+    return (
+      <Layout>
+        <div className="min-h-[80vh] flex flex-col items-center justify-center space-y-4">
+          <div className="h-12 w-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+          <p className="font-mono text-sm text-muted-foreground animate-pulse uppercase tracking-widest">Initializing Bridge Engine...</p>
+        </div>
+      </Layout>
+    );
   }
 
   const statCards = [
     {
-      title: 'Total USDT Stock',
+      title: 'Liquid Inventory',
       value: formatCurrency(stats?.total_balance || 520000, 'USD'),
       change: '+1.2%',
       icon: DollarSign,
       color: 'text-primary',
-      testId: 'total-usdt-stock'
+      desc: 'Total USDT Available'
     },
     {
-      title: 'Daily Volume',
+      title: '24h Execution Volume',
       value: formatCurrency(stats?.daily_volume || 148500, 'USD'),
       icon: Activity,
-      color: 'text-chart-2',
-      testId: 'daily-volume'
+      color: 'text-cyan-400',
+      desc: 'Aggregate Flow'
     },
     {
       title: 'Pending Settlements',
       value: stats?.pending_settlements || 5,
       icon: Clock,
-      color: 'text-warning',
-      testId: 'pending-settlements'
+      color: 'text-amber-400',
+      desc: 'Awaiting Confirmation'
     },
   ];
 
   return (
     <Layout>
-      <div data-testid="sense50-dashboard" className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="font-heading text-4xl font-bold tracking-tight text-foreground">
-              Sense 50 Bridge Engine
+      <div className="space-y-8 p-2">
+        {/* Header Section */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2 text-primary font-mono text-xs uppercase tracking-[0.2em] font-bold">
+              <Zap className="h-3 w-3" />
+              System Status: Operational
+            </div>
+            <h1 className="font-heading text-5xl font-black tracking-tighter text-white">
+              SENSE<span className="text-primary">50</span>
             </h1>
-            <p className="mt-2 text-base text-muted-foreground">
-              Real-time price aggregation and execution control
+            <p className="text-slate-500 font-medium max-w-md">
+              Enterprise Bridge Engine for Real-time Liquidity Aggregation and Settlement.
             </p>
           </div>
-          <div className="flex items-center gap-2 rounded-sm border border-border bg-card/40 px-4 py-2 backdrop-blur-sm">
-            <div className="h-2 w-2 animate-pulse rounded-full bg-success" />
-            <span className="font-mono text-sm text-muted-foreground">Live</span>
+          
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-4 px-4 py-2 rounded-full border border-white/10 bg-white/5 backdrop-blur-md">
+              <div className="flex items-center gap-2">
+                <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Node: US-EAST-1</span>
+              </div>
+              <div className="h-4 w-px bg-white/10" />
+              <div className="flex items-center gap-2">
+                <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">API: Active</span>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid gap-4 md:grid-cols-3">
-          {statCards.map((stat) => (
-            <div
-              key={stat.title}
-              data-testid={stat.testId}
-              className="rounded-sm border border-border bg-card/40 p-6 backdrop-blur-sm transition-colors hover:border-primary/30"
+        {/* Metrics Grid */}
+        <div className="grid gap-6 md:grid-cols-3">
+          {statCards.map((stat, idx) => (
+            <div 
+              key={idx} 
+              className="group relative overflow-hidden rounded-2xl border border-white/10 bg-slate-900/40 p-6 backdrop-blur-xl transition-all duration-300 hover:border-primary/50 hover:shadow-[0_0_30px_rgba(6,182,212,0.1)]"
             >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">{stat.title}</p>
-                  <p className="mt-2 font-mono text-3xl font-bold text-foreground">{stat.value}</p>
-                  {stat.change && (
-                    <div className="mt-2 flex items-center gap-1 text-sm font-medium text-success">
-                      <TrendingUp className="h-4 w-4" />
-                      {stat.change}
-                    </div>
-                  )}
+              <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-primary/5 blur-3xl transition-all group-hover:bg-primary/10" />
+              <div className="relative z-10 flex items-start justify-between">
+                <div className="space-y-2">
+                  <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">{stat.title}</p>
+                  <p className="font-mono text-4xl font-black text-white tracking-tight">{stat.value}</p>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-medium text-slate-600 uppercase">{stat.desc}</span>
+                    {stat.change && (
+                      <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-400 bg-emerald-400/10 px-1.5 py-0.5 rounded">
+                        <TrendingUp className="h-3 w-3" /> {stat.change}
+                      </span>
+                    )}
+                  </div>
                 </div>
-                <div className={`rounded-sm bg-secondary p-3 ${stat.color}`}>
+                <div className={`rounded-xl bg-slate-800/50 p-3 transition-transform group-hover:scale-110 ${stat.color}`}>
                   <stat.icon className="h-6 w-6" />
                 </div>
               </div>
@@ -112,126 +141,155 @@ const Sense50Dashboard = () => {
           ))}
         </div>
 
-        {/* Charts Row */}
-        <div className="grid gap-4 lg:grid-cols-2">
-          {/* Price Chart */}
-          <div className="rounded-sm border border-border bg-card/40 p-6 backdrop-blur-sm">
-            <h3 className="mb-4 font-heading text-xl font-semibold tracking-tight text-foreground">
-              USDT Price Trend (24h)
-            </h3>
-            <ResponsiveContainer width="100%" height={200}>
-              <AreaChart data={priceHistory}>
-                <defs>
-                  <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#06B6D4" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#06B6D4" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1E293B" />
-                <XAxis
-                  dataKey="timestamp"
-                  stroke="#94A3B8"
-                  fontSize={10}
-                  tickFormatter={(value) => new Date(value).getHours() + ':00'}
-                />
-                <YAxis stroke="#94A3B8" fontSize={10} domain={[0.999, 1.003]} />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: '#0F172A',
-                    border: '1px solid #1E293B',
-                    borderRadius: '4px',
-                    color: '#F8FAFC',
-                  }}
-                  labelFormatter={(value) => new Date(value).toLocaleString()}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="price"
-                  stroke="#06B6D4"
-                  fillOpacity={1}
-                  fill="url(#colorPrice)"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
+        {/* Analysis Center */}
+        <div className="grid gap-6 lg:grid-cols-2">
+          {/* Price Analysis */}
+          <div className="rounded-2xl border border-white/10 bg-slate-900/40 p-6 backdrop-blur-xl transition-all duration-300 hover:border-primary/30">
+            <div className="mb-6 flex items-center justify-between">
+              <div>
+                <h3 className="font-heading text-xl font-bold text-white">USDT Index Trend</h3>
+                <p className="text-xs text-slate-500">24h aggregated price movement</p>
+              </div>
+              <div className="flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 text-primary text-[10px] font-bold uppercase">
+                <Globe className="h-3 w-3" /> Global
+              </div>
+            </div>
+            <div className="h-[300px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={priceHistory}>
+                  <defs>
+                    <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#06B6D4" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#06B6D4" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
+                  <XAxis 
+                    dataKey="timestamp" 
+                    stroke="#475569" 
+                    fontSize={10} 
+                    tickLine={false} 
+                    axisLine={false}
+                    tickFormatter={(val) => new Date(val).getHours() + ':00'}
+                  />
+                  <YAxis 
+                    stroke="#475569" 
+                    fontSize={10} 
+                    tickLine={false} 
+                    axisLine={false}
+                    domain={['auto', 'auto']}
+                    tickFormatter={(val) => val.toFixed(4)}
+                  />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '12px', fontSize: '12px' }}
+                    itemStyle={{ color: '#06B6D4' }}
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey="price" 
+                    stroke="#06B6D4" 
+                    strokeWidth={3} 
+                    fillOpacity={1} 
+                    fill="url(#colorPrice)" 
+                    animationDuration={2000}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
           </div>
 
-          {/* P&L Chart */}
-          <div className="rounded-sm border border-border bg-card/40 p-6 backdrop-blur-sm">
-            <h3 className="mb-4 font-heading text-xl font-semibold tracking-tight text-foreground">
-              Profit & Loss
-            </h3>
-            <ResponsiveContainer width="100%" height={200}>
-              <LineChart
-                data={[
-                  { time: '11:00', value: 80 },
-                  { time: '1:00', value: 120 },
-                  { time: '3:00', value: 100 },
-                  { time: '5:00', value: 160 },
-                  { time: '7:00', value: 140 },
-                  { time: '9:00', value: 180 },
-                ]}
-              >
-                <CartesianGrid strokeDasharray="3 3" stroke="#1E293B" />
-                <XAxis dataKey="time" stroke="#94A3B8" fontSize={10} />
-                <YAxis stroke="#94A3B8" fontSize={10} />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: '#0F172A',
-                    border: '1px solid #1E293B',
-                    borderRadius: '4px',
-                  }}
-                />
-                <Line type="monotone" dataKey="value" stroke="#10B981" strokeWidth={2} dot={false} />
-              </LineChart>
-            </ResponsiveContainer>
+          {/* System Health */}
+          <div className="rounded-2xl border border-white/10 bg-slate-900/40 p-6 backdrop-blur-xl">
+            <div className="mb-6 flex items-center justify-between">
+              <div>
+                <h3 className="font-heading text-xl font-bold text-white">Bridge Health</h3>
+                <p className="text-xs text-slate-500">Execution latency and node stability</p>
+              </div>
+              <div className="flex items-center gap-2 px-3 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 text-[10px] font-bold uppercase">
+                <Server className="h-3 w-3" /> Stable
+              </div>
+            </div>
+            <div className="space-y-6">
+              {[
+                { label: 'Execution Latency', value: '12ms', status: 'Optimal', color: 'bg-emerald-500' },
+                { label: 'Node Synchronization', value: '99.9%', status: 'Perfect', color: 'bg-emerald-500' },
+                { label: 'API Throughput', value: '4.2k req/s', status: 'Normal', color: 'bg-primary' },
+                { label: 'Security Layer', value: 'Active', status: 'Encrypted', color: 'bg-blue-500' },
+              ].map((item, idx) => (
+                <div key={idx} className="group flex items-center justify-between p-3 rounded-xl bg-white/5 border border-transparent transition-all hover:border-white/10 hover:bg-white/10">
+                  <div className="flex items-center gap-3">
+                    <div className={`h-1.5 w-1.5 rounded-full ${item.color}`} />
+                    <span className="text-sm font-medium text-slate-300">{item.label}</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="font-mono text-sm font-bold text-white">{item.value}</span>
+                    <span className="text-[10px] font-bold text-slate-500 uppercase">{item.status}</span>
+                  </div>
+                </div>
+              ))}
+              <div className="pt-4">
+                <div className="rounded-xl bg-primary/5 border border-primary/20 p-4 flex items-center gap-3">
+                  <ShieldAlert className="h-5 w-5 text-primary" />
+                  <p className="text-xs text-slate-400 font-medium">
+                    Automated hedging active. Volatility protection enabled for all USDT pairs.
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Recent Activity */}
-        <div className="rounded-sm border border-border bg-card/40 backdrop-blur-sm">
-          <div className="border-b border-border p-4">
-            <h3 className="font-heading text-xl font-semibold tracking-tight text-foreground">
-              Recent Activity
-            </h3>
+        {/* Activity Ledger */}
+        <div className="rounded-2xl border border-white/10 bg-slate-900/40 backdrop-blur-xl overflow-hidden transition-all duration-300 hover:border-primary/30">
+          <div className="border-b border-white/10 p-6 flex items-center justify-between">
+            <div>
+              <h3 className="font-heading text-xl font-bold text-white">Execution Ledger</h3>
+              <p className="text-xs text-slate-500">Real-time trade settlements and bridge flows</p>
+            </div>
+            <button className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-white text-xs font-bold transition-all border border-white/10">
+              Export CSV <ArrowUpRight className="h-3 w-3" />
+            </button>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-border bg-muted/20 text-left">
-                  <th className="p-3 font-mono text-xs font-medium text-muted-foreground">TIME</th>
-                  <th className="p-3 font-mono text-xs font-medium text-muted-foreground">CLIENT</th>
-                  <th className="p-3 font-mono text-xs font-medium text-muted-foreground">TYPE</th>
-                  <th className="p-3 font-mono text-xs font-medium text-muted-foreground">AMOUNT</th>
-                  <th className="p-3 font-mono text-xs font-medium text-muted-foreground">STATUS</th>
+                <tr className="border-b border-white/10 bg-white/5 text-left">
+                  <th className="p-4 font-mono text-[10px] font-bold text-slate-500 uppercase tracking-widest">Timestamp</th>
+                  <th className="p-4 font-mono text-[10px] font-bold text-slate-500 uppercase tracking-widest">Counterparty</th>
+                  <th className="p-4 font-mono text-[10px] font-bold text-slate-500 uppercase tracking-widest">Type</th>
+                  <th className="p-4 font-mono text-[10px] font-bold text-slate-500 uppercase tracking-widest">Amount</th>
+                  <th className="p-4 font-mono text-[10px] font-bold text-slate-500 uppercase tracking-widest">Status</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-white/5">
                 {activities.map((activity, idx) => (
-                  <tr key={idx} className="border-b border-border/50 transition-colors hover:bg-muted/30">
-                    <td className="p-3 font-mono text-sm text-foreground">{activity.time}</td>
-                    <td className="p-3 font-mono text-sm text-foreground">{activity.client}</td>
-                    <td className="p-3">
+                  <tr key={idx} className="transition-colors hover:bg-white/5 group">
+                    <td className="p-4 font-mono text-xs text-slate-400">{activity.time}</td>
+                    <td className="p-4 font-mono text-sm font-bold text-white">{activity.client}</td>
+                    <td className="p-4">
                       <span
-                        className={`inline-flex rounded-sm px-2 py-1 font-mono text-xs font-medium ${
+                        className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase ${
                           activity.type === 'Buy'
-                            ? 'bg-success/10 text-success'
-                            : 'bg-destructive/10 text-destructive'
+                            ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                            : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
                         }`}
                       >
+                        {activity.type === 'Buy' ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
                         {activity.type}
                       </span>
                     </td>
-                    <td className="p-3 font-mono text-sm text-foreground">
-                      {formatNumber(activity.amount)} USDT
+                    <td className="p-4 font-mono text-sm font-bold text-white">
+                      {formatNumber(activity.amount)} <span className="text-slate-500 font-normal text-xs">USDT</span>
                     </td>
-                    <td className="p-3">
+                    <td className="p-4">
                       <span
-                        className={`inline-flex rounded-sm px-2 py-1 font-mono text-xs font-medium ${
+                        className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase ${
                           activity.status === 'Completed'
-                            ? 'bg-success/10 text-success'
-                            : 'bg-warning/10 text-warning'
+                            ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                            : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
                         }`}
                       >
+                        <div className={`h-1 w-1 rounded-full ${activity.status === 'Completed' ? 'bg-emerald-400' : 'bg-amber-400'} animate-pulse`} />
                         {activity.status}
                       </span>
                     </td>

@@ -1,9 +1,7 @@
 import os
-import asyncio
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import DeclarativeBase
 from dotenv import load_dotenv
-import asyncpg
 
 load_dotenv()
 
@@ -20,23 +18,15 @@ elif DATABASE_URL.startswith("postgresql://"):
 if "sslmode=require" in DATABASE_URL:
     DATABASE_URL = DATABASE_URL.replace("sslmode=require", "ssl=require")
 
-async def get_async_connection():
-    """
-    Custom connection creator to bypass 'channel_binding' error.
-    Ensures we use asyncpg directly to avoid SQLAlchemy injecting unsupported args.
-    """
-    # Extract the pure postgres URL (remove the driver prefix)
-    pure_url = DATABASE_URL.replace("postgresql+asyncpg://", "postgresql://")
-    
-    # Establish connection using asyncpg directly
-    conn = await asyncpg.connect(pure_url)
-    return conn
-
-# Use the custom creator to avoid the 'channel_binding' keyword argument error
+# Use connect_args to handle SSL and avoid the 'channel_binding' error
+# By explicitly setting the connection parameters here, we bypass the problematic defaults
 engine = create_async_engine(
     DATABASE_URL, 
     echo=True,
-    creator=get_async_connection
+    connect_args={
+        "ssl": "require",
+        "command_timeout": 60,
+    }
 )
 SessionLocal = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
 

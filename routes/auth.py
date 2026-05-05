@@ -111,14 +111,18 @@ async def get_current_user_info(db: AsyncSession = Depends(get_db), current_user
 
 @router.post("/web3/nonce")
 async def get_web3_nonce(request: Web3NonceRequest, db: AsyncSession = Depends(get_db)):
-    nonce = str(uuid.uuid4())
-    address = request.address.lower()
-    
-    db_nonce = DBNonce(address=address, nonce=nonce, created_at=datetime.now(timezone.utc))
-    await db.merge(db_nonce)
-    await db.commit()
-    
-    return {"nonce": nonce}
+    try:
+        nonce = str(uuid.uuid4())
+        address = request.address.lower()
+        
+        db_nonce = DBNonce(address=address, nonce=nonce, created_at=datetime.now(timezone.utc))
+        await db.merge(db_nonce)
+        await db.commit()
+        
+        return {"nonce": nonce}
+    except Exception as e:
+        print(f"NONCE GENERATION ERROR: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Nonce Error: {str(e)}")
 
 @router.post("/web3/login", response_model=Token)
 async def web3_login(credentials: Web3Login, db: AsyncSession = Depends(get_db)):
@@ -179,7 +183,19 @@ async def web3_login(credentials: Web3Login, db: AsyncSession = Depends(get_db))
             data={"user_id": user.id, "email": user.email, "role": user.role.value}
         )
         
-        return Token(access_token=access_token, user=User.model_validate(user))
+        # Use manual mapping instead of model_validate to avoid Pydantic/SQLAlchemy proxy issues
+        user_data = {
+            "id": user.id,
+            "email": user.email,
+            "web3_address": user.web3_address,
+            "full_name": user.full_name,
+            "role": user.role.value if hasattr(user.role, 'value') else user.role,
+            "company": user.company,
+            "is_active": user.is_active,
+            "created_at": user.created_at
+        }
+        
+        return Token(access_token=access_token, user=User(**user_data))
     except HTTPException as he:
         raise he
     except Exception as e:

@@ -2,14 +2,10 @@
   "version": 2,
   "builds": [
     { "src": "api_handler.py", "use": "@vercel/python" },
-    { "src": "package.json", "use": "@vercel/static-build" }
+    { "src": "package.json", "use": "@vercel/static-build", "config": { "distDir": "build" } }
   ],
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api_handler.py" },
     { "source": "/((?!api).*)", "destination": "/index.html" }
-  ],
-  "routes": [
-    { "handle": "filesystem" },
-    { "src": "/.*", "destination": "/index.html" }
   ]
 }

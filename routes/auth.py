@@ -122,61 +122,70 @@ async def get_web3_nonce(request: Web3NonceRequest, db: AsyncSession = Depends(g
 
 @router.post("/web3/login", response_model=Token)
 async def web3_login(credentials: Web3Login, db: AsyncSession = Depends(get_db)):
-    address = credentials.address.lower()
-    
-    result = await db.execute(select(DBNonce).where(DBNonce.address == address))
-    stored = result.scalar_one_or_none()
-    
-    if not stored or stored.nonce != credentials.nonce:
-        raise HTTPException(status_code=401, detail="Invalid or expired nonce")
-    
-    if datetime.now(timezone.utc) - stored.created_at.replace(tzinfo=timezone.utc) > timedelta(minutes=5):
+    try:
+        address = credentials.address.lower()
+        
+        result = await db.execute(select(DBNonce).where(DBNonce.address == address))
+        stored = result.scalar_one_or_none()
+        
+        if not stored or stored.nonce != credentials.nonce:
+            raise HTTPException(status_code=401, detail="Invalid or expired nonce")
+        
+        if datetime.now(timezone.utc) - stored.created_at.replace(tzinfo=timezone.utc) > timedelta(minutes=5):
+            await db.delete(stored)
+            await db.commit()
+            raise HTTPException(status_code=401, detail="Nonce expired")
+
+        message = encode_defunct(text=f"Welcome to Black IntelliSense! Sign this message to login.\nNonce: {credentials.nonce}")
+        try:
+            recovered_address = Account.recover_message(message, signature=credentials.signature)
+            if recovered_address.lower() != address:
+                raise HTTPException(status_code=401, detail="Invalid signature")
+        except Exception as e:
+            raise HTTPException(status_code=401, detail=f"Signature verification failed: {str(e)}")
+
+        # Delete nonce immediately and commit
         await db.delete(stored)
         await db.commit()
-        raise HTTPException(status_code=401, detail="Nonce expired")
 
-    message = encode_defunct(text=f"Welcome to Black IntelliSense! Sign this message to login.\nNonce: {credentials.nonce}")
-    try:
-        recovered_address = Account.recover_message(message, signature=credentials.signature)
-        if recovered_address.lower() != address:
-            raise HTTPException(status_code=401, detail="Invalid signature")
-    except Exception:
-        raise HTTPException(status_code=401, detail="Signature verification failed")
+        result = await db.execute(select(DBUser).where(DBUser.web3_address == address))
+        user = result.scalar_one_or_none()
+        
+        if not user:
+            user_id = str(uuid.uuid4())
+            # Use full address for email to avoid collisions on first 10 chars
+            email = f"{address}@web3.com"
+            try:
+                user = DBUser(
+                    id=user_id,
+                    email=email,
+                    web3_address=address,
+                    full_name=f"Web3 User {address[:6]}",
+                    role=UserRole.COUNTERPARTY,
+                    is_active=True,
+                    created_at=datetime.now(timezone.utc)
+                )
+                db.add(user)
+                await db.commit()
+                await db.refresh(user)
+            except Exception as e:
+                await db.rollback()
+                raise HTTPException(status_code=400, detail=f"Failed to create Web3 user: {str(e)}")
 
-    await db.delete(stored)
+        if not user.is_active:
+            raise HTTPException(status_code=403, detail="Account is inactive")
 
-    result = await db.execute(select(DBUser).where(DBUser.web3_address == address))
-    user = result.scalar_one_or_none()
-    
-    if not user:
-        user_id = str(uuid.uuid4())
-        # Use full address for email to avoid collisions on first 10 chars
-        email = f"{address}@web3.com"
-        try:
-            user = DBUser(
-                id=user_id,
-                email=email,
-                web3_address=address,
-                full_name=f"Web3 User {address[:6]}",
-                role=UserRole.COUNTERPARTY,
-                is_active=True,
-                created_at=datetime.now(timezone.utc)
-            )
-            db.add(user)
-            await db.commit()
-            await db.refresh(user)
-        except Exception as e:
-            await db.rollback()
-            raise HTTPException(status_code=400, detail=f"Failed to create Web3 user: {str(e)}")
-
-    if not user.is_active:
-        raise HTTPException(status_code=403, detail="Account is inactive")
-
-    access_token = create_access_token(
-        data={"user_id": user.id, "email": user.email, "role": user.role.value}
-    )
-    
-    return Token(access_token=access_token, user=User.model_validate(user))
+        access_token = create_access_token(
+            data={"user_id": user.id, "email": user.email, "role": user.role.value}
+        )
+        
+        return Token(access_token=access_token, user=User.model_validate(user))
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        # Log the error and return a detailed message to help debugging the 500
+        print(f"CRITICAL WEB3 LOGIN ERROR: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)}")
 
 @router.post("/reset-admin")
 async def reset_admin_password(db: AsyncSession = Depends(get_db)):

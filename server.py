@@ -14,29 +14,17 @@ load_dotenv(ROOT_DIR / '.env')
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Initialize database tables
+    # Initialize database tables - Moved to manual migration/startup script to avoid Vercel timeouts
     try:
-        # Use a shorter timeout or simpler check for startup
-        async with engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
-        logging.info("Successfully connected to PostgreSQL and created tables")
-        
-        # AUTO-RESET ADMIN: Ensure admin account exists on every startup
-        # Wrapped in try-except to prevent the whole app from 500ing if this fails
-        try:
-            from routes.auth import reset_admin_password
-            from database import SessionLocal
-            async with SessionLocal() as db:
-                await reset_admin_password(db=db)
-                logging.info("Admin user account synchronized.")
-        except Exception as sync_e:
-            logging.error(f"Admin synchronization failed: {sync_e}")
-            
+        # Only run this if explicitly needed, or handle via migrations
+        # async with engine.begin() as conn:
+        #     await conn.run_sync(Base.metadata.create_all)
+        # print("Database tables verified.")
+        pass
     except Exception as e:
-        logging.error(f"Failed to connect to PostgreSQL: {e}")
+        print(f"Startup DB check failed: {e}")
     
     yield
-    # Cleanup
     await engine.dispose()
 
 app = FastAPI(

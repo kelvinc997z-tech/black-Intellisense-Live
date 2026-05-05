@@ -64,32 +64,53 @@ async def register_user(user_data: UserCreate, db: AsyncSession = Depends(get_db
 
 @router.post("/login", response_model=Token)
 async def login(credentials: UserLogin, db: AsyncSession = Depends(get_db)):
-    print(f"Login attempt for email: {credentials.email}")
-    result = await db.execute(select(DBUser).where(DBUser.email == credentials.email))
+    email = credentials.email.lower()
+    print(f"Login attempt for email: {email}")
+    
+    result = await db.execute(select(DBUser).where(DBUser.email == email))
     user = result.scalar_one_or_none()
     
     if not user:
-        print(f"Login failed: User {credentials.email} not found")
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password"
-        )
+        print(f"Login failed: User {email} not found")
+        # LAZY INITIALIZATION: If admin is missing, create it now
+        if email == "admin@blackintellisense.com":
+            print("Admin not found, initializing on-the-fly...")
+            hashed_password = get_password_hash("admin123")
+            user = DBUser(
+                id=str(uuid.uuid4()),
+                email=email,
+                password=hashed_password,
+                full_name="System Administrator",
+                role=UserRole.ADMIN,
+                company="Black IntelliSense",
+                is_active=True,
+                created_at=datetime.now(timezone.utc)
+            )
+            db.add(user)
+            await db.commit()
+            await db.refresh(user)
+            print("Admin user created successfully.")
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Incorrect email or password"
+            )
     
     if not verify_password(credentials.password, user.password):
-        print(f"Login failed: Incorrect password for {credentials.email}")
+        print(f"Login failed: Incorrect password for {email}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password"
         )
     
     if not user.is_active:
-        print(f"Login failed: Account {credentials.email} is inactive")
+        print(f"Login failed: Account {email} is inactive")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Account is inactive"
         )
     
-    print(f"Login successful for: {credentials.email}")
+    print(f"Login successful for: {email}")
     access_token = create_access_token(
         data={"user_id": user.id, "email": user.email, "role": user.role.value}
     )
@@ -205,7 +226,8 @@ async def web3_login(credentials: Web3Login, db: AsyncSession = Depends(get_db))
 
 @router.post("/reset-admin")
 async def reset_admin_password(db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(DBUser).where(DBUser.email == "admin@blackintellisense.com"))
+    email = "admin@blackintellisense.com".lower()
+    result = await db.execute(select(DBUser).where(DBUser.email == email))
     admin = result.scalar_one_or_none()
     hashed_password = get_password_hash("admin123")
     
@@ -216,7 +238,7 @@ async def reset_admin_password(db: AsyncSession = Depends(get_db)):
     else:
         admin = DBUser(
             id=str(uuid.uuid4()),
-            email="admin@blackintellisense.com",
+            email=email,
             password=hashed_password,
             full_name="System Administrator",
             role=UserRole.ADMIN,
@@ -227,4 +249,5 @@ async def reset_admin_password(db: AsyncSession = Depends(get_db)):
         db.add(admin)
     
     await db.commit()
-    return {"message": "Admin user setup complete", "email": "admin@blackintellisense.com"}
+    await db.refresh(admin)
+    return {"message": "Admin user setup complete", "email": email}

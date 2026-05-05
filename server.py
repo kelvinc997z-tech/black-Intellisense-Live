@@ -16,16 +16,21 @@ load_dotenv(ROOT_DIR / '.env')
 async def lifespan(app: FastAPI):
     # Initialize database tables
     try:
+        # Use a shorter timeout or simpler check for startup
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
         logging.info("Successfully connected to PostgreSQL and created tables")
         
         # AUTO-RESET ADMIN: Ensure admin account exists on every startup
-        from routes.auth import reset_admin_password
-        from database import SessionLocal
-        async with SessionLocal() as db:
-            await reset_admin_password(db=db)
-            logging.info("Admin user account synchronized.")
+        # Wrapped in try-except to prevent the whole app from 500ing if this fails
+        try:
+            from routes.auth import reset_admin_password
+            from database import SessionLocal
+            async with SessionLocal() as db:
+                await reset_admin_password(db=db)
+                logging.info("Admin user account synchronized.")
+        except Exception as sync_e:
+            logging.error(f"Admin synchronization failed: {sync_e}")
             
     except Exception as e:
         logging.error(f"Failed to connect to PostgreSQL: {e}")

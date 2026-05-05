@@ -8,6 +8,16 @@ import OrdersPage from './pages/OrdersPage';
 import AssetsPage from './pages/AssetsPage';
 import PaymentUploadPage from './pages/PaymentUploadPage';
 import ChatPage from './pages/ChatPage';
+import Sense50Dashboard from './pages/Sense50Dashboard';
+import ExchangesPage from './pages/ExchangesPage';
+import APITradePage from './pages/APITradePage';
+import P2PTradingPage from './pages/P2PTradingPage';
+import MarkupConfigPage from './pages/MarkupConfigPage';
+import PriceFeedsPage from './pages/PriceFeedsPage';
+import WalletsPage from './pages/WalletsPage';
+import IntelliTradePage from './pages/IntelliTradePage';
+import OrderManagementPage from './pages/OrderManagementPage';
+import MarkCRMPage from './pages/MarkCRMPage';
 import './App.css';
 
 const PrivateRoute = ({ children }) => {
@@ -26,6 +36,83 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<Login />} />
+          
+          {/* Admin / Sense50 Routes */}
+          <Route path="/admin" element={<Navigate to="/sense50" replace />} />
+          <Route
+            path="/sense50"
+            element={
+              <PrivateRoute>
+                <Sense50Dashboard />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/sense50/exchanges"
+            element={
+              <PrivateRoute>
+                <ExchangesPage />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/sense50/api-trade"
+            element={
+              <PrivateRoute>
+                <APITradePage />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/sense50/p2p"
+            element={
+              <PrivateRoute>
+                <P2PTradingPage />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/sense50/wallets"
+            element={
+              <PrivateRoute>
+                <WalletsPage />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/sense50/markup"
+            element={
+              <PrivateRoute>
+                <MarkupConfigPage />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/sense50/prices"
+            element={
+              <PrivateRoute>
+                <PriceFeedsPage />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/markcrm"
+            element={
+              <PrivateRoute>
+                <MarkCRMPage />
+              </PrivateRoute>
+            }
+          />
+
+          {/* Client / IntelliTrade Routes */}
+          <Route
+            path="/intellitrade"
+            element={
+              <PrivateRoute>
+                <IntelliTradePage />
+              </PrivateRoute>
+            }
+          />
           <Route
             path="/trading"
             element={

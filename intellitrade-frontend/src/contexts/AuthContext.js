@@ -8,8 +8,8 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem('intellitrade_token');
-    const savedUser = localStorage.getItem('intellitrade_user');
+    const token = localStorage.getItem('token');
+    const savedUser = localStorage.getItem('user');
     
     if (token && savedUser) {
       setUser(JSON.parse(savedUser));
@@ -21,8 +21,8 @@ export const AuthProvider = ({ children }) => {
     const response = await api.post('/auth/login', { email, password });
     const { access_token, user: userData } = response.data;
     
-    localStorage.setItem('intellitrade_token', access_token);
-    localStorage.setItem('intellitrade_user', JSON.stringify(userData));
+    localStorage.setItem('token', access_token);
+    localStorage.setItem('user', JSON.stringify(userData));
     setUser(userData);
     
     return userData;
@@ -32,16 +32,16 @@ export const AuthProvider = ({ children }) => {
     const response = await api.post('/auth/web3/login', { address, signature, nonce });
     const { access_token, user: userData } = response.data;
     
-    localStorage.setItem('intellitrade_token', access_token);
-    localStorage.setItem('intellitrade_user', JSON.stringify(userData));
+    localStorage.setItem('token', access_token);
+    localStorage.setItem('user', JSON.stringify(userData));
     setUser(userData);
     
     return userData;
   };
 
   const logout = () => {
-    localStorage.removeItem('intellitrade_token');
-    localStorage.removeItem('intellitrade_user');
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
     setUser(null);
   };
 

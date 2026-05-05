@@ -20,7 +20,7 @@ const Login = () => {
     try {
       await login(email, password);
       toast.success('Authentication successful. Welcome back.');
-      navigate('/trading');
+      navigate('/sense50');
     } catch (error) {
       const errorMsg = error.response?.data?.detail || 'Invalid credentials. Please try again.';
       toast.error(errorMsg);
@@ -49,7 +49,7 @@ const Login = () => {
 
       await loginWithWeb3(address, signature, nonce);
       toast.success('Web3 Identity Verified!');
-      navigate('/trading');
+      navigate('/sense50');
     } catch (error) {
       console.error('Web3 Login Error:', error);
       const errorMsg = error.response?.data?.detail || error.message || 'MetaMask authentication failed';
@@ -62,7 +62,7 @@ const Login = () => {
   return (
     <div 
       className="min-h-screen flex items-center justify-center bg-cover bg-center relative overflow-hidden"
-      style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1639762681485-074b7f938ba0?crop=entropy&cs=srgb&fm=jpg&q=85)' }}
+      style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1757970204229-a02cb2ce0af6?crop=entropy&cs=srgb&fm=jpg&q=85)' }}
     >
       {/* Dynamic Background Overlay */}
       <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-md" />
@@ -73,13 +73,13 @@ const Login = () => {
         <div className="rounded-xl border border-border bg-slate-900/60 backdrop-blur-xl p-8 shadow-2xl transition-all duration-500 hover:border-primary/50 group">
           <div className="mb-10 text-center">
             <div className="mx-auto mb-6 flex items-center justify-center transition-transform duration-500 group-hover:scale-110">
-              <img src="/assets/logo.png" alt="IntelliTrade" className="h-24 w-auto drop-shadow-[0_0_15px_rgba(6,182,212,0.5)]" />
+              <img src="/assets/logo.png" alt="Black IntelliSense" className="h-24 w-auto drop-shadow-[0_0_15px_rgba(6,182,212,0.5)]" />
             </div>
             <h1 className="font-heading text-4xl font-extrabold tracking-tighter text-foreground mb-2">
-              Intelli<span className="text-primary">Trade</span>
+              Black <span className="text-primary">IntelliSense</span>
             </h1>
             <p className="text-sm text-muted-foreground font-light tracking-wide">
-              Professional OTC Trading Platform
+              The Intelligence Between Liquidity and Markets
             </p>
           </div>
 
@@ -127,7 +127,7 @@ const Login = () => {
                   <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                   Authenticating...
                 </span>
-              ) : 'Sign In to Trade'}
+              ) : 'Sign In'}
             </button>
           </form>
 
@@ -148,7 +148,7 @@ const Login = () => {
 
           <div className="mt-8 text-center">
             <p className="text-[10px] font-medium text-muted-foreground/50 uppercase tracking-widest">
-              Secure OTC Trading Platform
+              Authorized Personnel Only
             </p>
           </div>
         </div>

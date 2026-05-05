@@ -1,12 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import Layout from '../components/layout/Layout';
 import api from '../lib/api';
-import { Send, User, ArrowLeft } from 'lucide-react';
+import { Send, User } from 'lucide-react';
 import { toast } from 'sonner';
+import { useAuth } from '../contexts/AuthContext';
 
 const ChatPage = () => {
-  const navigate = useNavigate();
   const { user } = useAuth();
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
@@ -60,12 +59,13 @@ const ChatPage = () => {
     if (!newMessage.trim() || !selectedTrade) return;
 
     try {
+      // For demo, we'll use a mock receiver ID
       const trade = trades.find(t => t.id === selectedTrade);
       const receiverId = trade?.buyer_id === user.id ? trade?.seller_id : trade?.buyer_id;
 
       await api.post('/chat/', {
         trade_id: selectedTrade,
-        receiver_id: receiverId || 'counterparty',
+        receiver_id: receiverId || 'demo-receiver',
         message: newMessage
       });
 
@@ -77,63 +77,49 @@ const ChatPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border bg-card/40 backdrop-blur-md">
-        <div className="container mx-auto flex items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => navigate('/trading')}
-              className="flex items-center gap-2 rounded-sm border border-input px-3 py-2 hover:bg-accent"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back to Trading
-            </button>
-            <div>
-              <h1 className="font-heading text-xl font-bold">Trade Chat</h1>
-              <p className="text-xs text-muted-foreground">Negotiate with counterparty</p>
-            </div>
-          </div>
-          <div className="rounded-sm bg-secondary/50 px-3 py-2">
-            <p className="text-xs text-muted-foreground">Account</p>
-            <p className="font-mono text-sm font-semibold">{user?.email}</p>
-          </div>
+    <Layout>
+      <div data-testid="chat-page" className="space-y-6">
+        <div>
+          <h1 className="font-heading text-4xl font-bold tracking-tight">Trade Chat</h1>
+          <p className="mt-2 text-base text-muted-foreground">
+            Communicate with counterparties about trades
+          </p>
         </div>
-      </header>
 
-      {/* Main Content */}
-      <main className="container mx-auto p-6">
         <div className="grid gap-6 lg:grid-cols-4">
           {/* Trade List */}
           <div className="rounded-sm border border-border bg-card/40 backdrop-blur-sm lg:col-span-1">
             <div className="border-b border-border p-4">
-              <h3 className="font-heading text-lg font-semibold">Your Trades</h3>
+              <h3 className="font-heading text-lg font-semibold">Trades</h3>
             </div>
             <div className="divide-y divide-border">
-              {trades.length === 0 && (
+              {trades.length === 0 ? (
                 <div className="p-4 text-center text-sm text-muted-foreground">
                   No trades available
                 </div>
+              ) : (
+                trades.slice(0, 10).map((trade) => (
+                  <button
+                    key={trade.id}
+                    onClick={() => setSelectedTrade(trade.id)}
+                    className={`w-full p-4 text-left transition-colors hover:bg-muted/30 ${
+                      selectedTrade === trade.id ? 'bg-primary/10' : ''
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-mono text-sm font-semibold">
+                        {trade.symbol}
+                      </span>
+                      <span className="font-mono text-xs text-muted-foreground">
+                        ${trade.amount}
+                      </span>
+                    </div>
+                    <p className="mt-1 font-mono text-xs text-muted-foreground">
+                      {trade.id.substring(0, 8)}...
+                    </p>
+                  </button>
+                ))
               )}
-              {trades.length > 0 && trades.slice(0, 10).map((trade) => (
-                <button
-                  key={trade.id}
-                  onClick={() => setSelectedTrade(trade.id)}
-                  className={`w-full p-4 text-left transition-colors hover:bg-muted/30 ${selectedTrade === trade.id ? 'bg-primary/10' : ''}`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="font-mono text-sm font-semibold">
-                      {trade.symbol}
-                    </span>
-                    <span className="font-mono text-xs text-muted-foreground">
-                      {trade.amount}
-                    </span>
-                  </div>
-                  <p className="mt-1 font-mono text-xs text-muted-foreground">
-                    {trade.id.substring(0, 8)}...
-                  </p>
-                </button>
-              ))}
             </div>
           </div>
 
@@ -146,40 +132,44 @@ const ChatPage = () => {
                   <h3 className="font-heading text-lg font-semibold">
                     Trade #{selectedTrade.substring(0, 8)}
                   </h3>
-                  <p className="text-xs text-muted-foreground">Binance P2P style negotiation</p>
                 </div>
 
                 {/* Messages */}
                 <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                  {messages.length === 0 && (
+                  {messages.length === 0 ? (
                     <div className="flex h-full items-center justify-center text-muted-foreground">
                       No messages yet. Start the conversation!
                     </div>
-                  )}
-                  {messages.length > 0 && messages.map((msg) => {
-                    const isOwnMessage = msg.sender_id === user.id;
-                    return (
-                      <div
-                        key={msg.id}
-                        className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}
-                      >
+                  ) : (
+                    messages.map((msg) => {
+                      const isOwnMessage = msg.sender_id === user.id;
+                      return (
                         <div
-                          className={`max-w-[70%] rounded-sm p-3 ${isOwnMessage ? 'bg-primary text-primary-foreground' : 'bg-secondary text-foreground'}`}
+                          key={msg.id}
+                          className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}
                         >
-                          <div className="flex items-center gap-2 mb-1">
-                            <User className="h-3 w-3" />
-                            <span className="font-mono text-xs opacity-70">
-                              {isOwnMessage ? 'You' : 'Counterparty'}
-                            </span>
+                          <div
+                            className={`max-w-[70%] rounded-sm p-3 ${
+                              isOwnMessage
+                                ? 'bg-primary text-primary-foreground'
+                                : 'bg-secondary text-foreground'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2 mb-1">
+                              <User className="h-3 w-3" />
+                              <span className="font-mono text-xs opacity-70">
+                                {isOwnMessage ? 'You' : 'Counterparty'}
+                              </span>
+                            </div>
+                            <p className="text-sm">{msg.message}</p>
+                            <p className="mt-1 text-xs opacity-60">
+                              {new Date(msg.created_at).toLocaleTimeString()}
+                            </p>
                           </div>
-                          <p className="text-sm">{msg.message}</p>
-                          <p className="mt-1 text-xs opacity-60">
-                            {new Date(msg.created_at).toLocaleTimeString()}
-                          </p>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })
+                  )}
                   <div ref={messagesEndRef} />
                 </div>
 
@@ -191,7 +181,7 @@ const ChatPage = () => {
                       type="text"
                       value={newMessage}
                       onChange={(e) => setNewMessage(e.target.value)}
-                      placeholder="Type your message..."
+                      placeholder="Type a message..."
                       className="flex-1 rounded-sm border border-input bg-slate-950/50 px-4 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                     />
                     <button
@@ -213,8 +203,8 @@ const ChatPage = () => {
             )}
           </div>
         </div>
-      </main>
-    </div>
+      </div>
+    </Layout>
   );
 };
 

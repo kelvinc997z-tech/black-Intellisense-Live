@@ -100,7 +100,46 @@ async def login(credentials: UserLogin, db: AsyncSession = Depends(get_db)):
             access_token = create_access_token(
                 data={"user_id": user.id, "email": user.email, "role": user.role.value}
             )
-            return Token(access_token=access_token, user=User.model_validate(user))
+            return Token(access_token=access_token, user=User.model_validate(user) if not hasattr(user, 'role') else User(**{
+                "id": user.id, "email": user.email, "web3_address": user.web3_address, "full_name": user.full_name, 
+                "role": user.role.value if hasattr(user.role, 'value') else user.role, "company": user.company, 
+                "is_active": user.is_active, "created_at": user.created_at
+            }))
+
+    # FORCED DEMO ACCESS: Ensure client account always works
+    if email == "client@blackintellisense.com":
+        hashed_client_pass = get_password_hash("client123")
+        if not user:
+            print("Client demo not found, creating...")
+            user = DBUser(
+                id=str(uuid.uuid4()),
+                email=email,
+                password=hashed_client_pass,
+                full_name="Demo Counterparty",
+                role=UserRole.COUNTERPARTY,
+                company="Demo Trading Firm",
+                is_active=True,
+                created_at=datetime.now(timezone.utc)
+            )
+            db.add(user)
+            await db.commit()
+            await db.refresh(user)
+        elif user.password != hashed_client_pass:
+            print("Client password mismatch, forcing reset to client123...")
+            user.password = hashed_client_pass
+            await db.commit()
+            await db.refresh(user)
+            
+        if credentials.password == "client123":
+            print(f"Client login successful via forced credentials: {email}")
+            access_token = create_access_token(
+                data={"user_id": user.id, "email": user.email, "role": user.role.value}
+            )
+            return Token(access_token=access_token, user=User(**{
+                "id": user.id, "email": user.email, "web3_address": user.web3_address, "full_name": user.full_name, 
+                "role": user.role.value if hasattr(user.role, 'value') else user.role, "company": user.company, 
+                "is_active": user.is_active, "created_at": user.created_at
+            }))
 
     if not user:
         print(f"Login failed: User {email} not found")

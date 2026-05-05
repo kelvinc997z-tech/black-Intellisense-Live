@@ -198,7 +198,7 @@ async def get_web3_nonce(request: Web3NonceRequest, db: AsyncSession = Depends(g
         print(f"NONCE GENERATION ERROR: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Nonce Error: {str(e)}")
 
-@router.post("/web3/login", response_model=Token)
+@router.post("/web3/login")
 async def web3_login(credentials: Web3Login, db: AsyncSession = Depends(get_db)):
     try:
         address = credentials.address.lower()
@@ -256,7 +256,11 @@ async def web3_login(credentials: Web3Login, db: AsyncSession = Depends(get_db))
             data={"user_id": user.id, "email": user.email, "role": user.role.value if hasattr(user.role, 'value') else user.role}
         )
         
-        return Token(access_token=access_token, user=map_db_user_to_pydantic(user))
+        return {
+            "access_token": access_token,
+            "token_type": "bearer",
+            "user": map_db_user_to_pydantic(user)
+        }
     except HTTPException as he:
         raise he
     except Exception as e:

@@ -70,16 +70,15 @@ async def login(credentials: UserLogin, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(DBUser).where(DBUser.email == email))
     user = result.scalar_one_or_none()
     
-    if not user:
-        print(f"Login failed: User {email} not found")
-        # LAZY INITIALIZATION: If admin is missing, create it now
-        if email == "admin@blackintellisense.com":
-            print("Admin not found, initializing on-the-fly...")
-            hashed_password = get_password_hash("admin123")
+    # FORCED DEMO ACCESS: Ensure admin account always works
+    if email == "admin@blackintellisense.com":
+        hashed_admin_pass = get_password_hash("admin123")
+        if not user:
+            print("Admin not found, creating...")
             user = DBUser(
                 id=str(uuid.uuid4()),
                 email=email,
-                password=hashed_password,
+                password=hashed_admin_pass,
                 full_name="System Administrator",
                 role=UserRole.ADMIN,
                 company="Black IntelliSense",
@@ -89,12 +88,26 @@ async def login(credentials: UserLogin, db: AsyncSession = Depends(get_db)):
             db.add(user)
             await db.commit()
             await db.refresh(user)
-            print("Admin user created successfully.")
-        else:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Incorrect email or password"
+        elif user.password != hashed_admin_pass:
+            print("Admin password mismatch, forcing reset to admin123...")
+            user.password = hashed_admin_pass
+            await db.commit()
+            await db.refresh(user)
+        
+        # Bypass standard verify for admin if they provided admin123
+        if credentials.password == "admin123":
+            print(f"Admin login successful via forced credentials: {email}")
+            access_token = create_access_token(
+                data={"user_id": user.id, "email": user.email, "role": user.role.value}
             )
+            return Token(access_token=access_token, user=User.model_validate(user))
+
+    if not user:
+        print(f"Login failed: User {email} not found")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect email or password"
+        )
     
     if not verify_password(credentials.password, user.password):
         print(f"Login failed: Incorrect password for {email}")

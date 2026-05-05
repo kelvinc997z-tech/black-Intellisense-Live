@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, desc
-from models import Order, OrderCreate, OrderStatus, DBOrder, DBUser, DBTrade, DBSettlement
+from models import Order, OrderCreate, OrderStatus, OrderSide, SettlementStatus, DBOrder, DBUser, DBTrade, DBSettlement
 from routes.auth import get_current_user
 from database import get_db
 import uuid
@@ -150,7 +150,9 @@ async def accept_order(order_id: str, db: AsyncSession = Depends(get_db), curren
         await db.commit()
     except Exception as e:
         await db.rollback()
-        print(f"ACCEPT ORDER ERROR: {str(e)}")
+        import traceback
+        err_trace = traceback.format_exc()
+        print(f"CRITICAL ACCEPT ORDER ERROR:\nOrder ID: {order_id}\nUser: {current_user['user_id']}\nTraceback:\n{err_trace}")
         raise HTTPException(status_code=500, detail=f"Internal Server Error during acceptance: {str(e)}")
     
     return {

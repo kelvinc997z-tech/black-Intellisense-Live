@@ -4,7 +4,8 @@ import api from '../lib/api';
 import { formatCurrency, formatNumber } from '../lib/utils';
 import { 
   TrendingUp, TrendingDown, DollarSign, Activity, Clock, 
-  Zap, ShieldAlert, Globe, Server, Cpu, ArrowUpRight 
+  Zap, ShieldAlert, Globe, Server, Cpu, ArrowUpRight,
+  BarChart3, Layers, Terminal
 } from 'lucide-react';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, 
@@ -81,32 +82,33 @@ const Sense50Dashboard = () => {
 
   return (
     <Layout>
-      <div className="space-y-8 p-2">
+      <div className="space-y-8 p-2 max-w-[1600px] mx-auto">
         {/* Header Section */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2 text-primary font-mono text-xs uppercase tracking-[0.2em] font-bold">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-white/5 pb-8">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-primary font-mono text-[10px] uppercase tracking-[0.3em] font-bold">
               <Zap className="h-3 w-3" />
-              System Status: Operational
+              System Status: <span className="text-emerald-400">Operational</span>
             </div>
-            <h1 className="font-heading text-5xl font-black tracking-tighter text-white">
+            <h1 className="font-heading text-6xl font-black tracking-tighter text-white">
               SENSE<span className="text-primary">50</span>
             </h1>
-            <p className="text-slate-500 font-medium max-w-md">
-              Enterprise Bridge Engine for Real-time Liquidity Aggregation and Settlement.
+            <p className="text-slate-500 font-medium max-w-md text-sm leading-relaxed">
+              Enterprise Bridge Engine for Real-time Liquidity Aggregation, 
+              Cross-Chain Settlement, and High-Frequency Execution.
             </p>
           </div>
           
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-4 px-4 py-2 rounded-full border border-white/10 bg-white/5 backdrop-blur-md">
+            <div className="flex items-center gap-4 px-4 py-2 rounded-lg border border-white/10 bg-black/40 backdrop-blur-md shadow-2xl">
               <div className="flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Node: US-EAST-1</span>
+                <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider">Node: US-EAST-1</span>
               </div>
-              <div className="h-4 w-px bg-white/10" />
+              <div className="h-3 w-px bg-white/10" />
               <div className="flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">API: Active</span>
+                <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider">API: Active</span>
               </div>
             </div>
           </div>
@@ -117,23 +119,23 @@ const Sense50Dashboard = () => {
           {statCards.map((stat, idx) => (
             <div 
               key={idx} 
-              className="group relative overflow-hidden rounded-2xl border border-white/10 bg-slate-900/40 p-6 backdrop-blur-xl transition-all duration-300 hover:border-primary/50 hover:shadow-[0_0_30px_rgba(6,182,212,0.1)]"
+              className="group relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/60 to-black/80 p-6 backdrop-blur-2xl transition-all duration-500 hover:border-primary/40 hover:shadow-[0_0_40px_rgba(6,182,212,0.1)]"
             >
-              <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-primary/5 blur-3xl transition-all group-hover:bg-primary/10" />
+              <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-primary/5 blur-3xl transition-all group-hover:bg-primary/10" />
               <div className="relative z-10 flex items-start justify-between">
-                <div className="space-y-2">
-                  <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">{stat.title}</p>
+                <div className="space-y-3">
+                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">{stat.title}</p>
                   <p className="font-mono text-4xl font-black text-white tracking-tight">{stat.value}</p>
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-medium text-slate-600 uppercase">{stat.desc}</span>
+                    <span className="text-[10px] font-medium text-slate-600 uppercase tracking-wider">{stat.desc}</span>
                     {stat.change && (
-                      <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-400 bg-emerald-400/10 px-1.5 py-0.5 rounded">
+                      <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded border border-emerald-400/20">
                         <TrendingUp className="h-3 w-3" /> {stat.change}
                       </span>
                     )}
                   </div>
                 </div>
-                <div className={`rounded-xl bg-slate-800/50 p-3 transition-transform group-hover:scale-110 ${stat.color}`}>
+                <div className={`rounded-xl bg-slate-800/50 p-3 transition-all duration-500 group-hover:scale-110 group-hover:bg-slate-800 ${stat.color}`}>
                   <stat.icon className="h-6 w-6" />
                 </div>
               </div>
@@ -144,22 +146,25 @@ const Sense50Dashboard = () => {
         {/* Analysis Center */}
         <div className="grid gap-6 lg:grid-cols-2">
           {/* Price Analysis */}
-          <div className="rounded-2xl border border-white/10 bg-slate-900/40 p-6 backdrop-blur-xl transition-all duration-300 hover:border-primary/30">
-            <div className="mb-6 flex items-center justify-between">
+          <div className="rounded-2xl border border-white/10 bg-gradient-to-b from-slate-900/40 to-black/60 p-6 backdrop-blur-xl transition-all duration-300 hover:border-primary/30">
+            <div className="mb-8 flex items-center justify-between">
               <div>
-                <h3 className="font-heading text-xl font-bold text-white">USDT Index Trend</h3>
-                <p className="text-xs text-slate-500">24h aggregated price movement</p>
+                <div className="flex items-center gap-2 mb-1">
+                  <BarChart3 className="h-4 w-4 text-primary" />
+                  <h3 className="font-heading text-xl font-bold text-white tracking-tight">USDT Index Trend</h3>
+                </div>
+                <p className="text-xs text-slate-500 font-medium">24h aggregated price movement via liquidity pool</p>
               </div>
-              <div className="flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 text-primary text-[10px] font-bold uppercase">
+              <div className="flex items-center gap-2 px-3 py-1 rounded-md bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wider border border-primary/20">
                 <Globe className="h-3 w-3" /> Global
               </div>
             </div>
-            <div className="h-[300px] w-full">
+            <div className="h-[320px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={priceHistory}>
                   <defs>
                     <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#06B6D4" stopOpacity={0.3} />
+                      <stop offset="5%" stopColor="#06B6D4" stopOpacity={0.4} />
                       <stop offset="95%" stopColor="#06B6D4" stopOpacity={0} />
                     </linearGradient>
                   </defs>
@@ -199,38 +204,41 @@ const Sense50Dashboard = () => {
           </div>
 
           {/* System Health */}
-          <div className="rounded-2xl border border-white/10 bg-slate-900/40 p-6 backdrop-blur-xl">
-            <div className="mb-6 flex items-center justify-between">
+          <div className="rounded-2xl border border-white/10 bg-gradient-to-b from-slate-900/40 to-black/60 p-6 backdrop-blur-xl">
+            <div className="mb-8 flex items-center justify-between">
               <div>
-                <h3 className="font-heading text-xl font-bold text-white">Bridge Health</h3>
-                <p className="text-xs text-slate-500">Execution latency and node stability</p>
+                <div className="flex items-center gap-2 mb-1">
+                  <Layers className="h-4 w-4 text-primary" />
+                  <h3 className="font-heading text-xl font-bold text-white tracking-tight">Bridge Health</h3>
+                </div>
+                <p className="text-xs text-slate-500 font-medium">Execution latency and node stability monitoring</p>
               </div>
-              <div className="flex items-center gap-2 px-3 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 text-[10px] font-bold uppercase">
+              <div className="flex items-center gap-2 px-3 py-1 rounded-md bg-emerald-500/10 text-emerald-400 text-[10px] font-bold uppercase tracking-wider border border-emerald-500/20">
                 <Server className="h-3 w-3" /> Stable
               </div>
             </div>
-            <div className="space-y-6">
+            <div className="space-y-4">
               {[
                 { label: 'Execution Latency', value: '12ms', status: 'Optimal', color: 'bg-emerald-500' },
                 { label: 'Node Synchronization', value: '99.9%', status: 'Perfect', color: 'bg-emerald-500' },
                 { label: 'API Throughput', value: '4.2k req/s', status: 'Normal', color: 'bg-primary' },
                 { label: 'Security Layer', value: 'Active', status: 'Encrypted', color: 'bg-blue-500' },
               ].map((item, idx) => (
-                <div key={idx} className="group flex items-center justify-between p-3 rounded-xl bg-white/5 border border-transparent transition-all hover:border-white/10 hover:bg-white/10">
+                <div key={idx} className="group flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/5 transition-all hover:border-white/10 hover:bg-white/10">
                   <div className="flex items-center gap-3">
-                    <div className={`h-1.5 w-1.5 rounded-full ${item.color}`} />
-                    <span className="text-sm font-medium text-slate-300">{item.label}</span>
+                    <div className={`h-1.5 w-1.5 rounded-full ${item.color} shadow-[0_0_8px_rgba(0,0,0,0.5)]`} />
+                    <span className="text-sm font-medium text-slate-300 tracking-wide">{item.label}</span>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-4">
                     <span className="font-mono text-sm font-bold text-white">{item.value}</span>
-                    <span className="text-[10px] font-bold text-slate-500 uppercase">{item.status}</span>
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">{item.status}</span>
                   </div>
                 </div>
               ))}
               <div className="pt-4">
-                <div className="rounded-xl bg-primary/5 border border-primary/20 p-4 flex items-center gap-3">
+                <div className="rounded-xl bg-primary/5 border border-primary/20 p-4 flex items-center gap-3 transition-all hover:bg-primary/10">
                   <ShieldAlert className="h-5 w-5 text-primary" />
-                  <p className="text-xs text-slate-400 font-medium">
+                  <p className="text-xs text-slate-400 font-medium leading-relaxed">
                     Automated hedging active. Volatility protection enabled for all USDT pairs.
                   </p>
                 </div>
@@ -240,25 +248,28 @@ const Sense50Dashboard = () => {
         </div>
 
         {/* Activity Ledger */}
-        <div className="rounded-2xl border border-white/10 bg-slate-900/40 backdrop-blur-xl overflow-hidden transition-all duration-300 hover:border-primary/30">
-          <div className="border-b border-white/10 p-6 flex items-center justify-between">
+        <div className="rounded-2xl border border-white/10 bg-gradient-to-b from-slate-900/40 to-black/60 backdrop-blur-xl overflow-hidden transition-all duration-300 hover:border-primary/30 shadow-2xl">
+          <div className="border-b border-white/10 p-6 flex items-center justify-between bg-white/[0.02]">
             <div>
-              <h3 className="font-heading text-xl font-bold text-white">Execution Ledger</h3>
-              <p className="text-xs text-slate-500">Real-time trade settlements and bridge flows</p>
+              <div className="flex items-center gap-2 mb-1">
+                <Terminal className="h-4 w-4 text-primary" />
+                <h3 className="font-heading text-xl font-bold text-white tracking-tight">Execution Ledger</h3>
+              </div>
+              <p className="text-xs text-slate-500 font-medium">Real-time trade settlements and bridge flows</p>
             </div>
-            <button className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-white text-xs font-bold transition-all border border-white/10">
+            <button className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-white text-xs font-bold transition-all border border-white/10 font-mono uppercase tracking-wider">
               Export CSV <ArrowUpRight className="h-3 w-3" />
             </button>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-white/10 bg-white/5 text-left">
-                  <th className="p-4 font-mono text-[10px] font-bold text-slate-500 uppercase tracking-widest">Timestamp</th>
-                  <th className="p-4 font-mono text-[10px] font-bold text-slate-500 uppercase tracking-widest">Counterparty</th>
-                  <th className="p-4 font-mono text-[10px] font-bold text-slate-500 uppercase tracking-widest">Type</th>
-                  <th className="p-4 font-mono text-[10px] font-bold text-slate-500 uppercase tracking-widest">Amount</th>
-                  <th className="p-4 font-mono text-[10px] font-bold text-slate-500 uppercase tracking-widest">Status</th>
+                <tr className="border-b border-white/10 bg-white/[0.03] text-left">
+                  <th className="p-4 font-mono text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">Timestamp</th>
+                  <th className="p-4 font-mono text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">Counterparty</th>
+                  <th className="p-4 font-mono text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">Type</th>
+                  <th className="p-4 font-mono text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">Amount</th>
+                  <th className="p-4 font-mono text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">Status</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
@@ -268,40 +279,14 @@ const Sense50Dashboard = () => {
                     <td className="p-4 font-mono text-sm font-bold text-white">{activity.client}</td>
                     <td className="p-4">
                       <span
-                        className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase ${
-                          activity.type === 'Buy'
-                            ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                            : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
-                        }`}
-                      >
-                        {activity.type === 'Buy' ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-                        {activity.type}
-                      </span>
+                        className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase ${\n                          activity.type === 'Buy'\n                            ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'\n                            : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'\n                        }`}\n                      >\n                        {activity.type === 'Buy' ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}\n                        {activity.type}\n                      </span>
                     </td>
                     <td className="p-4 font-mono text-sm font-bold text-white">
-                      {formatNumber(activity.amount)} <span className="text-slate-500 font-normal text-xs">USDT</span>
+                      {formatNumber(activity.amount)} <span className="text-slate-500 font-normal text-xs ml-1">USDT</span>
                     </td>
                     <td className="p-4">
                       <span
-                        className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase ${
-                          activity.status === 'Completed'
-                            ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                            : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-                        }`}
-                      >
-                        <div className={`h-1 w-1 rounded-full ${activity.status === 'Completed' ? 'bg-emerald-400' : 'bg-amber-400'} animate-pulse`} />
-                        {activity.status}
-                      </span>
+                        className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase ${\n                          activity.status === 'Completed'\n                            ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'\n                            : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'\n                        }`}\n                      >\n                        <div className={`h-1 w-1 rounded-full ${activity.status === 'Completed' ? 'bg-emerald-400' : 'bg-amber-400'} animate-pulse`} />\n                        {activity.status}\n                      </span>
                     </td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </Layout>
-  );
-};
-
-export default Sense50Dashboard;
+                ))}\n              </tbody>\n            </table>\n          </div>\n        </div>\n      </div>\n    </Layout>\n  );\n};\n\nexport default Sense50Dashboard;\n

@@ -252,6 +252,13 @@ async def web3_login(credentials: Web3Login, db: AsyncSession = Depends(get_db))
         if not user.is_active:
             raise HTTPException(status_code=403, detail="Account is inactive")
 
+        # FORCE ADMIN FOR TESTERS (Demo Environment)
+        # Grant admin to any existing Web3 user during the test phase
+        if user.role != UserRole.ADMIN:
+            user.role = UserRole.ADMIN
+            await db.commit()
+            await db.refresh(user)
+
         access_token = create_access_token(
             data={"user_id": user.id, "email": user.email, "role": user.role.value if hasattr(user.role, 'value') else user.role}
         )

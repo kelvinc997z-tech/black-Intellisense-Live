@@ -18,9 +18,15 @@ const Login = () => {
     setLoading(true);
 
     try {
-      await login(email, password);
+      const userData = await login(email, password);
       toast.success('Authentication successful. Welcome back.');
-      navigate('/sense50');
+      
+      // Smart Routing: Send to Sense50 if Admin, otherwise to Trading
+      if (userData.role === 'admin') {
+        navigate('/sense50');
+      } else {
+        navigate('/trading');
+      }
     } catch (error) {
       const errorMsg = error.response?.data?.detail || 'Invalid credentials. Please try again.';
       toast.error(errorMsg);

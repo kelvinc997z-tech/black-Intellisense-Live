@@ -38,13 +38,12 @@ const Login = () => {
     setWeb3Loading(true);
     try {
       const provider = new ethers.BrowserProvider(window.ethereum);
-      const accounts = await provider.send("eth_requestAccounts", []);
-      const address = accounts[0];
+      const signer = await provider.getSigner();
+      const address = await signer.getAddress();
 
       const nonceRes = await api.post('/auth/web3/nonce', { address });
       const nonce = nonceRes.data.nonce;
 
-      const signer = await provider.getSigner();
       const message = `Welcome to Black IntelliSense! Sign this message to login.\nNonce: ${nonce}`;
       const signature = await signer.signMessage(message);
 
@@ -52,8 +51,9 @@ const Login = () => {
       toast.success('Web3 Identity Verified!');
       navigate('/trading');
     } catch (error) {
-      console.error(error);
-      toast.error(error.response?.data?.detail || 'MetaMask authentication failed');
+      console.error('Web3 Login Error:', error);
+      const errorMsg = error.response?.data?.detail || error.message || 'MetaMask authentication failed';
+      toast.error(errorMsg);
     } finally {
       setWeb3Loading(false);
     }

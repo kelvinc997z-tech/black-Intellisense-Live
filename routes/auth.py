@@ -150,18 +150,24 @@ async def web3_login(credentials: Web3Login, db: AsyncSession = Depends(get_db))
     
     if not user:
         user_id = str(uuid.uuid4())
-        user = DBUser(
-            id=user_id,
-            email=f"{address[:10]}@web3.com",
-            web3_address=address,
-            full_name=f"Web3 User {address[:6]}",
-            role=UserRole.COUNTERPARTY,
-            is_active=True,
-            created_at=datetime.now(timezone.utc)
-        )
-        db.add(user)
-        await db.commit()
-        await db.refresh(user)
+        # Use full address for email to avoid collisions on first 10 chars
+        email = f"{address}@web3.com"
+        try:
+            user = DBUser(
+                id=user_id,
+                email=email,
+                web3_address=address,
+                full_name=f"Web3 User {address[:6]}",
+                role=UserRole.COUNTERPARTY,
+                is_active=True,
+                created_at=datetime.now(timezone.utc)
+            )
+            db.add(user)
+            await db.commit()
+            await db.refresh(user)
+        except Exception as e:
+            await db.rollback()
+            raise HTTPException(status_code=400, detail=f"Failed to create Web3 user: {str(e)}")
 
     if not user.is_active:
         raise HTTPException(status_code=403, detail="Account is inactive")

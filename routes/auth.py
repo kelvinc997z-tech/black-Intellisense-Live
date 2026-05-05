@@ -76,81 +76,99 @@ async def register_user(user_data: UserCreate, db: AsyncSession = Depends(get_db
     
     return map_db_user_to_pydantic(user_doc)
 
-@router.post("/login", response_model=Token)
+@router.post("/login")
 async def login(credentials: UserLogin, db: AsyncSession = Depends(get_db)):
-    email = credentials.email.lower().strip()
-    password = credentials.password
-    print(f"Login attempt: {email}")
-    
-    # 1. FORCED DEMO ACCESS: Admin
-    if email == "admin@blackintellisense.com":
-        if password == "admin123":
-            result = await db.execute(select(DBUser).where(DBUser.email == email))
-            user = result.scalar_one_or_none()
-            if not user:
-                user = DBUser(
-                    id=str(uuid.uuid4()),
-                    email=email,
-                    password=get_password_hash("admin123"),
-                    full_name="System Administrator",
-                    role=UserRole.ADMIN,
-                    company="Black IntelliSense",
-                    is_active=True,
-                    created_at=datetime.now(timezone.utc)
+    try:
+        email = credentials.email.lower().strip()
+        password = credentials.password
+        print(f"Login attempt: {email}")
+        
+        # 1. FORCED DEMO ACCESS: Admin
+        if email == "admin@blackintellisense.com":
+            if password == "admin123":
+                result = await db.execute(select(DBUser).where(DBUser.email == email))
+                user = result.scalar_one_or_none()
+                if not user:
+                    user = DBUser(
+                        id=str(uuid.uuid4()),
+                        email=email,
+                        password=get_password_hash("admin123"),
+                        full_name="System Administrator",
+                        role=UserRole.ADMIN,
+                        company="Black IntelliSense",
+                        is_active=True,
+                        created_at=datetime.now(timezone.utc)
+                    )
+                    db.add(user)
+                    await db.commit()
+                    await db.refresh(user)
+                
+                access_token = create_access_token(
+                    data={"user_id": user.id, "email": user.email, "role": user.role.value if hasattr(user.role, 'value') else user.role}
                 )
-                db.add(user)
-                await db.commit()
-                await db.refresh(user)
-            
-            access_token = create_access_token(
-                data={"user_id": user.id, "email": user.email, "role": user.role.value if hasattr(user.role, 'value') else user.role}
-            )
-            return Token(access_token=access_token, user=map_db_user_to_pydantic(user))
-        else:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+                return {
+                    "access_token": access_token,
+                    "token_type": "bearer",
+                    "user": map_db_user_to_pydantic(user)
+                }
+            else:
+                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
 
-    # 2. FORCED DEMO ACCESS: Client
-    if email == "client@blackintellisense.com":
-        if password == "client123":
-            result = await db.execute(select(DBUser).where(DBUser.email == email))
-            user = result.scalar_one_or_none()
-            if not user:
-                user = DBUser(
-                    id=str(uuid.uuid4()),
-                    email=email,
-                    password=get_password_hash("client123"),
-                    full_name="Demo Counterparty",
-                    role=UserRole.COUNTERPARTY,
-                    company="Demo Trading Firm",
-                    is_active=True,
-                    created_at=datetime.now(timezone.utc)
+        # 2. FORCED DEMO ACCESS: Client
+        if email == "client@blackintellisense.com":
+            if password == "client123":
+                result = await db.execute(select(DBUser).where(DBUser.email == email))
+                user = result.scalar_one_or_none()
+                if not user:
+                    user = DBUser(
+                        id=str(uuid.uuid4()),
+                        email=email,
+                        password=get_password_hash("client123"),
+                        full_name="Demo Counterparty",
+                        role=UserRole.COUNTERPARTY,
+                        company="Demo Trading Firm",
+                        is_active=True,
+                        created_at=datetime.now(timezone.utc)
+                    )
+                    db.add(user)
+                    await db.commit()
+                    await db.refresh(user)
+                
+                access_token = create_access_token(
+                    data={"user_id": user.id, "email": user.email, "role": user.role.value if hasattr(user.role, 'value') else user.role}
                 )
-                db.add(user)
-                await db.commit()
-                await db.refresh(user)
-            
-            access_token = create_access_token(
-                data={"user_id": user.id, "email": user.email, "role": user.role.value if hasattr(user.role, 'value') else user.role}
-            )
-            return Token(access_token=access_token, user=map_db_user_to_pydantic(user))
-        else:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+                return {
+                    "access_token": access_token,
+                    "token_type": "bearer",
+                    "user": map_db_user_to_pydantic(user)
+                }
+            else:
+                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
 
-    # 3. STANDARD LOGIN FLOW
-    result = await db.execute(select(DBUser).where(DBUser.email == email))
-    user = result.scalar_one_or_none()
-    
-    if not user or not verify_password(password, user.password):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect email or password")
-    
-    if not user.is_active:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Account is inactive")
-    
-    access_token = create_access_token(
-        data={"user_id": user.id, "email": user.email, "role": user.role.value if hasattr(user.role, 'value') else user.role}
-    )
-    
-    return Token(access_token=access_token, user=map_db_user_to_pydantic(user))
+        # 3. STANDARD LOGIN FLOW
+        result = await db.execute(select(DBUser).where(DBUser.email == email))
+        user = result.scalar_one_or_none()
+        
+        if not user or not verify_password(password, user.password):
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect email or password")
+        
+        if not user.is_active:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Account is inactive")
+        
+        access_token = create_access_token(
+            data={"user_id": user.id, "email": user.email, "role": user.role.value if hasattr(user.role, 'value') else user.role}
+        )
+        
+        return {
+            "access_token": access_token,
+            "token_type": "bearer",
+            "user": map_db_user_to_pydantic(user)
+        }
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        print(f"LOGIN ERROR: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)}")
 
 @router.get("/me", response_model=User)
 async def get_current_user_info(db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):

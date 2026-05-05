@@ -19,6 +19,14 @@ async def lifespan(app: FastAPI):
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
         logging.info("Successfully connected to PostgreSQL and created tables")
+        
+        # AUTO-RESET ADMIN: Ensure admin account exists on every startup
+        from routes.auth import reset_admin_password
+        from database import SessionLocal
+        async with SessionLocal() as db:
+            await reset_admin_password(db=db)
+            logging.info("Admin user account synchronized.")
+            
     except Exception as e:
         logging.error(f"Failed to connect to PostgreSQL: {e}")
     

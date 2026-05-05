@@ -13,11 +13,19 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 import hashlib
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    # Use SHA-256 pre-hashing to bypass bcrypt's 72-byte limit
-    pre_hashed = hashlib.sha256(plain_password.encode()).hexdigest()
-    return pwd_context.verify(pre_hashed, hashed_password)
+    if not plain_password or not hashed_password:
+        return False
+    try:
+        # Use SHA-256 pre-hashing to bypass bcrypt's 72-byte limit
+        pre_hashed = hashlib.sha256(plain_password.encode()).hexdigest()
+        return pwd_context.verify(pre_hashed, hashed_password)
+    except Exception as e:
+        print(f"VERIFY_PASSWORD_ERROR: {str(e)} | input_len: {len(plain_password)}")
+        return False
 
 def get_password_hash(password: str) -> str:
+    if not password:
+        return ""
     # Use SHA-256 pre-hashing to bypass bcrypt's 72-byte limit
     pre_hashed = hashlib.sha256(password.encode()).hexdigest()
     return pwd_context.hash(pre_hashed)

@@ -6,6 +6,6 @@
   ],
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api_handler.py" },
-    { "source": "/((?!api).*)", "destination": "/index.html" }
+    { "source": "/((?!api).*)", "destination": "/intellitrade-frontend/build/index.html" }
   ]
 }

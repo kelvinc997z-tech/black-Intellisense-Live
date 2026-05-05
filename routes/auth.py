@@ -14,7 +14,7 @@ router = APIRouter()
 security = HTTPBearer()
 
 def map_db_user_to_pydantic(db_user):
-    \"\"\"Helper to safely map SQLAlchemy DBUser to a dictionary for API response\"\"\"
+    """Helper to safely map SQLAlchemy DBUser to a dictionary for API response"""
     return {
         "id": db_user.id,
         "email": db_user.email,

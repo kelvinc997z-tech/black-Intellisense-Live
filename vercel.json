@@ -2,10 +2,10 @@
   "version": 2,
   "builds": [
     { "src": "api_handler.py", "use": "@vercel/python" },
-    { "src": "intellitrade-frontend/package.json", "use": "@vercel/static-build", "config": { "distDir": "build" } }
+    { "src": "intellitrade-frontend/package.json", "use": "@vercel/static-build" }
   ],
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api_handler.py" },
-    { "source": "/((?!api).*)", "destination": "/intellitrade-frontend/build/index.html" }
+    { "source": "/((?!api).*)", "destination": "/intellitrade-frontend/index.html" }
   ]
 }

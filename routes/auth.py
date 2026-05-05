@@ -45,6 +45,10 @@ async def require_admin(current_user: dict = Depends(get_current_user)):
         )
     return current_user
 
+@router.get("/version")
+async def get_version():
+    return {"version": "1.0.0", "status": "running", "note": "If you see this, the server is live."}
+
 @router.post("/register", response_model=User)
 async def register_user(user_data: UserCreate, db: AsyncSession = Depends(get_db), admin: dict = Depends(require_admin)):
     result = await db.execute(select(DBUser).where(DBUser.email == user_data.email))

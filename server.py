@@ -34,10 +34,6 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-@app.get("/version")
-async def get_version():
-    return {"version": "1.0.0", "status": "running", "note": "If you see this, the server is live."}
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],

@@ -40,7 +40,26 @@ const Login = () => {
         navigate('/trading');
       }
     } catch (error) {
-      const errorMsg = error.response?.data?.detail || 'Invalid credentials. Please try again.';
+      console.error('Login Error Full:', error);
+      let errorMsg = 'Invalid credentials. Please try again.';
+      
+      if (error.response) {
+        const status = error.response.status;
+        const data = error.response.data;
+        
+        if (typeof data === 'string') {
+          errorMsg = `Server Error (${status}): Response is not JSON`;
+        } else if (data && data.detail) {
+          errorMsg = typeof data.detail === 'string' ? data.detail : JSON.stringify(data.detail);
+        } else {
+          errorMsg = `Server Error (${status}): ${JSON.stringify(data)}`;
+        }
+      } else if (error.request) {
+        errorMsg = 'No response from server. Please check your connection.';
+      } else {
+        errorMsg = error.message || 'An unexpected error occurred.';
+      }
+      
       toast.error(errorMsg);
     } finally {
       setLoading(false);

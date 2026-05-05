@@ -13,6 +13,20 @@ from eth_account import Account
 router = APIRouter()
 security = HTTPBearer()
 
+def map_db_user_to_pydantic(db_user):
+    \"\"\"Helper to safely map SQLAlchemy DBUser to Pydantic User model\"\"\"
+    return User(
+        id=db_user.id,
+        email=db_user.email,
+        web3_address=db_user.web3_address,
+        full_name=db_user.full_name,
+        role=db_user.role.value if hasattr(db_user.role, 'value') else db_user.role,
+        company=db_user.company,
+        is_active=db_user.is_active,
+        created_at=db_user.created_at,
+        created_by=db_user.created_by
+    )
+
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
     token = credentials.credentials
     payload = decode_token(token)
@@ -60,7 +74,7 @@ async def register_user(user_data: UserCreate, db: AsyncSession = Depends(get_db
     await db.commit()
     await db.refresh(user_doc)
     
-    return user_doc
+    return map_db_user_to_pydantic(user_doc)
 
 @router.post("/login", response_model=Token)
 async def login(credentials: UserLogin, db: AsyncSession = Depends(get_db)):
@@ -70,11 +84,10 @@ async def login(credentials: UserLogin, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(DBUser).where(DBUser.email == email))
     user = result.scalar_one_or_none()
     
-    # FORCED DEMO ACCESS: Ensure admin account always works
+    # 1. FORCED DEMO ACCESS: Admin
     if email == "admin@blackintellisense.com":
         hashed_admin_pass = get_password_hash("admin123")
         if not user:
-            print("Admin not found, creating...")
             user = DBUser(
                 id=str(uuid.uuid4()),
                 email=email,
@@ -89,28 +102,20 @@ async def login(credentials: UserLogin, db: AsyncSession = Depends(get_db)):
             await db.commit()
             await db.refresh(user)
         elif user.password != hashed_admin_pass:
-            print("Admin password mismatch, forcing reset to admin123...")
             user.password = hashed_admin_pass
             await db.commit()
             await db.refresh(user)
         
-        # Bypass standard verify for admin if they provided admin123
         if credentials.password == "admin123":
-            print(f"Admin login successful via forced credentials: {email}")
             access_token = create_access_token(
-                data={"user_id": user.id, "email": user.email, "role": user.role.value}
+                data={"user_id": user.id, "email": user.email, "role": user.role.value if hasattr(user.role, 'value') else user.role}
             )
-            return Token(access_token=access_token, user=User.model_validate(user) if not hasattr(user, 'role') else User(**{
-                "id": user.id, "email": user.email, "web3_address": user.web3_address, "full_name": user.full_name, 
-                "role": user.role.value if hasattr(user.role, 'value') else user.role, "company": user.company, 
-                "is_active": user.is_active, "created_at": user.created_at
-            }))
+            return Token(access_token=access_token, user=map_db_user_to_pydantic(user))
 
-    # FORCED DEMO ACCESS: Ensure client account always works
+    # 2. FORCED DEMO ACCESS: Client
     if email == "client@blackintellisense.com":
         hashed_client_pass = get_password_hash("client123")
         if not user:
-            print("Client demo not found, creating...")
             user = DBUser(
                 id=str(uuid.uuid4()),
                 email=email,
@@ -125,61 +130,31 @@ async def login(credentials: UserLogin, db: AsyncSession = Depends(get_db)):
             await db.commit()
             await db.refresh(user)
         elif user.password != hashed_client_pass:
-            print("Client password mismatch, forcing reset to client123...")
             user.password = hashed_client_pass
             await db.commit()
             await db.refresh(user)
             
         if credentials.password == "client123":
-            print(f"Client login successful via forced credentials: {email}")
             access_token = create_access_token(
-                data={"user_id": user.id, "email": user.email, "role": user.role.value}
+                data={"user_id": user.id, "email": user.email, "role": user.role.value if hasattr(user.role, 'value') else user.role}
             )
-            return Token(access_token=access_token, user=User(**{
-                "id": user.id, "email": user.email, "web3_address": user.web3_address, "full_name": user.full_name, 
-                "role": user.role.value if hasattr(user.role, 'value') else user.role, "company": user.company, 
-                "is_active": user.is_active, "created_at": user.created_at
-            }))
+            return Token(access_token=access_token, user=map_db_user_to_pydantic(user))
 
+    # 3. STANDARD LOGIN FLOW
     if not user:
-        print(f"Login failed: User {email} not found")
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password"
-        )
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect email or password")
     
     if not verify_password(credentials.password, user.password):
-        print(f"Login failed: Incorrect password for {email}")
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password"
-        )
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect email or password")
     
     if not user.is_active:
-        print(f"Login failed: Account {email} is inactive")
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Account is inactive"
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Account is inactive")
     
-    print(f"Login successful for: {email}")
     access_token = create_access_token(
-        data={"user_id": user.id, "email": user.email, "role": user.role.value}
+        data={"user_id": user.id, "email": user.email, "role": user.role.value if hasattr(user.role, 'value') else user.role}
     )
     
-    # Use manual mapping instead of model_validate to avoid Pydantic/SQLAlchemy proxy issues
-    user_data = {
-        "id": user.id,
-        "email": user.email,
-        "web3_address": user.web3_address,
-        "full_name": user.full_name,
-        "role": user.role.value if hasattr(user.role, 'value') else user.role,
-        "company": user.company,
-        "is_active": user.is_active,
-        "created_at": user.created_at
-    }
-    
-    return Token(access_token=access_token, user=User(**user_data))
+    return Token(access_token=access_token, user=map_db_user_to_pydantic(user))
 
 @router.get("/me", response_model=User)
 async def get_current_user_info(db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
@@ -192,7 +167,7 @@ async def get_current_user_info(db: AsyncSession = Depends(get_db), current_user
             detail="User not found"
         )
     
-    return User.model_validate(user)
+    return map_db_user_to_pydantic(user)
 
 @router.post("/web3/nonce")
 async def get_web3_nonce(request: Web3NonceRequest, db: AsyncSession = Depends(get_db)):
@@ -242,7 +217,6 @@ async def web3_login(credentials: Web3Login, db: AsyncSession = Depends(get_db))
         
         if not user:
             user_id = str(uuid.uuid4())
-            # Use full address for email to avoid collisions on first 10 chars
             email = f"{address}@web3.com"
             try:
                 user = DBUser(
@@ -265,26 +239,13 @@ async def web3_login(credentials: Web3Login, db: AsyncSession = Depends(get_db))
             raise HTTPException(status_code=403, detail="Account is inactive")
 
         access_token = create_access_token(
-            data={"user_id": user.id, "email": user.email, "role": user.role.value}
+            data={"user_id": user.id, "email": user.email, "role": user.role.value if hasattr(user.role, 'value') else user.role}
         )
         
-        # Use manual mapping instead of model_validate to avoid Pydantic/SQLAlchemy proxy issues
-        user_data = {
-            "id": user.id,
-            "email": user.email,
-            "web3_address": user.web3_address,
-            "full_name": user.full_name,
-            "role": user.role.value if hasattr(user.role, 'value') else user.role,
-            "company": user.company,
-            "is_active": user.is_active,
-            "created_at": user.created_at
-        }
-        
-        return Token(access_token=access_token, user=User(**user_data))
+        return Token(access_token=access_token, user=map_db_user_to_pydantic(user))
     except HTTPException as he:
         raise he
     except Exception as e:
-        # Log the error and return a detailed message to help debugging the 500
         print(f"CRITICAL WEB3 LOGIN ERROR: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)}")
 

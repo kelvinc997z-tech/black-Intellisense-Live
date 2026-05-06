@@ -94,17 +94,6 @@ async def create_order(data: OrderCreate, db: AsyncSession = Depends(get_db), cu
     order_id = str(uuid.uuid4())
     total = data.amount * data.price
     
-    # --- Dynamic Trade Limit Check ---
-    limit = await get_user_trade_limit(db, current_user["user_id"])
-    print(f"DEBUG: User {current_user['user_id']} attempting order for ${total}. Current limit: ${limit}")
-    if total > limit:
-        print(f"DEBUG: Order rejected due to limit. {total} > {limit}")
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=f"Order total (${total:,.2f}) exceeds your current trade limit (${limit:,.2f}). Please complete zkTLS verification to increase your limit."
-        )
-    # ---------------------------------
-    
     order_doc = DBOrder(
         id=order_id,
         user_id=current_user["user_id"],

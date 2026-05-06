@@ -34,16 +34,26 @@ async def sync_database(
             detail=f"Database sync failed: {str(e)}"
         )
 
-@router.post("/force-admin")
-async def force_admin(
+@router.get("/force-admin")
+async def force_admin_get(
     email: str,
     x_admin_key: str = Header(None),
     db: AsyncSession = Depends(get_db)
 ):
     """
-    Force change a user's role to ADMIN.
-    Use this to fix 'Accept Order' failures caused by incorrect roles.
+    Allow GET request for easy browser access to force admin role.
     """
+    return await force_admin_logic(email, x_admin_key, db)
+
+@router.post("/force-admin")
+async def force_admin_post(
+    email: str,
+    x_admin_key: str = Header(None),
+    db: AsyncSession = Depends(get_db)
+):
+    return await force_admin_logic(email, x_admin_key, db)
+
+async def force_admin_logic(email: str, x_admin_key: str, db: AsyncSession):
     if x_admin_key != ADMIN_SYNC_KEY:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -66,5 +76,5 @@ async def force_admin(
     return {
         "status": "success",
         "message": f"User {email} is now an ADMIN",
-        "user": map_db_user_to_pydantic(user) if 'map_db_user_to_pydantic' in globals() else user.id
+        "user_id": user.id
     }

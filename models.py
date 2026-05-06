@@ -154,6 +154,7 @@ class DBSettlement(Base):
     payment_proof_id = Column(String, ForeignKey("payment_proofs.id"), nullable=True)
     status = Column(SQLEnum(SettlementStatus), default=SettlementStatus.PENDING)
     amount = Column(Float, default=0.0)
+    reference_code = Column(String, unique=True, index=True) # Unique memo for payment matching
     notes = Column(String, nullable=True)
     approved_by = Column(String, ForeignKey("users.id"), nullable=True)
     approved_at = Column(DateTime, nullable=True)

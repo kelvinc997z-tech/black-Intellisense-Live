@@ -165,6 +165,7 @@ async def accept_order(order_id: str, db: AsyncSession = Depends(get_db), curren
         
         # Create settlement record
         settlement_id = str(uuid.uuid4())
+        ref_code = f"BI-{uuid.uuid4().hex[:8].upper()}" # Generate unique payment reference
         settlement_doc = DBSettlement(
             id=settlement_id,
             trade_id=trade_id,
@@ -173,6 +174,7 @@ async def accept_order(order_id: str, db: AsyncSession = Depends(get_db), curren
             order_id=order_id,
             counterparty_id=order.user_id,
             amount=order.total,
+            reference_code=ref_code,
             created_at=datetime.now(timezone.utc)
         )
         db.add(settlement_doc)

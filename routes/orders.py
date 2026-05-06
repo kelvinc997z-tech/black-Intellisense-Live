@@ -190,6 +190,78 @@ async def cancel_order(order_id: str, db: AsyncSession = Depends(get_db), curren
     
     return {"message": "Order cancelled successfully"}
 
+@router.patch("/debug-accept/{order_id}")
+async def debug_accept_order(order_id: str, user_id: str = "admin", db: AsyncSession = Depends(get_db)):
+    \"\"\"
+    DEBUG ONLY: Accepts an order without authentication.
+    Pass user_id as query param if needed, otherwise defaults to 'admin'.
+    \"\"\"
+    # Try to find the actual admin user if 'admin' string is passed
+    if user_id == "admin":
+        admin_result = await db.execute(select(DBUser).where(DBUser.email == "admin@blackintellisense.com"))
+        admin_user = admin_result.scalar_one_or_none()
+        if not admin_user:
+            raise HTTPException(status_code=500, detail="Admin user not found in DB")
+        actual_user_id = admin_user.id
+    else:
+        actual_user_id = user_id
+
+    result = await db.execute(select(DBOrder).where(DBOrder.id == order_id))
+    order = result.scalar_one_or_none()
+    
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    
+    if order.status != OrderStatus.PENDING:
+        raise HTTPException(status_code=400, detail="Order not pending")
+    
+    try:
+        order.status = OrderStatus.ACCEPTED
+        order.updated_at = datetime.now(timezone.utc)
+        order.accepted_by = actual_user_id
+        order.accepted_at = datetime.now(timezone.utc)
+        
+        is_buy_order = (order.side == OrderSide.BUY)
+        buyer_id = order.user_id if is_buy_order else actual_user_id
+        seller_id = actual_user_id if is_buy_order else order.user_id
+        
+        trade_id = str(uuid.uuid4())
+        trade_doc = DBTrade(
+            id=trade_id,
+            order_id=order_id,
+            buyer_id=buyer_id,
+            seller_id=seller_id,
+            symbol=order.symbol,
+            amount=order.amount,
+            price=order.price,
+            total=order.total,
+            status="pending_payment",
+            created_at=datetime.now(timezone.utc)
+        )
+        db.add(trade_doc)
+        
+        settlement_id = str(uuid.uuid4())
+        ref_code = f"DEBUG-{uuid.uuid4().hex[:8].upper()}"
+        settlement_doc = DBSettlement(
+            id=settlement_id,
+            trade_id=trade_id,
+            payment_proof_id=None,
+            status=SettlementStatus.PENDING,
+            order_id=order_id,
+            counterparty_id=order.user_id,
+            amount=order.total,
+            reference_code=ref_code,
+            created_at=datetime.now(timezone.utc)
+        )
+        db.add(settlement_doc)
+        
+        await db.commit()
+        return {"message": "Debug accept success", "trade_id": trade_id}
+    except Exception as e:
+        await db.rollback()
+        import traceback
+        return {"error": str(e), "traceback": traceback.format_exc()}
+
 @router.patch("/{order_id}/accept")
 async def accept_order(order_id: str, db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
     """Accept counterparty order (Market Maker/Admin only)"""

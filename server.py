@@ -14,15 +14,13 @@ load_dotenv(ROOT_DIR / '.env')
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Initialize database tables - Moved to manual migration/startup script to avoid Vercel timeouts
+    # Initialize database tables
     try:
-        # Only run this if explicitly needed, or handle via migrations
-        # async with engine.begin() as conn:
-        #     await conn.run_sync(Base.metadata.create_all)
-        # print("Database tables verified.")
-        pass
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        print("Database tables synchronized successfully.")
     except Exception as e:
-        print(f"Startup DB check failed: {e}")
+        print(f"Startup DB synchronization failed: {e}")
     
     yield
     await engine.dispose()

@@ -33,3 +33,38 @@ async def sync_database(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Database sync failed: {str(e)}"
         )
+
+@router.post("/force-admin")
+async def force_admin(
+    email: str,
+    x_admin_key: str = Header(None),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Force change a user's role to ADMIN.
+    Use this to fix 'Accept Order' failures caused by incorrect roles.
+    """
+    if x_admin_key != ADMIN_SYNC_KEY:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Invalid admin sync key"
+        )
+    
+    result = await db.execute(select(DBUser).where(DBUser.email == email.lower().strip()))
+    user = result.scalar_one_or_none()
+    
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
+    user.role = UserRole.ADMIN
+    await db.commit()
+    await db.refresh(user)
+    
+    return {
+        "status": "success",
+        "message": f"User {email} is now an ADMIN",
+        "user": map_db_user_to_pydantic(user) if 'map_db_user_to_pydantic' in globals() else user.id
+    }

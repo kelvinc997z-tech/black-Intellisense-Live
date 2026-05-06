@@ -5,17 +5,18 @@ import os
 import logging
 from pathlib import Path
 from contextlib import asynccontextmanager
+from database import engine, Base
 
-# Import routes
-from routes import auth_debug as auth, exchanges, wallets, markup, prices, orders, trades, chat, payments, settlements, api_trade, p2p, assets, reports, verification, payment_automation, admin, system
+from routes import auth, exchanges, wallets, markup, prices, orders, trades, chat, payments, settlements, api_trade, p2p, assets, reports, verification, payment_automation, admin, system
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Removed DB initialization from startup to prevent 500 errors during cold starts
+    # Database tables are synchronized via /api/admin/sync-db to avoid Vercel cold-start timeouts
     yield
+    await engine.dispose()
 
 app = FastAPI(
     title="Black IntelliSense API",
@@ -32,6 +33,26 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.get("/health")
+@app.get("/api/health")
 async def health_check():
     return {"status": "ok", "message": "Server is alive!"}
+
+# Routes
+app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
+app.include_router(exchanges.router, prefix="/api/exchanges", tags=["Exchanges"])
+app.include_router(wallets.router, prefix="/api/wallets", tags=["Wallets"])
+app.include_router(markup.router, prefix="/api/markup", tags=["Markup"])
+app.include_router(prices.router, prefix="/api/prices", tags=["Prices"])
+app.include_router(orders.router, prefix="/api/orders", tags=["Orders"])
+app.include_router(trades.router, prefix="/api/trades", tags=["Trades"])
+app.include_router(chat.router, prefix="/api/chat", tags=["Chat"])
+app.include_router(payments.router, prefix="/api/payments", tags=["Payments"])
+app.include_router(settlements.router, prefix="/api/settlements", tags=["Settlements"])
+app.include_router(api_trade.router, prefix="/api/api-trade", tags=["API Trade"])
+app.include_router(p2p.router, prefix="/api/p2p", tags=["P2P"])
+app.include_router(assets.router, prefix="/api/assets", tags=["Assets"])
+app.include_router(reports.router, prefix="/api/reports", tags=["Reports"])
+app.include_router(verification.router, prefix="/api/verify", tags=["Verification"])
+app.include_router(payment_automation.router, prefix="/api/payments/automation", tags=["Payment Automation"])
+app.include_router(admin.router, prefix="/api/admin", tags=["Admin"])
+app.include_router(system.router, prefix="/api/system", tags=["System"])

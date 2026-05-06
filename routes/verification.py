@@ -20,10 +20,21 @@ class ZKProofRequest(BaseModel):
 async def mock_verify_with_provider(proof: str, provider: str, data: Dict[str, Any]):
     """
     MOCK FUNCTION: In production, this would call an external zkTLS provider API.
-    Example: requests.post("https://api.reclaimprotocol.org/verify", json={"proof": proof})
     """
-    # Simulate API latency
-    # For demo, any proof starting with 'valid_' is considered successful
+    # ZK Pass specific mock logic
+    if provider == "zkpass":
+        # ZK Pass usually involves verifying a 'Pass' against a specific schema
+        # For demo, we expect the proof to contain 'zkpass_proof_'
+        if proof.startswith("zkpass_proof_"):
+            return {
+                "status": "success",
+                "verified_data": data if data else {"verified_attribute": "account_balance", "value": 50000},
+                "proof_hash": f"zkp_{uuid.uuid4().hex[:12]}",
+                "schema": "ZKPASS_BALANCE_VERIFICATION_V1"
+            }
+        return {"status": "failed", "error": "ZK Pass proof is invalid or expired"}
+    
+    # Reclaim Protocol mock logic
     if proof.startswith("valid_"):
         return {
             "status": "success",

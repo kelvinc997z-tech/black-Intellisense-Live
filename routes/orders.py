@@ -1,11 +1,12 @@
 from fastapi import APIRouter, HTTPException, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, desc
-from models import Order, OrderCreate, OrderStatus, OrderSide, SettlementStatus, DBOrder, DBUser, DBTrade, DBSettlement
+from models import Order, OrderCreate, OrderStatus, OrderSide, SettlementStatus, DBOrder, DBUser, DBTrade, DBSettlement, DBUserVerification
 from routes.auth import get_current_user
 from database import get_db
 import uuid
 from datetime import datetime, timezone
+from typing import List
 async def get_user_trade_limit(db: AsyncSession, user_id: str) -> float:
     """Determine trade limit based on user verification status"""
     # Check for any active zkTLS verifications

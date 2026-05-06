@@ -6,7 +6,22 @@ from routes.auth import get_current_user
 from database import get_db
 import uuid
 from datetime import datetime, timezone
-from typing import List
+async def get_user_trade_limit(db: AsyncSession, user_id: str) -> float:
+    """Determine trade limit based on user verification status"""
+    # Check for any active zkTLS verifications
+    result = await db.execute(
+        select(DBUserVerification).where(
+            DBUserVerification.user_id == user_id,
+            DBUserVerification.method == "zkTLS",
+            DBUserVerification.status == "verified"
+        )
+    )
+    verification = result.scalar_one_or_none()
+    
+    if verification:
+        return 100000.0  # Higher limit for verified users
+    
+    return 5000.0  # Default limit for unverified users
 
 router = APIRouter()
 
@@ -14,6 +29,15 @@ router = APIRouter()
 async def create_order(data: OrderCreate, db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
     order_id = str(uuid.uuid4())
     total = data.amount * data.price
+    
+    # --- Dynamic Trade Limit Check ---
+    limit = await get_user_trade_limit(db, current_user["user_id"])
+    if total > limit:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Order total (${total:,.2f}) exceeds your current trade limit (${limit:,.2f}). Please complete zkTLS verification to increase your limit."
+        )
+    # ---------------------------------
     
     order_doc = DBOrder(
         id=order_id,

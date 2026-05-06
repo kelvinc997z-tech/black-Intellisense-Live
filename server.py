@@ -30,6 +30,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.get("/health")
+@app.get("/api/health")
 async def health_check():
     return {"status": "ok", "message": "Server is alive!"}

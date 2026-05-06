@@ -11,7 +11,8 @@ import {
   Receipt, 
   LogOut,
   Menu,
-  X
+  X,
+  ShieldCheck
 } from 'lucide-react';
 
 const Layout = ({ children }) => {
@@ -43,6 +44,7 @@ const Layout = ({ children }) => {
         { name: 'Trading', icon: TrendingUp, path: '/intellitrade' },
         { name: 'Order Management', icon: Receipt, path: '/intellitrade/orders' },
         { name: 'Chat', icon: MessageSquare, path: '/intellitrade/chat' },
+        { name: 'Verify zkTLS', icon: ShieldCheck, path: '/verify' },
       ],
     },
     {

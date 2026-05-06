@@ -5,8 +5,8 @@ import os
 import logging
 from pathlib import Path
 from contextlib import asynccontextmanager
-from database import engine, Base
 
+# Import routes
 from routes import auth_debug as auth, exchanges, wallets, markup, prices, orders, trades, chat, payments, settlements, api_trade, p2p, assets, reports, verification, payment_automation, admin, system
 
 ROOT_DIR = Path(__file__).parent
@@ -14,8 +14,8 @@ load_dotenv(ROOT_DIR / '.env')
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Removed DB initialization from startup to prevent 500 errors during cold starts
     yield
-    await engine.dispose()
 
 app = FastAPI(
     title="Black IntelliSense API",
@@ -32,8 +32,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.get("/api/health")
+@app.get("/health")
 async def health_check():
     return {"status": "ok", "message": "Server is alive!"}
-
-app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])

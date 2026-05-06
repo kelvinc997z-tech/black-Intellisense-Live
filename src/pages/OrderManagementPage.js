@@ -39,7 +39,8 @@ const OrderManagementPage = () => {
       toast.success('Order accepted successfully!');
       fetchOrders();
     } catch (error) {
-      toast.error('Failed to accept order');
+      const detail = error.response?.data?.detail || 'Failed to accept order';
+      toast.error(detail);
     }
   };
 

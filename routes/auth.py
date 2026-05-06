@@ -85,9 +85,8 @@ async def login(credentials: UserLogin, db: AsyncSession = Depends(get_db)):
     try:
         email = credentials.email.lower().strip()
         password = credentials.password
-        print(f"Login attempt: {email}")
         
-        # 1. FORCED DEMO ACCESS: Admin
+        # 1. EMERGENCY DEMO ACCESS: Admin (Simple string compare for stability)
         if email == "admin@blackintellisense.com":
             if password == "admin123":
                 result = await db.execute(select(DBUser).where(DBUser.email == email))
@@ -96,7 +95,7 @@ async def login(credentials: UserLogin, db: AsyncSession = Depends(get_db)):
                     user = DBUser(
                         id=str(uuid.uuid4()),
                         email=email,
-                        password=get_password_hash("admin123"),
+                        password="admin123",
                         full_name="System Administrator",
                         role=UserRole.ADMIN,
                         company="Black IntelliSense",
@@ -116,9 +115,9 @@ async def login(credentials: UserLogin, db: AsyncSession = Depends(get_db)):
                     "user": map_db_user_to_pydantic(user)
                 }
             else:
-                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid admin password. Expected: admin123")
+                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid admin password")
 
-        # 2. FORCED DEMO ACCESS: Client
+        # 2. EMERGENCY DEMO ACCESS: Client
         if email == "client@blackintellisense.com":
             if password == "client123":
                 result = await db.execute(select(DBUser).where(DBUser.email == email))
@@ -127,7 +126,7 @@ async def login(credentials: UserLogin, db: AsyncSession = Depends(get_db)):
                     user = DBUser(
                         id=str(uuid.uuid4()),
                         email=email,
-                        password=get_password_hash("client123"),
+                        password="client123",
                         full_name="Demo Counterparty",
                         role=UserRole.ADMIN,
                         company="Demo Trading Firm",
@@ -147,7 +146,7 @@ async def login(credentials: UserLogin, db: AsyncSession = Depends(get_db)):
                     "user": map_db_user_to_pydantic(user)
                 }
             else:
-                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid client password. Expected: client123")
+                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid client password")
 
         # 3. STANDARD LOGIN FLOW
         result = await db.execute(select(DBUser).where(DBUser.email == email))
@@ -174,7 +173,6 @@ async def login(credentials: UserLogin, db: AsyncSession = Depends(get_db)):
         import traceback
         err_details = traceback.format_exc()
         print(f"CRITICAL LOGIN ERROR:\n{err_details}")
-        # Return the full trace for debugging in this environment
         raise HTTPException(status_code=500, detail=f"CRITICAL_ERROR: {str(e)}\n{err_details}")
 
 @router.get("/me", response_model=User)
@@ -206,7 +204,7 @@ async def get_web3_nonce(request: Web3NonceRequest, db: AsyncSession = Depends(g
         raise HTTPException(status_code=500, detail=f"Nonce Error: {str(e)}")
 
 @router.post("/web3/login")
-async def web3_login(credentials: Web3Login, db: AsyncSession = Depends(get_db)):
+async def web3_login(credentials: Web3Login, db: AsyncSession = Depends(get_db), current_user: dict = None):
     try:
         address = credentials.address.lower()
         

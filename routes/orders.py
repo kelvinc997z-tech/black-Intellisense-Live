@@ -29,6 +29,16 @@ async def auto_accept_order(order_id: str, db: AsyncSession):
     Internal helper to automatically accept an order.
     Simulates a Market Maker accepting the trade immediately.
     """
+    # 1. Find a valid system/admin user to act as the MM
+    admin_result = await db.execute(select(DBUser).where(DBUser.email == "admin@blackintellisense.com"))
+    admin_user = admin_result.scalar_one_or_none()
+    
+    if not admin_user:
+        print("AUTO_ACCEPT_ERROR: Admin user not found to act as MM")
+        return None
+        
+    mm_id = admin_user.id
+
     result = await db.execute(select(DBOrder).where(DBOrder.id == order_id))
     order = result.scalar_one_or_none()
     
@@ -39,14 +49,13 @@ async def auto_accept_order(order_id: str, db: AsyncSession):
         # Update order status
         order.status = OrderStatus.ACCEPTED
         order.updated_at = datetime.now(timezone.utc)
-        # We use a system-level admin ID for auto-acceptance
-        order.accepted_by = "SYSTEM_AUTO_MATCH" 
+        order.accepted_by = mm_id 
         order.accepted_at = datetime.now(timezone.utc)
         
         # Determine buyer and seller
         is_buy_order = (order.side == OrderSide.BUY)
-        buyer_id = order.user_id if is_buy_order else "SYSTEM_MM"
-        seller_id = "SYSTEM_MM" if is_buy_order else order.user_id
+        buyer_id = order.user_id if is_buy_order else mm_id
+        seller_id = mm_id if is_buy_order else order.user_id
         
         # Create trade record
         trade_id = str(uuid.uuid4())

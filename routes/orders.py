@@ -222,7 +222,6 @@ async def accept_order(order_id: str, db: AsyncSession = Depends(get_db), curren
         order.accepted_at = datetime.now(timezone.utc)
         
         # Determine buyer and seller based on order side
-        # order.side is SQLEnum(OrderSide), so we compare it directly with the Enum member
         is_buy_order = (order.side == OrderSide.BUY)
         buyer_id = order.user_id if is_buy_order else current_user["user_id"]
         seller_id = current_user["user_id"] if is_buy_order else order.user_id
@@ -264,8 +263,10 @@ async def accept_order(order_id: str, db: AsyncSession = Depends(get_db), curren
         await db.rollback()
         import traceback
         err_trace = traceback.format_exc()
-        print(f"CRITICAL ACCEPT ORDER ERROR:\nOrder ID: {order_id}\nUser: {current_user['user_id']}\nTraceback:\n{err_trace}")
-        raise HTTPException(status_code=500, detail=f"Internal Server Error during acceptance: {str(e)}")
+        # LOGGING THE EXACT VALUES TO FIND THE NULL/INVALID ID
+        print(f"ACCEPT_ORDER_CRASH: OrderID={order_id}, Buyer={buyer_id}, Seller={seller_id}, Counterparty={order.user_id}")
+        print(f"TRACEBACK:\n{err_trace}")
+        raise HTTPException(status_code=500, detail=f"Internal Server Error during acceptance: {str(e)}\n\nTechnical Detail: {err_trace}")
     
     return {
         "message": "Order accepted successfully",

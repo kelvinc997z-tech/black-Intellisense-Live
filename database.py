@@ -18,13 +18,9 @@ elif DATABASE_URL.startswith("postgresql://"):
 elif DATABASE_URL.startswith("postgresql+asyncpg://"):
     DATABASE_URL = DATABASE_URL.replace("postgresql+asyncpg://", "postgresql+psycopg://", 1)
 
-# Ensure sslmode is set for Psycopg 3
-if "sslmode" not in DATABASE_URL:
-    if DATABASE_URL.endswith("/"):
-        DATABASE_URL += "?sslmode=require"
-    else:
-        separator = "&" if "?" in DATABASE_URL else "?"
-        DATABASE_URL += f"{separator}sslmode=require"
+# Remove manual sslmode appending. 
+# Neon connection strings usually already include necessary SSL params.
+# Psycopg 3 handles sslmode=require by default if not specified for most cloud providers.
 
 engine = create_async_engine(
     DATABASE_URL, 

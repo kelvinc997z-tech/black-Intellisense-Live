@@ -117,7 +117,7 @@ async def accept_order(order_id: str, db: AsyncSession = Depends(get_db), curren
     if current_user.get("role") not in ["admin", "market_maker"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only market makers can accept orders"
+            detail=f"Access Denied: Your role is {current_user.get('role')}. Only admins or market makers can accept orders. Please use the force-admin link if you are the owner."
         )
     
     result = await db.execute(select(DBOrder).where(DBOrder.id == order_id))

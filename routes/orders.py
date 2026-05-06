@@ -24,6 +24,69 @@ async def get_user_trade_limit(db: AsyncSession, user_id: str) -> float:
     
     return 5000.0  # Default limit for unverified users
 
+async def auto_accept_order(order_id: str, db: AsyncSession):
+    """
+    Internal helper to automatically accept an order.
+    Simulates a Market Maker accepting the trade immediately.
+    """
+    result = await db.execute(select(DBOrder).where(DBOrder.id == order_id))
+    order = result.scalar_one_or_none()
+    
+    if not order or order.status != OrderStatus.PENDING:
+        return None
+
+    try:
+        # Update order status
+        order.status = OrderStatus.ACCEPTED
+        order.updated_at = datetime.now(timezone.utc)
+        # We use a system-level admin ID for auto-acceptance
+        order.accepted_by = "SYSTEM_AUTO_MATCH" 
+        order.accepted_at = datetime.now(timezone.utc)
+        
+        # Determine buyer and seller
+        is_buy_order = (order.side == OrderSide.BUY)
+        buyer_id = order.user_id if is_buy_order else "SYSTEM_MM"
+        seller_id = "SYSTEM_MM" if is_buy_order else order.user_id
+        
+        # Create trade record
+        trade_id = str(uuid.uuid4())
+        trade_doc = DBTrade(
+            id=trade_id,
+            order_id=order_id,
+            buyer_id=buyer_id,
+            seller_id=seller_id,
+            symbol=order.symbol,
+            amount=order.amount,
+            price=order.price,
+            total=order.total,
+            status="pending_payment",
+            created_at=datetime.now(timezone.utc)
+        )
+        db.add(trade_doc)
+        
+        # Create settlement record
+        settlement_id = str(uuid.uuid4())
+        ref_code = f"AUTO-{uuid.uuid4().hex[:8].upper()}"
+        settlement_doc = DBSettlement(
+            id=settlement_id,
+            trade_id=trade_id,
+            payment_proof_id=None,
+            status=SettlementStatus.PENDING,
+            order_id=order_id,
+            counterparty_id=order.user_id,
+            amount=order.total,
+            reference_code=ref_code,
+            created_at=datetime.now(timezone.utc)
+        )
+        db.add(settlement_doc)
+        
+        await db.commit()
+        return {"trade_id": trade_id, "settlement_id": settlement_id}
+    except Exception as e:
+        await db.rollback()
+        print(f"AUTO_ACCEPT_ERROR: {str(e)}")
+        return None
+
 router = APIRouter()
 
 @router.post("/", response_model=Order)
@@ -57,6 +120,15 @@ async def create_order(data: OrderCreate, db: AsyncSession = Depends(get_db), cu
     db.add(order_doc)
     await db.commit()
     await db.refresh(order_doc)
+    
+    # --- Auto-Accept Engine ---
+    # Automatically accept the order so the Client can proceed to settlement immediately
+    auto_result = await auto_accept_order(order_id, db)
+    
+    if auto_result:
+        # Update the returned order object to reflect the accepted status
+        order_doc.status = OrderStatus.ACCEPTED
+    # --------------------------
     
     return order_doc
 

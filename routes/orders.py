@@ -192,10 +192,10 @@ async def cancel_order(order_id: str, db: AsyncSession = Depends(get_db), curren
 
 @router.patch("/debug-accept/{order_id}")
 async def debug_accept_order(order_id: str, user_id: str = "admin", db: AsyncSession = Depends(get_db)):
-    \"\"\"
+    """
     DEBUG ONLY: Accepts an order without authentication.
     Pass user_id as query param if needed, otherwise defaults to 'admin'.
-    \"\"\"
+    """
     # Try to find the actual admin user if 'admin' string is passed
     if user_id == "admin":
         admin_result = await db.execute(select(DBUser).where(DBUser.email == "admin@blackintellisense.com"))

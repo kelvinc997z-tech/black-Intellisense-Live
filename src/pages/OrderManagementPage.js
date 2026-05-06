@@ -101,6 +101,9 @@ const OrderManagementPage = () => {
               <tbody>
                 {pendingOrders.map((order) => (
                   <tr key={order.id} className="border-b border-border/50 hover:bg-muted/30">
+                    <td className="p-3 font-mono text-xs text-muted-foreground">
+                      {order.id}
+                    </td>
                     <td className="p-3">
                       <div>
                         <p className="font-mono text-sm font-semibold">{order.user_email || 'N/A'}</p>
@@ -149,7 +152,7 @@ const OrderManagementPage = () => {
                 ))}
                 {pendingOrders.length === 0 && (
                   <tr>
-                    <td colSpan={8} className="p-6 text-center text-muted-foreground">
+                    <td colSpan={9} className="p-6 text-center text-muted-foreground">
                       No pending orders
                     </td>
                   </tr>

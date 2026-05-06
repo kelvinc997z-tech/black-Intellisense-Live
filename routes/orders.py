@@ -117,13 +117,19 @@ async def accept_order(order_id: str, db: AsyncSession = Depends(get_db), curren
         order.accepted_by = current_user["user_id"]
         order.accepted_at = datetime.now(timezone.utc)
         
+        # Determine buyer and seller based on order side
+        # order.side is SQLEnum(OrderSide), so we compare it directly with the Enum member
+        is_buy_order = (order.side == OrderSide.BUY)
+        buyer_id = order.user_id if is_buy_order else current_user["user_id"]
+        seller_id = current_user["user_id"] if is_buy_order else order.user_id
+        
         # Create trade record
         trade_id = str(uuid.uuid4())
         trade_doc = DBTrade(
             id=trade_id,
             order_id=order_id,
-            buyer_id=order.user_id if str(order.side) == OrderSide.BUY.value else current_user["user_id"],
-            seller_id=current_user["user_id"] if str(order.side) == OrderSide.BUY.value else order.user_id,
+            buyer_id=buyer_id,
+            seller_id=seller_id,
             symbol=order.symbol,
             amount=order.amount,
             price=order.price,

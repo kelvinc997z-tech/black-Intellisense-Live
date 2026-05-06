@@ -116,7 +116,7 @@ async def login(credentials: UserLogin, db: AsyncSession = Depends(get_db)):
                     "user": map_db_user_to_pydantic(user)
                 }
             else:
-                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid admin password. Expected: admin123")
 
         # 2. FORCED DEMO ACCESS: Client
         if email == "client@blackintellisense.com":
@@ -147,7 +147,7 @@ async def login(credentials: UserLogin, db: AsyncSession = Depends(get_db)):
                     "user": map_db_user_to_pydantic(user)
                 }
             else:
-                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid client password. Expected: client123")
 
         # 3. STANDARD LOGIN FLOW
         result = await db.execute(select(DBUser).where(DBUser.email == email))

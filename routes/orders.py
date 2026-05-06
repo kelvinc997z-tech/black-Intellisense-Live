@@ -91,37 +91,44 @@ router = APIRouter()
 
 @router.post("/", response_model=Order)
 async def create_order(data: OrderCreate, db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    order_id = str(uuid.uuid4())
-    total = data.amount * data.price
-    
-    order_doc = DBOrder(
-        id=order_id,
-        user_id=current_user["user_id"],
-        symbol=data.symbol,
-        side=data.side,
-        amount=data.amount,
-        price=data.price,
-        total=total,
-        status=OrderStatus.PENDING,
-        filled_amount=0.0,
-        created_at=datetime.now(timezone.utc),
-        updated_at=datetime.now(timezone.utc)
-    )
-    
-    db.add(order_doc)
-    await db.commit()
-    await db.refresh(order_doc)
-    
-    # --- Auto-Accept Engine ---
-    # Automatically accept the order so the Client can proceed to settlement immediately
-    auto_result = await auto_accept_order(order_id, db)
-    
-    if auto_result:
-        # Update the returned order object to reflect the accepted status
-        order_doc.status = OrderStatus.ACCEPTED
-    # --------------------------
-    
-    return order_doc
+    try:
+        order_id = str(uuid.uuid4())
+        total = data.amount * data.price
+        
+        order_doc = DBOrder(
+            id=order_id,
+            user_id=current_user["user_id"],
+            symbol=data.symbol,
+            side=data.side,
+            amount=data.amount,
+            price=data.price,
+            total=total,
+            status=OrderStatus.PENDING,
+            filled_amount=0.0,
+            created_at=datetime.now(timezone.utc),
+            updated_at=datetime.now(timezone.utc)
+        )
+        
+        db.add(order_doc)
+        await db.commit()
+        await db.refresh(order_doc)
+        
+        # --- Auto-Accept Engine ---
+        auto_result = await auto_accept_order(order_id, db)
+        if auto_result:
+            order_doc.status = OrderStatus.ACCEPTED
+        # --------------------------
+        
+        return order_doc
+    except Exception as e:
+        await db.rollback()
+        import traceback
+        err_trace = traceback.format_exc()
+        print(f"CRITICAL CREATE ORDER ERROR:\n{err_trace}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Server Error: {str(e)}\n\nTraceback:\n{err_trace}"
+        )
 
 @router.get("/", response_model=List[Order])
 async def get_orders(db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):

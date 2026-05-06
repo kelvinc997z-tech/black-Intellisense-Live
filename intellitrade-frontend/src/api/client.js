@@ -18,5 +18,6 @@ api.interceptors.request.use((config) => {
 export const zkApi = {
   getThreshold: () => api.get('/verify/solvency/threshold'),
   submitProof: (proofData) => api.post('/verify/solvency/verify', proofData),
+  submitIdentityProof: (proofData) => api.post('/verify/identity/verify', proofData),
   getStatus: () => api.get('/verify/status'),
 };

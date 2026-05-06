@@ -174,7 +174,8 @@ async def login(credentials: UserLogin, db: AsyncSession = Depends(get_db)):
         import traceback
         err_details = traceback.format_exc()
         print(f"CRITICAL LOGIN ERROR:\n{err_details}")
-        raise HTTPException(status_code=500, detail=f"DEBUG_ERROR: {str(e)} | FULL_TRACE: {err_details}")
+        # Return the full trace for debugging in this environment
+        raise HTTPException(status_code=500, detail=f"CRITICAL_ERROR: {str(e)}\n{err_details}")
 
 @router.get("/me", response_model=User)
 async def get_current_user_info(db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):

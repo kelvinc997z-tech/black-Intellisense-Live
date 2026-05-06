@@ -7,21 +7,14 @@ from pathlib import Path
 from contextlib import asynccontextmanager
 from database import engine, Base
 
-from routes import auth, exchanges, wallets, markup, prices, orders, trades, chat, payments, settlements, api_trade, p2p, assets, reports, verification, payment_automation
+from routes import auth, exchanges, wallets, markup, prices, orders, trades, chat, payments, settlements, api_trade, p2p, assets, reports, verification, payment_automation, admin
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Initialize database tables
-    try:
-        async with engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
-        print("Database tables synchronized successfully.")
-    except Exception as e:
-        print(f"Startup DB synchronization failed: {e}")
-    
+    # Database tables are synchronized via /api/admin/sync-db to avoid Vercel cold-start timeouts
     yield
     await engine.dispose()
 
@@ -57,3 +50,4 @@ app.include_router(assets.router, prefix="/api/assets", tags=["Assets"])
 app.include_router(reports.router, prefix="/api/reports", tags=["Reports"])
 app.include_router(verification.router, prefix="/api/verify", tags=["Verification"])
 app.include_router(payment_automation.router, prefix="/api/payments/automation", tags=["Payment Automation"])
+app.include_router(admin.router, prefix="/api/admin", tags=["Admin"])

@@ -279,14 +279,38 @@ const Sense50Dashboard = () => {
                     <td className="p-4 font-mono text-sm font-bold text-white">{activity.client}</td>
                     <td className="p-4">
                       <span
-                        className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase ${\n                          activity.type === 'Buy'\n                            ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'\n                            : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'\n                        }`}\n                      >\n                        {activity.type === 'Buy' ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}\n                        {activity.type}\n                      </span>
+                        className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase ${
+                          activity.type === 'Buy'
+                            ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                            : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                        }`}
+                      >
+                        {activity.type === 'Buy' ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}\n                        {activity.type}\n                      </span>
                     </td>
                     <td className="p-4 font-mono text-sm font-bold text-white">
                       {formatNumber(activity.amount)} <span className="text-slate-500 font-normal text-xs ml-1">USDT</span>
                     </td>
                     <td className="p-4">
                       <span
-                        className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase ${\n                          activity.status === 'Completed'\n                            ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'\n                            : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'\n                        }`}\n                      >\n                        <div className={`h-1 w-1 rounded-full ${activity.status === 'Completed' ? 'bg-emerald-400' : 'bg-amber-400'} animate-pulse`} />\n                        {activity.status}\n                      </span>
+                        className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase ${
+                          activity.status === 'Completed'
+                            ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                            : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                        }`}
+                      >
+                        <div className={`h-1 w-1 rounded-full ${activity.status === 'Completed' ? 'bg-emerald-400' : 'bg-amber-400'} animate-pulse`} />
+                        {activity.status}
+                      </span>
                     </td>
                   </tr>
-                ))}\n              </tbody>\n            </table>\n          </div>\n        </div>\n      </div>\n    </Layout>\n  );\n};\n\nexport default Sense50Dashboard;\n
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </Layout>
+  );
+};
+
+export default Sense50Dashboard;

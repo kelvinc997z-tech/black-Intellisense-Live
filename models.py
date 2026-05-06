@@ -179,6 +179,18 @@ class DBAsset(Base):
     is_visible = Column(Boolean, default=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
+class DBUserVerification(Base):
+    __tablename__ = "user_verifications"
+    id = Column(String, primary_key=True)
+    user_id = Column(String, ForeignKey("users.id"))
+    method = Column(String) # e.g., "zkTLS", "KYC", "Web3"
+    provider = Column(String) # e.g., "Reclaim", "TLSNotary"
+    proof_hash = Column(String)
+    verified_data = Column(JSON) # Store non-sensitive verified attributes
+    status = Column(String, default="verified")
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    expires_at = Column(DateTime, nullable=True)
+
 class DBExchangeAPIConfig(Base):
     __tablename__ = "exchange_api_configs"
     id = Column(String, primary_key=True)

@@ -7,7 +7,7 @@ from pathlib import Path
 from contextlib import asynccontextmanager
 from database import engine, Base
 
-from routes import auth, exchanges, wallets, markup, prices, orders, trades, chat, payments, settlements, api_trade, p2p, assets, reports
+from routes import auth, exchanges, wallets, markup, prices, orders, trades, chat, payments, settlements, api_trade, p2p, assets, reports, verification
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -57,3 +57,4 @@ app.include_router(api_trade.router, prefix="/api/api-trade", tags=["API Trade"]
 app.include_router(p2p.router, prefix="/api/p2p", tags=["P2P"])
 app.include_router(assets.router, prefix="/api/assets", tags=["Assets"])
 app.include_router(reports.router, prefix="/api/reports", tags=["Reports"])
+app.include_router(verification.router, prefix="/api/verify", tags=["Verification"])

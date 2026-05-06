@@ -7,6 +7,8 @@ from pathlib import Path
 from contextlib import asynccontextmanager
 from database import engine, Base
 
+from routes import auth, exchanges, wallets, markup, prices, orders, trades, chat, payments, settlements, api_trade, p2p, assets, reports, verification, payment_automation, admin, system
+
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
@@ -33,3 +35,5 @@ app.add_middleware(
 @app.get("/api/health")
 async def health_check():
     return {"status": "ok", "message": "Server is alive!"}
+
+app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])

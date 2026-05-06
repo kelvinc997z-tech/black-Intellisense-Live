@@ -122,10 +122,10 @@ async def create_order(data: OrderCreate, db: AsyncSession = Depends(get_db), cu
         await db.commit()
         await db.refresh(order_doc)
         
-        # --- Auto-Accept Engine ---
-        auto_result = await auto_accept_order(order_id, db)
-        if auto_result:
-            order_doc.status = OrderStatus.ACCEPTED
+        # --- Auto-Accept Engine (Temporarily Disabled for Debugging) ---
+        # auto_result = await auto_accept_order(order_id, db)
+        # if auto_result:
+        #     order_doc.status = OrderStatus.ACCEPTED
         # --------------------------
         
         return order_doc

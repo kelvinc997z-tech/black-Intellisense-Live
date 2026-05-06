@@ -18,6 +18,7 @@ import WalletsPage from './pages/WalletsPage';
 import IntelliTradePage from './pages/IntelliTradePage';
 import OrderManagementPage from './pages/OrderManagementPage';
 import MarkCRMPage from './pages/MarkCRMPage';
+import VerificationPage from './pages/VerificationPage';
 import './App.css';
 
 const PrivateRoute = ({ children }) => {
@@ -158,6 +159,14 @@ function App() {
             element={
               <PrivateRoute>
                 <ChatPage />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/verify"
+            element={
+              <PrivateRoute>
+                <VerificationPage />
               </PrivateRoute>
             }
           />

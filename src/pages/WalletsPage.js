@@ -87,7 +87,7 @@ const WalletsPage = () => {
           <div className="space-y-2">
             <div className="flex items-center gap-2 text-primary font-mono text-[10px] uppercase tracking-[0.3em] font-bold">
               <Database className="h-3 w-3" />
-              Vault Management
+              Sense50 Bridge Engine
             </div>
             <h1 className="font-heading text-6xl font-black tracking-tighter text-white">
               WALLETS<span className="text-primary">.EXE</span>

@@ -70,7 +70,7 @@ const Sense50Dashboard = () => {
               SENSE<span className="text-primary">50</span>
             </h1>
             <p className="text-slate-500 font-medium text-xs max-w-sm leading-relaxed">
-              Institutional Bridge Engine • Real-time Liquidity Aggregation • High-Frequency Execution
+              Sense50 Bridge Engine • Institutional Liquidity Aggregation • High-Frequency Execution
             </p>
           </div>
           <div className="lg:col-span-2 flex flex-wrap gap-3 justify-end">

@@ -188,6 +188,7 @@ class DBUserVerification(Base):
     method = Column(String) # e.g., "zkTLS", "KYC", "Web3"
     provider = Column(String) # e.g., "Reclaim", "TLSNotary"
     proof_hash = Column(String)
+    nullifier_hash = Column(String, index=True) # New: Anti-replay unique identifier
     verified_data = Column(JSON) # Store non-sensitive verified attributes
     status = Column(String, default="verified")
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))

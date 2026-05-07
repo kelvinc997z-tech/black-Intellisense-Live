@@ -32,7 +32,7 @@ class ZKVerifierService:
 
         # TradeEscrow ABI
         self.escrow_abi = [
-            {"inputs": [{"internalType": "string", "name": "_tradeId", "type": "string"}], "name": "lockTrade", "outputs": [], "stateMutability": "nonpayable", "type": "function"},
+            {"inputs": [{"internalType": "string", "name": "_tradeId", "type": "string"}, {"internalType": "bytes32", "name": "_proofCommitment", "type": "bytes32"}], "name": "lockTrade", "outputs": [], "stateMutability": "nonpayable", "type": "function"},
             {"inputs": [{"internalType": "string", "name": "_tradeId", "type": "string"}], "name": "executeTrade", "outputs": [], "stateMutability": "nonpayable", "type": "function"},
             {"inputs": [{"internalType": "string", "name": "_tradeId", "type": "string"}], "name": "releaseAssets", "outputs": [], "stateMutability": "nonpayable", "type": "function"},
             {"inputs": [{"internalType": "string", "name": "_tradeId", "type": "string"}], "name": "getTradeStatus", "outputs": [{"internalType": "uint8", "name": "", "type": "uint8"}], "stateMutability": "view", "type": "function"}
@@ -65,10 +65,13 @@ class ZKVerifierService:
             print(f"TRANSACTION_ERROR: {str(e)}")
             return None
 
-    async def lock_trade_on_chain(self, trade_id: str) -> bool:
+    async def lock_trade_on_chain(self, trade_id: str, proof_commitment: str) -> bool:
         try:
             contract = self.w3.eth.contract(address=self.escrow_address, abi=self.escrow_abi)
-            tx_hash = await self._send_transaction(contract.functions.lockTrade(trade_id))
+            # Convert proof_commitment (hex string) to bytes32
+            commitment_bytes = self.w3.to_bytes(hexstr=proof_commitment) if proof_commitment.startswith('0x') else self.w3.to_bytes(hexstr='0x' + proof_commitment)
+            
+            tx_hash = await self._send_transaction(contract.functions.lockTrade(trade_id, commitment_bytes))
             return tx_hash is not None
         except Exception as e:
             print(f"ESCROW_LOCK_ERROR: {str(e)}")

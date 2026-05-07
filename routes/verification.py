@@ -8,6 +8,7 @@ from utils.zk_service import zk_verifier
 from utils.heartbeat_service import heartbeat_service
 import uuid
 import os
+import hashlib
 from datetime import datetime, timezone, timedelta
 from pydantic import BaseModel
 from typing import Optional, Dict, Any, List
@@ -40,15 +41,24 @@ async def verify_reclaim_proof(proof_data: Dict[str, Any]):
         proof = Proof.from_json(proof_data)
         provider_id = os.getenv("RECLAIM_PROVIDER_ID", "your_default_provider_id")
         
+        # SECURITY: Verify that the proof was signed by the official Reclaim provider
+        # This prevents spoofed callbacks from unauthorized sources.
         result = await verify_proof(proof, {"providerId": provider_id})
         
         if not result.is_verified:
             return {"status": "failed", "error": str(result.error)}
         
+        # SECURITY: Extract the Nullifier from the proof metadata to prevent Replay Attacks.
+        # In zkTLS, the nullifier is typically a hash of the proof's public signals
+        # and a salt, ensuring the same proof cannot be used twice.
+        nullifier = getattr(result.data[0], 'nullifier', None) or \
+                    hashlib.sha256(str(result.data[0].proof_hash).encode()).hexdigest()
+        
         return {
             "status": "success",
             "verified_data": result.data[0].extracted_parameters,
-            "proof_hash": result.data[0].proof_hash if hasattr(result.data[0], 'proof_hash') else uuid.uuid4().hex[:12]
+            "proof_hash": result.data[0].proof_hash if hasattr(result.data[0], 'proof_hash') else uuid.uuid4().hex[:12],
+            "nullifier": nullifier
         }
     except Exception as e:
         return {"status": "failed", "error": f"Verification exception: {str(e)}"}
@@ -58,8 +68,6 @@ async def mock_verify_with_provider(proof: str, provider: str, data: Dict[str, A
     Verifies a proof. For 'reclaim', it uses the real SDK. For others, it's a mock.
     """
     if provider == "reclaim":
-        # In a real flow, 'proof' here might be the proof data JSON
-        # For compatibility with existing /verify-zk-proof, we handle it as a string or dict
         import json
         try:
             proof_json = json.loads(proof) if isinstance(proof, str) else proof
@@ -69,16 +77,19 @@ async def mock_verify_with_provider(proof: str, provider: str, data: Dict[str, A
 
     # ZK Pass specific mock logic
     if provider == "zkpass":
-        # ZK Pass usually involves verifying a 'Pass' against a specific schema
-        # For demo, we expect the proof to contain 'zkpass_proof_'
         if proof.startswith("zkpass_proof_"):
+            # Generate a deterministic nullifier based on the proof string
+            nullifier = hashlib.sha256(proof.encode()).hexdigest()
             return {
                 "status": "success",
                 "verified_data": data if data else {"verified_attribute": "account_balance", "value": 50000},
                 "proof_hash": f"zkp_{uuid.uuid4().hex[:12]}",
+                "nullifier": nullifier,
                 "schema": "ZKPASS_BALANCE_VERIFICATION_V1"
             }
         return {"status": "failed", "error": "ZK Pass proof is invalid or expired"}
+    
+    return {"status": "failed", "error": f"Unsupported provider: {provider}"}
 
 @router.post("/reclaim/request")
 async def create_reclaim_request(
@@ -135,6 +146,14 @@ async def reclaim_callback(
         if verification_result["status"] == "failed":
             return {"status": "error", "message": verification_result["error"]}, 400
         
+        # SECURITY: Anti-Replay Check (Nullifier)
+        nullifier = verification_result.get("nullifier")
+        result = await db.execute(
+            select(DBUserVerification).where(DBUserVerification.nullifier_hash == nullifier)
+        )
+        if result.scalars().first():
+            return {"status": "error", "message": "Replay Attack Detected: This proof has already been used"}, 400
+        
         # Associate this proof with a user and a trade
         context = proof_data.get("context", {})
         user_id = context.get("user_id")
@@ -144,26 +163,50 @@ async def reclaim_callback(
             return {"status": "error", "message": "Missing user_id or trade_id in proof context"}, 400
 
         # 1. LOCK TRADE ON CHAIN (The ZK-Locked Escrow step)
-        blockchain_success = await zk_verifier.lock_trade_on_chain(trade_id)
+        # SECURITY: Use the proof_hash as the commitment to bind the on-chain lock to the specific zkTLS proof
+        proof_commitment = verification_result["proof_hash"]
+        # Ensure commitment is 32 bytes (hex)
+        commitment_hex = hashlib.sha256(proof_commitment.encode()).hexdigest()
+        
+        blockchain_success = await zk_verifier.lock_trade_on_chain(trade_id, commitment_hex)
         if not blockchain_success:
             return {"status": "error", "message": "Failed to lock trade on blockchain"}, 500
 
         # 2. Save the verification record to DB
         verification_id = str(uuid.uuid4())
+        
+        # SECURITY: Apply Dynamic TTL based on verified balance
+        verified_data = verification_result["verified_data"]
+        balance = 0.0
+        try:
+            balance_key = next((k for k in verified_data.keys() if 'balance' in k.lower()), None)
+            if balance_key:
+                balance = float(verified_data[balance_key])
+        except:
+            pass
+            
+        if balance >= 1000000:
+            ttl_days = 1
+        elif balance >= 100000:
+            ttl_days = 7
+        else:
+            ttl_days = 30
+
         verification_doc = DBUserVerification(
             id=verification_id,
             user_id=user_id,
             method="zkTLS-Escrow",
             provider="reclaim",
             proof_hash=verification_result["proof_hash"],
+            nullifier_hash=nullifier,
             verified_data={
-                **verification_result["verified_data"],
+                **verified_data,
                 "trade_id": trade_id,
                 "blockchain_locked": True
             },
             status="verified",
             created_at=datetime.now(timezone.utc),
-            expires_at=datetime.now(timezone.utc) + timedelta(days=30)
+            expires_at=datetime.now(timezone.utc) + timedelta(days=ttl_days)
         )
         
         db.add(verification_doc)
@@ -304,18 +347,48 @@ async def verify_zk_proof(
             detail=f"ZK Proof verification failed: {verification_result.get('error')}"
         )
     
+    # SECURITY: Anti-Replay Check (Nullifier)
+    nullifier = verification_result.get("nullifier")
+    result = await db.execute(
+        select(DBUserVerification).where(DBUserVerification.nullifier_hash == nullifier)
+    )
+    if result.scalars().first():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Replay Attack Detected: This proof has already been used for verification"
+        )
+    
     # 2. Save the verification record to the database
     verification_id = str(uuid.uuid4())
+    
+    # SECURITY: Apply Dynamic TTL based on verified balance
+    verified_data = verification_result["verified_data"]
+    balance = 0.0
+    try:
+        balance_key = next((k for k in verified_data.keys() if 'balance' in k.lower()), None)
+        if balance_key:
+            balance = float(verified_data[balance_key])
+    except:
+        pass
+        
+    if balance >= 1000000:
+        ttl_days = 1
+    elif balance >= 100000:
+        ttl_days = 7
+    else:
+        ttl_days = 30
+
     verification_doc = DBUserVerification(
         id=verification_id,
         user_id=current_user["user_id"],
         method="zkTLS",
         provider=request.provider,
         proof_hash=verification_result["proof_hash"],
-        verified_data=verification_result["verified_data"],
+        nullifier_hash=nullifier,
+        verified_data=verified_data,
         status="verified",
         created_at=datetime.now(timezone.utc),
-        expires_at=datetime.now(timezone.utc) + timedelta(days=30) # Proof valid for 30 days
+        expires_at=datetime.now(timezone.utc) + timedelta(days=ttl_days) # Dynamic TTL
     )
     
     db.add(verification_doc)

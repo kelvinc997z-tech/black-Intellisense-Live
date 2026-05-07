@@ -4,6 +4,7 @@ sqlalchemy
 psycopg[binary]
 greenlet
 aiofiles
+aiohttp
 python-dotenv
 python-jose[cryptography]
 passlib[bcrypt]

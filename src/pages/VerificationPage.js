@@ -11,6 +11,7 @@ const VerificationPage = () => {
   const [message, setMessage] = useState({ type: '', text: '' });
   const [reclaimUrl, setReclaimUrl] = useState(null);
   const [isRequesting, setIsRequesting] = useState(false);
+  const [tradeId, setTradeId] = useState('');
 
   useEffect(() => {
     checkStatus();
@@ -57,10 +58,15 @@ const VerificationPage = () => {
   };
 
   const handleReclaimRequest = async () => {
+    if (!tradeId) {
+      setMessage({ type: 'error', text: 'Please enter a Trade ID for escrow lock' });
+      return;
+    }
+
     setIsRequesting(true);
     setMessage({ type: '', text: '' });
     try {
-      const res = await api.post('/verify/reclaim/request');
+      const res = await api.post(`/verify/reclaim/request?trade_id=${tradeId}`);
       setReclaimUrl(res.data.request_url);
       setMessage({ type: 'success', text: 'QR Code generated. Please scan with Reclaim App.' });
     } catch (error) {
@@ -157,17 +163,32 @@ const VerificationPage = () => {
             </div>
 
             <div className="space-y-6">
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Proof String</label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-600" />
-                  <input 
-                    type="text" 
-                    value={proof}
-                    onChange={(e) => setProof(e.target.value)}
-                    placeholder="zkpass_proof_..." 
-                    className="w-full pl-10 pr-4 py-3 rounded-xl bg-black/40 border border-white/10 text-white font-mono text-sm focus:outline-none focus:border-primary/50 transition-all"
-                  />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Trade ID</label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-600" />
+                    <input 
+                      type="text" 
+                      value={tradeId}
+                      onChange={(e) => setTradeId(e.target.value)}
+                      placeholder="TRD-XXXX-XXXX" 
+                      className="w-full pl-10 pr-4 py-3 rounded-xl bg-black/40 border border-white/10 text-white font-mono text-sm focus:outline-none focus:border-primary/50 transition-all"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Manual ZK Proof</label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-600" />
+                    <input 
+                      type="text" 
+                      value={proof}
+                      onChange={(e) => setProof(e.target.value)}
+                      placeholder="zkpass_proof_..." 
+                      className="w-full pl-10 pr-4 py-3 rounded-xl bg-black/40 border border-white/10 text-white font-mono text-sm focus:outline-none focus:border-primary/50 transition-all"
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -176,7 +197,7 @@ const VerificationPage = () => {
                   <span className="w-full border-t border-white/5"></span>
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-gradient-to-b from-slate-900/40 to-black/60 px-2 text-slate-500 font-bold">Or usezK TLS</span>
+                  <span className="bg-gradient-to-b from-slate-900/40 to-black/60 px-2 text-slate-500 font-bold">Institutional zK-Lock</span>
                 </div>
               </div>
 
@@ -185,7 +206,7 @@ const VerificationPage = () => {
                 disabled={isRequesting}
                 className="w-full py-3 rounded-xl bg-white/5 border border-white/10 text-white font-bold text-sm uppercase tracking-widest hover:bg-white/10 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
-                {isRequesting ? 'Generating...' : 'Verify with Reclaim Protocol'}
+                {isRequesting ? 'Generating...' : 'Guarantee Trade via Reclaim'}
               </button>
 
               {reclaimUrl && (

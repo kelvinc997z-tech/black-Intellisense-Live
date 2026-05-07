@@ -9,6 +9,9 @@ class ZKVerifierService:
         self.rpc_url = os.getenv("ZK_VERIFIER_RPC_URL", "http://127.0.0.1:8545")
         self.solvency_address = os.getenv("ZK_SOLVENCY_ADDRESS", "0x5FbDB2315678afecb367f032d93F642f64180aa3")
         self.identity_address = os.getenv("ZK_IDENTITY_ADDRESS", "0x7FbDB2315678afecb367f032d93F64180aa3") # Example address
+        self.escrow_address = os.getenv("ZK_ESCROW_ADDRESS", "0xYourEscrowAddressHere")
+        self.admin_private_key = os.getenv("BLOCKCHAIN_ADMIN_KEY", "0xYourPrivateKeyHere")
+        
         self.w3 = Web3(Web3.HTTPProvider(self.rpc_url))
         
         # Generic Groth16 Verifier ABI
@@ -26,6 +29,61 @@ class ZKVerifierService:
                 "type": "function"
             }
         ]
+
+        # TradeEscrow ABI
+        self.escrow_abi = [
+            {"inputs": [{"internalType": "string", "name": "_tradeId", "type": "string"}], "name": "lockTrade", "outputs": [], "stateMutability": "nonpayable", "type": "function"},
+            {"inputs": [{"internalType": "string", "name": "_tradeId", "type": "string"}], "name": "executeTrade", "outputs": [], "stateMutability": "nonpayable", "type": "function"},
+            {"inputs": [{"internalType": "string", "name": "_tradeId", "type": "string"}], "name": "releaseAssets", "outputs": [], "stateMutability": "nonpayable", "type": "function"},
+            {"inputs": [{"internalType": "string", "name": "_tradeId", "type": "string"}], "name": "getTradeStatus", "outputs": [{"internalType": "uint8", "name": "", "type": "uint8"}], "stateMutability": "view", "type": "function"}
+        ]
+
+    async def _send_transaction(self, func_call):
+        """Helper to sign and send transactions"""
+        try:
+            account = Account.from_key(self.admin_private_key)
+            nonce = self.w3.eth.get_transaction_count(account.address)
+            
+            tx = func_call.build_transaction({
+                'from': account.address,
+                'nonce': nonce,
+                'gas': 200000,
+                'gasPrice': self.w3.to_wei('50', 'gwei')
+            })
+            
+            signed_tx = self.w3.eth.account.sign_transaction(tx, self.admin_private_key)
+            tx_hash = self.w3.eth.send_raw_transaction(signed_tx.rawTransaction)
+            return self.w3.to_hex(tx_hash)
+        except Exception as e:
+            print(f"TRANSACTION_ERROR: {str(e)}")
+            return None
+
+    async def lock_trade_on_chain(self, trade_id: str) -> bool:
+        try:
+            contract = self.w3.eth.contract(address=self.escrow_address, abi=self.escrow_abi)
+            tx_hash = await self._send_transaction(contract.functions.lockTrade(trade_id))
+            return tx_hash is not None
+        except Exception as e:
+            print(f"ESCROW_LOCK_ERROR: {str(e)}")
+            return False
+
+    async def execute_trade_on_chain(self, trade_id: str) -> bool:
+        try:
+            contract = self.w3.eth.contract(address=self.escrow_address, abi=self.escrow_abi)
+            tx_hash = await self._send_transaction(contract.functions.executeTrade(trade_id))
+            return tx_hash is not None
+        except Exception as e:
+            print(f"ESCROW_EXECUTE_ERROR: {str(e)}")
+            return False
+
+    async def release_assets_on_chain(self, trade_id: str) -> bool:
+        try:
+            contract = self.w3.eth.contract(address=self.escrow_address, abi=self.escrow_abi)
+            tx_hash = await self._send_transaction(contract.functions.releaseAssets(trade_id))
+            return tx_hash is not None
+        except Exception as e:
+            print(f"ESCROW_RELEASE_ERROR: {str(e)}")
+            return False
 
     async def verify_proof(self, contract_address: str, proof: dict, public_signals: list) -> bool:
         """

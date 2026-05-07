@@ -69,7 +69,8 @@ async def mock_verify_with_provider(proof: str, provider: str, data: Dict[str, A
 
 @router.post("/reclaim/request")
 async def create_reclaim_request(
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
+    trade_id: str # Now requiring trade_id to link the proof to an escrow trade
 ):
     """
     Initialize a Reclaim proof request and return the request URL.
@@ -86,8 +87,13 @@ async def create_reclaim_request(
             provider_id=provider_id,
         )
         
+        # Add contextual data so the callback knows which user and trade this is for
+        proof_request.set_context({
+            "user_id": current_user["user_id"],
+            "trade_id": trade_id
+        })
+        
         # Set callback URL where Reclaim will send the proof
-        # In production, this must be a public URL
         callback_url = f"https://{os.getenv('API_DOMAIN', 'api.blackintellisense.com')}/verification/reclaim/callback"
         proof_request.set_app_callback_url(callback_url)
         
@@ -115,23 +121,32 @@ async def reclaim_callback(
         if verification_result["status"] == "failed":
             return {"status": "error", "message": verification_result["error"]}, 400
         
-        # We need to associate this proof with a user. 
-        # Reclaim allows passing contextual data (like user_id) in the request.
-        # If the proof data contains a user identifier:
-        user_id = proof_data.get("context", {}).get("user_id")
-        if not user_id:
-            # Fallback or error: without user_id, we don't know who this proof is for
-            return {"status": "error", "message": "No user context provided in proof"}, 400
+        # Associate this proof with a user and a trade
+        context = proof_data.get("context", {})
+        user_id = context.get("user_id")
+        trade_id = context.get("trade_id") # Crucial for OTC Escrow
+        
+        if not user_id or not trade_id:
+            return {"status": "error", "message": "Missing user_id or trade_id in proof context"}, 400
 
-        # Save the verification record
+        # 1. LOCK TRADE ON CHAIN (The ZK-Locked Escrow step)
+        blockchain_success = await zk_verifier.lock_trade_on_chain(trade_id)
+        if not blockchain_success:
+            return {"status": "error", "message": "Failed to lock trade on blockchain"}, 500
+
+        # 2. Save the verification record to DB
         verification_id = str(uuid.uuid4())
         verification_doc = DBUserVerification(
             id=verification_id,
             user_id=user_id,
-            method="zkTLS",
+            method="zkTLS-Escrow",
             provider="reclaim",
             proof_hash=verification_result["proof_hash"],
-            verified_data=verification_result["verified_data"],
+            verified_data={
+                **verification_result["verified_data"],
+                "trade_id": trade_id,
+                "blockchain_locked": True
+            },
             status="verified",
             created_at=datetime.now(timezone.utc),
             expires_at=datetime.now(timezone.utc) + timedelta(days=30)
@@ -142,8 +157,9 @@ async def reclaim_callback(
         
         return {
             "status": "success",
-            "message": "Proof verified and account updated",
-            "verification_id": verification_id
+            "message": "Proof verified and Trade locked in Escrow",
+            "verification_id": verification_id,
+            "trade_id": trade_id
         }
     except Exception as e:
         return {"status": "error", "message": f"Callback error: {str(e)}"}, 500

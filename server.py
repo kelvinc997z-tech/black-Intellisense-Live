@@ -7,7 +7,22 @@ from pathlib import Path
 from contextlib import asynccontextmanager
 from database import engine, Base
 
-from routes import auth, exchanges, wallets, markup, prices, orders, trades, chat, payments, settlements, api_trade, p2p, assets, reports, verification, payment_automation, admin, system
+# Debugging list to catch import errors
+import_errors = []
+
+def safe_import_router(name, module_path, prefix, tags):
+    try:
+        # Dynamically import the module
+        import importlib
+        module = importlib.import_module(module_path)
+        app.include_router(module.router, prefix=prefix, tags=tags)
+        return True
+    except Exception as e:
+        import traceback
+        error_msg = f"Error importing {name} ({module_path}): {str(e)}\n{traceback.format_exc()}"
+        import_errors.append(error_msg)
+        print(error_msg)
+        return False
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -37,22 +52,35 @@ app.add_middleware(
 async def health_check():
     return {"status": "ok", "message": "Server is alive!"}
 
-# Routes
-app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
-app.include_router(exchanges.router, prefix="/api/exchanges", tags=["Exchanges"])
-app.include_router(wallets.router, prefix="/api/wallets", tags=["Wallets"])
-app.include_router(markup.router, prefix="/api/markup", tags=["Markup"])
-app.include_router(prices.router, prefix="/api/prices", tags=["Prices"])
-app.include_router(orders.router, prefix="/api/orders", tags=["Orders"])
-app.include_router(trades.router, prefix="/api/trades", tags=["Trades"])
-app.include_router(chat.router, prefix="/api/chat", tags=["Chat"])
-app.include_router(payments.router, prefix="/api/payments", tags=["Payments"])
-app.include_router(settlements.router, prefix="/api/settlements", tags=["Settlements"])
-app.include_router(api_trade.router, prefix="/api/api-trade", tags=["API Trade"])
-app.include_router(p2p.router, prefix="/api/p2p", tags=["P2P"])
-app.include_router(assets.router, prefix="/api/assets", tags=["Assets"])
-app.include_router(reports.router, prefix="/api/reports", tags=["Reports"])
-app.include_router(verification.router, prefix="/api/verify", tags=["Verification"])
-app.include_router(payment_automation.router, prefix="/api/payments/automation", tags=["Payment Automation"])
-app.include_router(admin.router, prefix="/api/admin", tags=["Admin"])
-app.include_router(system.router, prefix="/api/system", tags=["System"])
+@app.get("/api/debug/imports")
+async def debug_imports():
+    """Endpoint to see which routers failed to load"""
+    return {
+        "total_errors": len(import_errors),
+        "errors": import_errors
+    }
+
+# Routes - Loaded safely to prevent total server crash
+routes_to_load = [
+    ("Authentication", "routes.auth", "/api/auth", ["Authentication"]),
+    ("Exchanges", "routes.exchanges", "/api/exchanges", ["Exchanges"]),
+    ("Wallets", "routes.wallets", "/api/wallets", ["Wallets"]),
+    ("Markup", "routes.markup", "/api/markup", ["Markup"]),
+    ("Prices", "routes.prices", "/api/prices", ["Prices"]),
+    ("Orders", "routes.orders", "/api/orders", ["Orders"]),
+    ("Trades", "routes.trades", "/api/trades", ["Trades"]),
+    ("Chat", "routes.chat", "/api/chat", ["Chat"]),
+    ("Payments", "routes.payments", "/api/payments", ["Payments"]),
+    ("Settlements", "routes.settlements", "/api/settlements", ["Settlements"]),
+    ("API Trade", "routes.api_trade", "/api/api-trade", ["API Trade"]),
+    ("P2P", "routes.p2p", "/api/p2p", ["P2P"]),
+    ("Assets", "routes.assets", "/api/assets", ["Assets"]),
+    ("Reports", "routes.reports", "/api/reports", ["Reports"]),
+    ("Verification", "routes.verification", "/api/verify", ["Verification"]),
+    ("Payment Automation", "routes.payment_automation", "/api/payments/automation", ["Payment Automation"]),
+    ("Admin", "routes.admin", "/api/admin", ["Admin"]),
+    ("System", "routes.system", "/api/system", ["System"]),
+]
+
+for name, path, prefix, tags in routes_to_load:
+    safe_import_router(name, path, prefix, tags)

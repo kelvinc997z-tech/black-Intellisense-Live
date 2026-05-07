@@ -2,8 +2,6 @@ fastapi
 uvicorn
 sqlalchemy
 psycopg[binary]
-asyncpg
-psycopg2-binary
 greenlet
 aiofiles
 python-dotenv

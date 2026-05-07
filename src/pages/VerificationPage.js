@@ -9,6 +9,8 @@ const VerificationPage = () => {
   const [proof, setProof] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
+  const [reclaimUrl, setReclaimUrl] = useState(null);
+  const [isRequesting, setIsRequesting] = useState(false);
 
   useEffect(() => {
     checkStatus();
@@ -51,6 +53,23 @@ const VerificationPage = () => {
       });
     } finally {
       setIsVerifying(false);
+    }
+  };
+
+  const handleReclaimRequest = async () => {
+    setIsRequesting(true);
+    setMessage({ type: '', text: '' });
+    try {
+      const res = await api.post('/verify/reclaim/request');
+      setReclaimUrl(res.data.request_url);
+      setMessage({ type: 'success', text: 'QR Code generated. Please scan with Reclaim App.' });
+    } catch (error) {
+      setMessage({ 
+        type: 'error', 
+        text: error.response?.data?.detail || 'Failed to initiate Reclaim request.' 
+      });
+    } finally {
+      setIsRequesting(false);
     }
   };
 
@@ -151,6 +170,43 @@ const VerificationPage = () => {
                   />
                 </div>
               </div>
+
+              <div className="relative py-4">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t border-white/5"></span>
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-gradient-to-b from-slate-900/40 to-black/60 px-2 text-slate-500 font-bold">Or usezK TLS</span>
+                </div>
+              </div>
+
+              <button 
+                onClick={handleReclaimRequest}
+                disabled={isRequesting}
+                className="w-full py-3 rounded-xl bg-white/5 border border-white/10 text-white font-bold text-sm uppercase tracking-widest hover:bg-white/10 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {isRequesting ? 'Generating...' : 'Verify with Reclaim Protocol'}
+              </button>
+
+              {reclaimUrl && (
+                <div className="p-6 rounded-2xl bg-white border border-white/20 flex flex-col items-center justify-center space-y-4 animate-in fade-in zoom-in duration-300">
+                  <img 
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(reclaimUrl)}`} 
+                    alt="Reclaim QR Code" 
+                    className="w-40 h-40"
+                  />
+                  <div className="text-center">
+                    <p className="text-black font-bold text-sm">Scan with Reclaim App</p>
+                    <p className="text-slate-500 text-[10px] uppercase">Secure zkTLS Proof Generation</p>
+                  </div>
+                  <button 
+                    onClick={() => setReclaimUrl(null)} 
+                    className="text-xs text-slate-400 hover:text-black underline"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              )}
 
               {message.text && (
                 <div className={`p-4 rounded-xl border text-xs font-medium flex items-center gap-3 ${

@@ -34,3 +34,4 @@ cytoolz
 openai
 google-generativeai
 litellm
+reclaimprotocol-python-sdk

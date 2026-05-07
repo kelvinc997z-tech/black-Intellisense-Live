@@ -17,33 +17,10 @@ const Sense50Dashboard = () => {
   const [activities, setActivities] = useState([]);
   const [priceHistory, setPriceHistory] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [logs, setLogs] = useState([
-    "System initialized...",
-    "Connecting to liquidity nodes...",
-    "US-EAST-1: ONLINE",
-    "EU-WEST-1: ONLINE",
-    "Handshaking with ZK-Layer..."
-  ]);
 
   useEffect(() => {
     fetchData();
-    const logInterval = setInterval(addRandomLog, 4000);
-    return () => clearInterval(logInterval);
   }, []);
-
-  const addRandomLog = () => {
-    const events = [
-      "Incoming liquidity flow: +12,400 USDT",
-      "zkTLS Proof verified for user_8821",
-      "Executing hedge for pair BTC/USDT",
-      "Node latency: 14ms (OPTIMAL)",
-      "Settling cross-chain batch #4412",
-      "API request burst handled: 2.1k req/s",
-      "Heartbeat signal received from NeonDB",
-      "Rotating encryption keys..."
-    ];
-    setLogs(prev => [...prev.slice(-10), events[Math.floor(Math.random() * events.length)]]);
-  };
 
   const fetchData = async () => {
     try {
@@ -156,7 +133,7 @@ const Sense50Dashboard = () => {
           </div>
 
           {/* Center Analysis - Large Chart */}
-          <div className="col-span-12 lg:col-span-5 rounded-2xl border border-white/10 bg-gradient-to-b from-slate-900/40 to-black/60 p-6 backdrop-blur-xl transition-all hover:border-primary/30 relative overflow-hidden">
+          <div className="col-span-12 lg:col-span-8 rounded-2xl border border-white/10 bg-gradient-to-b from-slate-900/40 to-black/60 p-6 backdrop-blur-xl transition-all hover:border-primary/30 relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary to-transparent opacity-50" />
             <div className="mb-8 flex items-center justify-between">
               <div>
@@ -211,59 +188,6 @@ const Sense50Dashboard = () => {
                   />
                 </AreaChart>
               </ResponsiveContainer>
-            </div>
-          </div>
-
-          {/* Right Column - System Health & Terminal */}
-          <div className="col-span-12 lg:col-span-3 space-y-6">
-            {/* Health Module */}
-            <div className="rounded-2xl border border-white/10 bg-gradient-to-b from-slate-900/40 to-black/60 p-6 backdrop-blur-xl">
-              <div className="mb-6 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Layers className="h-4 w-4 text-primary" />
-                  <h3 className="font-heading text-lg font-bold text-white tracking-tight">Bridge Health</h3>
-                </div>
-                <div className="flex items-center gap-2 px-2 py-1 rounded-md bg-emerald-500/10 text-emerald-400 text-[10px] font-bold uppercase tracking-wider border border-emerald-500/20">
-                  <Server className="h-3 w-3" /> Stable
-                </div>
-              </div>
-              <div className="space-y-3">
-                {[
-                  { label: 'Latency', value: '12ms', color: 'bg-emerald-500' },
-                  { label: 'Sync', value: '99.9%', color: 'bg-emerald-500' },
-                  { label: 'API', value: '4.2k/s', color: 'bg-primary' },
-                  { label: 'Security', value: 'Active', color: 'bg-blue-500' },
-                ].map((item, idx) => (
-                  <div key={idx} className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5 text-xs">
-                    <div className="flex items-center gap-2">
-                      <div className={`h-1.5 w-1.5 rounded-full ${item.color}`} />
-                      <span className="text-slate-400">{item.label}</span>
-                    </div>
-                    <span className="font-mono font-bold text-white">{item.value}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* System Terminal Widget */}
-            <div className="rounded-2xl border border-white/10 bg-black p-4 backdrop-blur-xl font-mono overflow-hidden relative group">
-              <div className="absolute top-0 left-0 w-full h-1 bg-primary/30" />
-              <div className="flex items-center gap-2 mb-3 border-b border-white/10 pb-2">
-                <Terminal className="h-3 w-3 text-primary" />
-                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">System_Logs.sh</span>
-              </div>
-              <div className="space-y-2 h-[200px] overflow-y-auto scrollbar-hide">
-                {logs.map((log, idx) => (
-                  <div key={idx} className="text-[10px] leading-relaxed">
-                    <span className="text-slate-600 mr-2">[{new Date().toLocaleTimeString([], {hour12:false})}]</span>
-                    <span className={log.includes('ONLINE') || log.includes('verified') ? 'text-emerald-400' : 'text-slate-400'}>{log}</span>
-                  </div>
-                ))}
-                <div className="flex items-center gap-1">
-                  <span className="text-primary text-xs">❯</span>
-                  <div className="h-3 w-1 bg-primary animate-pulse" />
-                </div>
-              </div>
             </div>
           </div>
 

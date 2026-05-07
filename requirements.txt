@@ -9,7 +9,6 @@ python-dotenv
 python-jose[cryptography]
 passlib[bcrypt]
 python-multipart
-PyJWT
 requests
 pandas
 openpyxl

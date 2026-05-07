@@ -8,11 +8,11 @@ class ZKVerifierService:
         # In production, these would come from environment variables
         self.rpc_url = os.getenv("ZK_VERIFIER_RPC_URL", "http://127.0.0.1:8545")
         self.solvency_address = os.getenv("ZK_SOLVENCY_ADDRESS", "0x5FbDB2315678afecb367f032d93F642f64180aa3")
-        self.identity_address = os.getenv("ZK_IDENTITY_ADDRESS", "0x7FbDB2315678afecb367f032d93F64180aa3") # Example address
+        self.identity_address = os.getenv("ZK_IDENTITY_ADDRESS", "0x7FbDB2315678afecb367f032d93F642f64180aa3") # Example address
         self.escrow_address = os.getenv("ZK_ESCROW_ADDRESS", "0xYourEscrowAddressHere")
         self.admin_private_key = os.getenv("BLOCKCHAIN_ADMIN_KEY", "0xYourPrivateKeyHere")
         
-        self.w3 = Web3(Web3.HTTPProvider(self.rpc_url))
+        self._w3 = None
         
         # Generic Groth16 Verifier ABI
         self.verifier_abi = [
@@ -37,6 +37,13 @@ class ZKVerifierService:
             {"inputs": [{"internalType": "string", "name": "_tradeId", "type": "string"}], "name": "releaseAssets", "outputs": [], "stateMutability": "nonpayable", "type": "function"},
             {"inputs": [{"internalType": "string", "name": "_tradeId", "type": "string"}], "name": "getTradeStatus", "outputs": [{"internalType": "uint8", "name": "", "type": "uint8"}], "stateMutability": "view", "type": "function"}
         ]
+
+    @property
+    def w3(self):
+        """Lazy load Web3 provider to prevent server startup crash"""
+        if self._w3 is None:
+            self._w3 = Web3(Web3.HTTPProvider(self.rpc_url))
+        return self._w3
 
     async def _send_transaction(self, func_call):
         """Helper to sign and send transactions"""

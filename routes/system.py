@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
 from database import get_db
 from typing import Optional
+from utils.heartbeat_service import heartbeat_service
 
 router = APIRouter()
 
@@ -34,3 +35,24 @@ async def db_heartbeat(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Heartbeat failed: {str(e)}"
         )
+
+@router.post("/solvency-heartbeat/check")
+async def trigger_solvency_heartbeat(
+    x_system_key: str = Header(None),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Trigger the Automated Solvency Heartbeat check.
+    Flag users who missed their periodic zkTLS verification.
+    """
+    if x_system_key != HEARTBEAT_KEY: # Using same key for simplicity in demo
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Unauthorized system call"
+        )
+    
+    result = await heartbeat_service.check_and_flag_users(db)
+    return {
+        "status": "success",
+        "details": result
+    }

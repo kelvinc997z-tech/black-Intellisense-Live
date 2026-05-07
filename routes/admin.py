@@ -11,6 +11,55 @@ router = APIRouter()
 # In production, move this to .env
 ADMIN_SYNC_KEY = "sync_secret_99"
 
+@router.post("/approve-settlement")
+async def approve_settlement(
+    settlement_id: str,
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Multisig Approval: Add admin approval to a settlement.
+    If the settlement exceeds the threshold, multiple approvals are required.
+    """
+    if current_user.get("role") != "admin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required")
+
+    result = await db.execute(select(DBSettlement).where(DBSettlement.id == settlement_id))
+    settlement = result.scalar_one_or_none()
+    
+    if not settlement:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Settlement not found")
+    
+    approvals = settlement.approvals or []
+    if current_user["user_id"] in approvals:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Already approved by this admin")
+    
+    approvals.append(current_user["user_id"])
+    settlement.approvals = approvals
+    
+    # Logic: If amount > 100k, require 2 approvals to mark as APPROVED
+    threshold = 100000.0
+    if settlement.amount > threshold:
+        if len(approvals) >= 2:
+            settlement.status = SettlementStatus.APPROVED
+            settlement.approved_by = current_user["user_id"]
+            settlement.approved_at = datetime.now(timezone.utc)
+    else:
+        # Small trades only need 1 approval
+        settlement.status = SettlementStatus.APPROVED
+        settlement.approved_by = current_user["user_id"]
+        settlement.approved_at = datetime.now(timezone.utc)
+        
+    await db.commit()
+    await db.refresh(settlement)
+    
+    return {
+        "status": "success",
+        "current_approvals": len(approvals),
+        "required_approvals": 2 if settlement.amount > threshold else 1,
+        "settlement_status": settlement.status
+    }
+
 @router.post("/sync-db")
 async def sync_database(
     x_admin_key: str = Header(None),

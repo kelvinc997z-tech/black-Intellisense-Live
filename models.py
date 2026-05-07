@@ -159,6 +159,7 @@ class DBSettlement(Base):
     approved_by = Column(String, ForeignKey("users.id"), nullable=True)
     approved_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    approvals = Column(JSON, default=list) # New: List of admin IDs who approved this settlement
 
 class DBChatMessage(Base):
     __tablename__ = "chat_messages"
@@ -191,6 +192,8 @@ class DBUserVerification(Base):
     status = Column(String, default="verified")
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     expires_at = Column(DateTime, nullable=True)
+    is_heartbeat_active = Column(Boolean, default=False) # New: Track if this user is on the heartbeat schedule
+    last_heartbeat_at = Column(DateTime, nullable=True)   # New: Last successful solvency check
 
 class DBExchangeAPIConfig(Base):
     __tablename__ = "exchange_api_configs"

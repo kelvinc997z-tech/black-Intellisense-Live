@@ -5,6 +5,7 @@ from models import DBUserVerification, DBUser
 from routes.auth import get_current_user
 from database import get_db
 from utils.zk_service import zk_verifier
+from utils.heartbeat_service import heartbeat_service
 import uuid
 import os
 from datetime import datetime, timezone, timedelta
@@ -81,8 +82,8 @@ async def mock_verify_with_provider(proof: str, provider: str, data: Dict[str, A
 
 @router.post("/reclaim/request")
 async def create_reclaim_request(
-    current_user: dict = Depends(get_current_user),
-    trade_id: str # Now requiring trade_id to link the proof to an escrow trade
+    trade_id: str, # Move to front: parameter without default must come first
+    current_user: dict = Depends(get_current_user)
 ):
     """
     Initialize a Reclaim proof request and return the request URL.
@@ -218,11 +219,16 @@ async def verify_solvency(
         },
         status="verified",
         created_at=datetime.now(timezone.utc),
-        expires_at=datetime.now(timezone.utc) + timedelta(days=30)
+        expires_at=datetime.now(timezone.utc) + timedelta(days=30),
+        is_heartbeat_active=True,
+        last_heartbeat_at=datetime.now(timezone.utc)
     )
     
     db.add(verification_doc)
     await db.commit()
+
+    # Record in heartbeat service
+    await heartbeat_service.record_successful_heartbeat(db, current_user["user_id"])
     
     return {
         "message": "Solvency verified successfully!",

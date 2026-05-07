@@ -4,6 +4,7 @@ from sqlalchemy import select, desc
 from models import Order, OrderCreate, OrderStatus, OrderSide, SettlementStatus, DBOrder, DBUser, DBTrade, DBSettlement, DBUserVerification
 from routes.auth import get_current_user
 from database import get_db
+from utils.execution.sor import SmartOrderRouter, OrderManager
 import uuid
 from datetime import datetime, timezone
 from typing import List
@@ -104,13 +105,23 @@ async def create_order(data: OrderCreate, db: AsyncSession = Depends(get_db), cu
         order_id = str(uuid.uuid4())
         total = data.amount * data.price
         
+        # SECURITY & OPTIMIZATION: Use SOR to find best price if price is 0 (Market Order)
+        final_price = data.price
+        if final_price == 0:
+            sor = SmartOrderRouter(db)
+            best_quote = await sor.get_best_price(data.symbol, data.side)
+            if not best_quote:
+                raise HTTPException(status_code=400, detail="No liquidity found across connected exchanges")
+            final_price = best_quote["price"]
+            total = data.amount * final_price
+
         order_doc = DBOrder(
             id=order_id,
             user_id=current_user["user_id"],
             symbol=data.symbol,
             side=data.side,
             amount=data.amount,
-            price=data.price,
+            price=final_price,
             total=total,
             status=OrderStatus.PENDING,
             filled_amount=0.0,
@@ -121,12 +132,6 @@ async def create_order(data: OrderCreate, db: AsyncSession = Depends(get_db), cu
         db.add(order_doc)
         await db.commit()
         await db.refresh(order_doc)
-        
-        # --- Auto-Accept Engine (Temporarily Disabled for Debugging) ---
-        # auto_result = await auto_accept_order(order_id, db)
-        # if auto_result:
-        #     order_doc.status = OrderStatus.ACCEPTED
-        # --------------------------
         
         return order_doc
     except Exception as e:

@@ -10,7 +10,9 @@ import os
 from datetime import datetime, timezone, timedelta
 from pydantic import BaseModel
 from typing import Optional, Dict, Any, List
-from reclaim_python_sdk import verify_proof, Proof, ReclaimProofRequest
+
+# Move heavy imports inside functions to prevent server crash at startup
+# from reclaim_python_sdk import verify_proof, Proof, ReclaimProofRequest
 
 router = APIRouter()
 
@@ -33,6 +35,7 @@ async def verify_reclaim_proof(proof_data: Dict[str, Any]):
     Verifies a Reclaim Protocol proof using the Python SDK.
     """
     try:
+        from reclaim_python_sdk import verify_proof, Proof
         proof = Proof.from_json(proof_data)
         provider_id = os.getenv("RECLAIM_PROVIDER_ID", "your_default_provider_id")
         
@@ -76,6 +79,7 @@ async def create_reclaim_request(
     Initialize a Reclaim proof request and return the request URL.
     """
     try:
+        from reclaim_python_sdk import ReclaimProofRequest
         app_id = os.getenv("RECLAIM_APP_ID", "your_app_id")
         app_secret = os.getenv("RECLAIM_APP_SECRET", "your_app_secret")
         provider_id = os.getenv("RECLAIM_PROVIDER_ID", "your_provider_id")

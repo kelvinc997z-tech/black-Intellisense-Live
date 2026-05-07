@@ -37,3 +37,4 @@ backend/uploads/payment_proofs/
 .cursor/
 terminals/
 .vercel
+zk/

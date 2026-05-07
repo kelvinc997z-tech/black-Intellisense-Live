@@ -40,6 +40,13 @@ const Layout = ({ children }) => {
       ],
     },
     {
+      title: 'ADMIN CENTER',
+      items: [
+        { name: 'Command Center', icon: ShieldCheck, path: '/admin/command-center' },
+        { name: 'Audit Logs', icon: Receipt, path: '/admin/audit-logs' },
+      ],
+    },
+    {
       title: 'INTELLITRADE',
       items: [
         { name: 'Trading', icon: TrendingUp, path: '/intellitrade' },

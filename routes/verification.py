@@ -68,7 +68,16 @@ async def mock_verify_with_provider(proof: str, provider: str, data: Dict[str, A
 
     # ZK Pass specific mock logic
     if provider == "zkpass":
-        # ... (rest of the mock logic)
+        # ZK Pass usually involves verifying a 'Pass' against a specific schema
+        # For demo, we expect the proof to contain 'zkpass_proof_'
+        if proof.startswith("zkpass_proof_"):
+            return {
+                "status": "success",
+                "verified_data": data if data else {"verified_attribute": "account_balance", "value": 50000},
+                "proof_hash": f"zkp_{uuid.uuid4().hex[:12]}",
+                "schema": "ZKPASS_BALANCE_VERIFICATION_V1"
+            }
+        return {"status": "failed", "error": "ZK Pass proof is invalid or expired"}
 
 @router.post("/reclaim/request")
 async def create_reclaim_request(

@@ -5,7 +5,7 @@ import { formatCurrency, formatNumber } from '../lib/utils';
 import { 
   TrendingUp, TrendingDown, DollarSign, Activity, Clock, 
   Zap, ShieldAlert, Globe, Server, Cpu, ArrowUpRight,
-  BarChart3, Layers, Terminal
+  BarChart3, Layers, Terminal, Cpu as CpuIcon, Database, ShieldCheck
 } from 'lucide-react';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, 
@@ -17,10 +17,33 @@ const Sense50Dashboard = () => {
   const [activities, setActivities] = useState([]);
   const [priceHistory, setPriceHistory] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [logs, setLogs] = useState([
+    "System initialized...",
+    "Connecting to liquidity nodes...",
+    "US-EAST-1: ONLINE",
+    "EU-WEST-1: ONLINE",
+    "Handshaking with ZK-Layer..."
+  ]);
 
   useEffect(() => {
     fetchData();
+    const logInterval = setInterval(addRandomLog, 4000);
+    return () => clearInterval(logInterval);
   }, []);
+
+  const addRandomLog = () => {
+    const events = [
+      "Incoming liquidity flow: +12,400 USDT",
+      "zkTLS Proof verified for user_8821",
+      "Executing hedge for pair BTC/USDT",
+      "Node latency: 14ms (OPTIMAL)",
+      "Settling cross-chain batch #4412",
+      "API request burst handled: 2.1k req/s",
+      "Heartbeat signal received from NeonDB",
+      "Rotating encryption keys..."
+    ];
+    setLogs(prev => [...prev.slice(-10), events[Math.floor(Math.random() * events.length)]]);
+  };
 
   const fetchData = async () => {
     try {
@@ -55,52 +78,26 @@ const Sense50Dashboard = () => {
     );
   }
 
-  const statCards = [
-    {
-      title: 'Liquid Inventory',
-      value: formatCurrency(stats?.total_balance || 520000, 'USD'),
-      change: '+1.2%',
-      icon: DollarSign,
-      color: 'text-primary',
-      desc: 'Total USDT Available'
-    },
-    {
-      title: '24h Execution Volume',
-      value: formatCurrency(stats?.daily_volume || 148500, 'USD'),
-      icon: Activity,
-      color: 'text-cyan-400',
-      desc: 'Aggregate Flow'
-    },
-    {
-      title: 'Pending Settlements',
-      value: stats?.pending_settlements || 5,
-      icon: Clock,
-      color: 'text-amber-400',
-      desc: 'Awaiting Confirmation'
-    },
-  ];
-
   return (
     <Layout>
-      <div className="space-y-8 p-2 max-w-[1600px] mx-auto">
-        {/* Header Section */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-white/5 pb-8">
-          <div className="space-y-2">
+      <div className="p-4 max-w-[1800px] mx-auto space-y-6">
+        {/* HUD Header */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 items-center border border-white/10 bg-black/40 p-6 rounded-2xl backdrop-blur-md relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 blur-3xl pointer-events-none" />
+          <div className="lg:col-span-2 space-y-1">
             <div className="flex items-center gap-2 text-primary font-mono text-[10px] uppercase tracking-[0.3em] font-bold">
-              <Zap className="h-3 w-3" />
+              <Zap className="h-3 w-3 animate-pulse" />
               System Status: <span className="text-emerald-400">Operational</span>
             </div>
-            <h1 className="font-heading text-6xl font-black tracking-tighter text-white">
+            <h1 className="font-heading text-5xl font-black tracking-tighter text-white">
               SENSE<span className="text-primary">50</span>
             </h1>
-            <p className="text-slate-500 font-medium max-w-md text-sm leading-relaxed">
-              Enterprise Bridge Engine for Real-time Liquidity Aggregation, 
-              Cross-Chain Settlement, and High-Frequency Execution.
+            <p className="text-slate-500 font-medium text-xs max-w-sm leading-relaxed">
+              Institutional Bridge Engine • Real-time Liquidity Aggregation • High-Frequency Execution
             </p>
           </div>
-          
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-4 px-4 py-2 rounded-lg border border-white/10 bg-black/40 backdrop-blur-md shadow-2xl">
+          <div className="lg:col-span-2 flex flex-wrap gap-3 justify-end">
+            <div className="flex items-center gap-4 px-4 py-2 rounded-lg border border-white/10 bg-black/60 backdrop-blur-md">
               <div className="flex items-center gap-2">
                 <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 <span className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider">Node: US-EAST-1</span>
@@ -114,39 +111,53 @@ const Sense50Dashboard = () => {
           </div>
         </div>
 
-        {/* Metrics Grid */}
-        <div className="grid gap-6 md:grid-cols-3">
-          {statCards.map((stat, idx) => (
-            <div 
-              key={idx} 
-              className="group relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/60 to-black/80 p-6 backdrop-blur-2xl transition-all duration-500 hover:border-primary/40 hover:shadow-[0_0_40px_rgba(6,182,212,0.1)]"
-            >
-              <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-primary/5 blur-3xl transition-all group-hover:bg-primary/10" />
-              <div className="relative z-10 flex items-start justify-between">
-                <div className="space-y-3">
-                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">{stat.title}</p>
-                  <p className="font-mono text-4xl font-black text-white tracking-tight">{stat.value}</p>
+        {/* Bento Grid Layout */}
+        <div className="grid grid-cols-12 grid-rows-auto gap-6">
+          
+          {/* Main Metrics - Large Cards */}
+          <div className="col-span-12 lg:col-span-4 grid gap-6">
+            <div className="group relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/60 to-black/80 p-6 backdrop-blur-2xl transition-all hover:border-primary/40">
+              <div className="flex items-start justify-between">
+                <div className="space-y-1">
+                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">Liquid Inventory</p>
+                  <p className="font-mono text-4xl font-black text-white tracking-tight">{formatCurrency(stats?.total_balance || 520000, 'USD')}</p>
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-medium text-slate-600 uppercase tracking-wider">{stat.desc}</span>
-                    {stat.change && (
-                      <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded border border-emerald-400/20">
-                        <TrendingUp className="h-3 w-3" /> {stat.change}
-                      </span>
-                    )}
+                    <span className="text-[10px] font-medium text-slate-600 uppercase tracking-wider">Total USDT Available</span>
+                    <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded border border-emerald-400/20">
+                      <TrendingUp className="h-3 w-3" /> +1.2%
+                    </span>
                   </div>
                 </div>
-                <div className={`rounded-xl bg-slate-800/50 p-3 transition-all duration-500 group-hover:scale-110 group-hover:bg-slate-800 ${stat.color}`}>
-                  <stat.icon className="h-6 w-6" />
-                </div>
+                <div className="rounded-xl bg-slate-800/50 p-3 text-primary"><DollarSign className="h-6 w-6" /></div>
               </div>
             </div>
-          ))}
-        </div>
 
-        {/* Analysis Center */}
-        <div className="grid gap-6 lg:grid-cols-2">
-          {/* Price Analysis */}
-          <div className="rounded-2xl border border-white/10 bg-gradient-to-b from-slate-900/40 to-black/60 p-6 backdrop-blur-xl transition-all duration-300 hover:border-primary/30">
+            <div className="group relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/60 to-black/80 p-6 backdrop-blur-2xl transition-all hover:border-primary/40">
+              <div className="flex items-start justify-between">
+                <div className="space-y-1">
+                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">24h Volume</p>
+                  <p className="font-mono text-4xl font-black text-white tracking-tight">{formatCurrency(stats?.daily_volume || 148500, 'USD')}</p>
+                  <p className="text-[10px] font-medium text-slate-600 uppercase tracking-wider">Aggregate Flow</p>
+                </div>
+                <div className="rounded-xl bg-slate-800/50 p-3 text-cyan-400"><Activity className="h-6 w-6" /></div>
+              </div>
+            </div>
+
+            <div className="group relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/60 to-black/80 p-6 backdrop-blur-2xl transition-all hover:border-primary/40">
+              <div className="flex items-start justify-between">
+                <div className="space-y-1">
+                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">Pending Settlements</p>
+                  <p className="font-mono text-4xl font-black text-white tracking-tight">{stats?.pending_settlements || 5}</p>
+                  <p className="text-[10px] font-medium text-slate-600 uppercase tracking-wider">Awaiting Confirmation</p>
+                </div>
+                <div className="rounded-xl bg-slate-800/50 p-3 text-amber-400"><Clock className="h-6 w-6" /></div>
+              </div>
+            </div>
+          </div>
+
+          {/* Center Analysis - Large Chart */}
+          <div className="col-span-12 lg:col-span-5 rounded-2xl border border-white/10 bg-gradient-to-b from-slate-900/40 to-black/60 p-6 backdrop-blur-xl transition-all hover:border-primary/30 relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary to-transparent opacity-50" />
             <div className="mb-8 flex items-center justify-between">
               <div>
                 <div className="flex items-center gap-2 mb-1">
@@ -159,7 +170,7 @@ const Sense50Dashboard = () => {
                 <Globe className="h-3 w-3" /> Global
               </div>
             </div>
-            <div className="h-[320px] w-full">
+            <div className="h-[400px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={priceHistory}>
                   <defs>
@@ -203,109 +214,105 @@ const Sense50Dashboard = () => {
             </div>
           </div>
 
-          {/* System Health */}
-          <div className="rounded-2xl border border-white/10 bg-gradient-to-b from-slate-900/40 to-black/60 p-6 backdrop-blur-xl">
-            <div className="mb-8 flex items-center justify-between">
+          {/* Right Column - System Health & Terminal */}
+          <div className="col-span-12 lg:col-span-3 space-y-6">
+            {/* Health Module */}
+            <div className="rounded-2xl border border-white/10 bg-gradient-to-b from-slate-900/40 to-black/60 p-6 backdrop-blur-xl">
+              <div className="mb-6 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Layers className="h-4 w-4 text-primary" />
+                  <h3 className="font-heading text-lg font-bold text-white tracking-tight">Bridge Health</h3>
+                </div>
+                <div className="flex items-center gap-2 px-2 py-1 rounded-md bg-emerald-500/10 text-emerald-400 text-[10px] font-bold uppercase tracking-wider border border-emerald-500/20">
+                  <Server className="h-3 w-3" /> Stable
+                </div>
+              </div>
+              <div className="space-y-3">
+                {[
+                  { label: 'Latency', value: '12ms', color: 'bg-emerald-500' },
+                  { label: 'Sync', value: '99.9%', color: 'bg-emerald-500' },
+                  { label: 'API', value: '4.2k/s', color: 'bg-primary' },
+                  { label: 'Security', value: 'Active', color: 'bg-blue-500' },
+                ].map((item, idx) => (
+                  <div key={idx} className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5 text-xs">
+                    <div className="flex items-center gap-2">
+                      <div className={`h-1.5 w-1.5 rounded-full ${item.color}`} />
+                      <span className="text-slate-400">{item.label}</span>
+                    </div>
+                    <span className="font-mono font-bold text-white">{item.value}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* System Terminal Widget */}
+            <div className="rounded-2xl border border-white/10 bg-black p-4 backdrop-blur-xl font-mono overflow-hidden relative group">
+              <div className="absolute top-0 left-0 w-full h-1 bg-primary/30" />
+              <div className="flex items-center gap-2 mb-3 border-b border-white/10 pb-2">
+                <Terminal className="h-3 w-3 text-primary" />
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">System_Logs.sh</span>
+              </div>
+              <div className="space-y-2 h-[200px] overflow-y-auto scrollbar-hide">
+                {logs.map((log, idx) => (
+                  <div key={idx} className="text-[10px] leading-relaxed">
+                    <span className="text-slate-600 mr-2">[{new Date().toLocaleTimeString([], {hour12:false})}]</span>
+                    <span className={log.includes('ONLINE') || log.includes('verified') ? 'text-emerald-400' : 'text-slate-400'}>{log}</span>
+                  </div>
+                ))}
+                <div className="flex items-center gap-1">
+                  <span className="text-primary text-xs">❯</span>
+                  <div className="h-3 w-1 bg-primary animate-pulse" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom Ledger - Full Width */}
+          <div className="col-span-12 rounded-2xl border border-white/10 bg-gradient-to-b from-slate-900/40 to-black/60 backdrop-blur-xl overflow-hidden transition-all duration-300 hover:border-primary/30 shadow-2xl">
+            <div className="border-b border-white/10 p-6 flex items-center justify-between bg-white/[0.02]">
               <div>
                 <div className="flex items-center gap-2 mb-1">
-                  <Layers className="h-4 w-4 text-primary" />
-                  <h3 className="font-heading text-xl font-bold text-white tracking-tight">Bridge Health</h3>
+                  <Terminal className="h-4 w-4 text-primary" />
+                  <h3 className="font-heading text-xl font-bold text-white tracking-tight">Execution Ledger</h3>
                 </div>
-                <p className="text-xs text-slate-500 font-medium">Execution latency and node stability monitoring</p>
+                <p className="text-xs text-slate-500 font-medium">Real-time trade settlements and bridge flows</p>
               </div>
-              <div className="flex items-center gap-2 px-3 py-1 rounded-md bg-emerald-500/10 text-emerald-400 text-[10px] font-bold uppercase tracking-wider border border-emerald-500/20">
-                <Server className="h-3 w-3" /> Stable
-              </div>
+              <button className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-white text-xs font-bold transition-all border border-white/10 font-mono uppercase tracking-wider">
+                Export CSV <ArrowUpRight className="h-3 w-3" />
+              </button>
             </div>
-            <div className="space-y-4">
-              {[
-                { label: 'Execution Latency', value: '12ms', status: 'Optimal', color: 'bg-emerald-500' },
-                { label: 'Node Synchronization', value: '99.9%', status: 'Perfect', color: 'bg-emerald-500' },
-                { label: 'API Throughput', value: '4.2k req/s', status: 'Normal', color: 'bg-primary' },
-                { label: 'Security Layer', value: 'Active', status: 'Encrypted', color: 'bg-blue-500' },
-              ].map((item, idx) => (
-                <div key={idx} className="group flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/5 transition-all hover:border-white/10 hover:bg-white/10">
-                  <div className="flex items-center gap-3">
-                    <div className={`h-1.5 w-1.5 rounded-full ${item.color} shadow-[0_0_8px_rgba(0,0,0,0.5)]`} />
-                    <span className="text-sm font-medium text-slate-300 tracking-wide">{item.label}</span>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <span className="font-mono text-sm font-bold text-white">{item.value}</span>
-                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">{item.status}</span>
-                  </div>
-                </div>
-              ))}
-              <div className="pt-4">
-                <div className="rounded-xl bg-primary/5 border border-primary/20 p-4 flex items-center gap-3 transition-all hover:bg-primary/10">
-                  <ShieldAlert className="h-5 w-5 text-primary" />
-                  <p className="text-xs text-slate-400 font-medium leading-relaxed">
-                    Automated hedging active. Volatility protection enabled for all USDT pairs.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Activity Ledger */}
-        <div className="rounded-2xl border border-white/10 bg-gradient-to-b from-slate-900/40 to-black/60 backdrop-blur-xl overflow-hidden transition-all duration-300 hover:border-primary/30 shadow-2xl">
-          <div className="border-b border-white/10 p-6 flex items-center justify-between bg-white/[0.02]">
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <Terminal className="h-4 w-4 text-primary" />
-                <h3 className="font-heading text-xl font-bold text-white tracking-tight">Execution Ledger</h3>
-              </div>
-              <p className="text-xs text-slate-500 font-medium">Real-time trade settlements and bridge flows</p>
-            </div>
-            <button className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-white text-xs font-bold transition-all border border-white/10 font-mono uppercase tracking-wider">
-              Export CSV <ArrowUpRight className="h-3 w-3" />
-            </button>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-white/10 bg-white/[0.03] text-left">
-                  <th className="p-4 font-mono text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">Timestamp</th>
-                  <th className="p-4 font-mono text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">Counterparty</th>
-                  <th className="p-4 font-mono text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">Type</th>
-                  <th className="p-4 font-mono text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">Amount</th>
-                  <th className="p-4 font-mono text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/5">
-                {activities.map((activity, idx) => (
-                  <tr key={idx} className="transition-colors hover:bg-white/5 group">
-                    <td className="p-4 font-mono text-xs text-slate-400">{activity.time}</td>
-                    <td className="p-4 font-mono text-sm font-bold text-white">{activity.client}</td>
-                    <td className="p-4">
-                      <span
-                        className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase ${
-                          activity.type === 'Buy'
-                            ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                            : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
-                        }`}
-                      >
-                        {activity.type === 'Buy' ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}\n                        {activity.type}\n                      </span>
-                    </td>
-                    <td className="p-4 font-mono text-sm font-bold text-white">
-                      {formatNumber(activity.amount)} <span className="text-slate-500 font-normal text-xs ml-1">USDT</span>
-                    </td>
-                    <td className="p-4">
-                      <span
-                        className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase ${
-                          activity.status === 'Completed'
-                            ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                            : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-                        }`}
-                      >
-                        <div className={`h-1 w-1 rounded-full ${activity.status === 'Completed' ? 'bg-emerald-400' : 'bg-amber-400'} animate-pulse`} />
-                        {activity.status}
-                      </span>
-                    </td>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-white/10 bg-white/[0.03] text-left">
+                    <th className="p-4 font-mono text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">Timestamp</th>
+                    <th className="p-4 font-mono text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">Counterparty</th>
+                    <th className="p-4 font-mono text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">Type</th>
+                    <th className="p-4 font-mono text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">Amount</th>
+                    <th className="p-4 font-mono text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">Status</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {activities.map((activity, idx) => (
+                    <tr key={idx} className="transition-colors hover:bg-white/5 group">
+                      <td className="p-4 font-mono text-xs text-slate-400">{activity.time}</td>
+                      <td className="p-4 font-mono text-sm font-bold text-white">{activity.client}</td>
+                      <td className="p-4">
+                        <span
+                          className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase ${\n                            activity.type === 'Buy'\n                              ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'\n                              : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'\n                          }`}\n                        >\n                          {activity.type === 'Buy' ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}\n                          {activity.type}\n                        </span>
+                      </td>
+                      <td className="p-4 font-mono text-sm font-bold text-white">
+                        {formatNumber(activity.amount)} <span className="text-slate-500 font-normal text-xs ml-1">USDT</span>
+                      </td>
+                      <td className="p-4">
+                        <span
+                          className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase ${\n                            activity.status === 'Completed'\n                              ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'\n                              : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'\n                          }`}\n                        >\n                          <div className={`h-1 w-1 rounded-full ${activity.status === 'Completed' ? 'bg-emerald-400' : 'bg-amber-400'} animate-pulse`} />\n                          {activity.status}\n                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>

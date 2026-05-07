@@ -1,0 +1,120 @@
+:root {
+  --bg-deep: #0a0b10;
+  --bg-card: #11131c;
+  --primary-neon: #00f2ff;
+  --secondary-neon: #7000ff;
+  --border-glass: rgba(255, 255, 255, 0.08);
+  --text-muted: #8b949e;
+  --text-foreground: #e6edf3;
+  --accent-glow: rgba(0, 242, 255, 0.15);
+}
+
+body {
+  background-color: var(--bg-deep);
+  color: var(--text-foreground);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Monospace for data/terminal feel */
+.font-mono {
+  font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace !important;
+}
+
+/* Terminal Typing Animation */
+@keyframes typing {
+  from { width: 0 }
+  to { width: 100% }
+}
+
+.animate-typing {
+  overflow: hidden;
+  white-space: nowrap;
+  border-right: 2px solid var(--primary-neon);
+  animation: typing 2s steps(40, end), blink-caret .75s step-end infinite;
+}
+
+@keyframes blink-caret {
+  from, to { border-color: transparent }
+  50% { border-color: var(--primary-neon); }
+}
+
+/* Scanning Effect */
+.scan-line {
+  position: absolute;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(to right, transparent, var(--primary-neon), transparent);
+  top: 0;
+  left: 0;
+  animation: scan 3s linear infinite;
+  z-index: 10;
+  opacity: 0.5;
+}
+
+@keyframes scan {
+  0% { top: 0% }
+  100% { top: 100% }
+}
+
+/* Glassmorphism Utility */
+.glass-panel {
+  background: rgba(17, 19, 28, 0.7);
+  backdrop-filter: blur(12px) saturate(180%);
+  -webkit-backdrop-filter: blur(12px) saturate(180%);
+  border: 1px solid var(--border-glass);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
+/* Ambient Glow Effect */
+.ambient-glow {
+  position: fixed;
+  width: 40vw;
+  height: 40vw;
+  background: radial-gradient(circle, var(--accent-glow) 0%, rgba(0, 0, 0, 0) 70%);
+  border-radius: 50%;
+  filter: blur(60px);
+  z-index: -1;
+  pointer-events: none;
+}
+
+.glow-top-right {
+  top: -10vw;
+  right: -10vw;
+}
+
+.glow-bottom-left {
+  bottom: -10vw;
+  left: -10vw;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-deep);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-glass);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-neon);
+}
+
+/* Neon Text Glow */
+.text-neon {
+  color: var(--primary-neon);
+  text-shadow: 0 0 8px var(--accent-glow);
+}
+
+/* Transition smooth */
+.transition-smooth {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}

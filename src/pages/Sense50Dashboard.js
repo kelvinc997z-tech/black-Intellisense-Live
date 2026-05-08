@@ -54,7 +54,6 @@ const Sense50Dashboard = () => {
         api.get('/wallets/total-balance')
       ]);
 
-      // Extract data safely from Promise.allSettled
       const statsData = statsRes.status === 'fulfilled' ? statsRes.value.data : null;
       const activitiesData = activitiesRes.status === 'fulfilled' ? activitiesRes.value.data : { activities: [] };
       const historyData = historyRes.status === 'fulfilled' ? historyRes.value.data : { history: [] };
@@ -84,13 +83,11 @@ const Sense50Dashboard = () => {
     );
   }
 
-  // Defensive check for priceHistory to prevent chart crash
   const safePriceHistory = Array.isArray(priceHistory) ? priceHistory : [];
 
   return (
     <Layout>
       <div className="p-4 max-w-[1800px] mx-auto space-y-6">
-        {/* HUD Header */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 items-center border border-white/10 bg-black/40 p-6 rounded-2xl backdrop-blur-md relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 blur-3xl pointer-events-none" />
           <div className="lg:col-span-2 space-y-1">
@@ -120,19 +117,14 @@ const Sense50Dashboard = () => {
           </div>
         </div>
 
-        {/* Bento Grid Layout */}
         <div className="grid grid-cols-12 grid-rows-auto gap-6">
-          
-          {/* Main Metrics - Large Cards */}
           <div className="col-span-12 lg:col-span-4 grid gap-6">
             <div className="group relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/60 to-black/80 p-6 backdrop-blur-2xl transition-all hover:border-primary/40">
               <div className="flex items-start justify-between">
                 <div className="space-y-1">
                   <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">Liquid Inventory</p>
                   <p className="font-mono text-4xl font-black text-white tracking-tight">
-                    {stats?.total_balance !== undefined 
-                      ? formatCurrency(stats.total_balance, 'USD') 
-                      : '520,000.00 USD'}
+                    {stats?.total_balance !== undefined ? formatCurrency(stats.total_balance, 'USD') : '520,000.00 USD'}
                   </p>
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] font-medium text-slate-600 uppercase tracking-wider">Total USDT Available</span>
@@ -145,7 +137,6 @@ const Sense50Dashboard = () => {
               </div>
             </div>
 
-            {/* Wallet Asset Quick-View */}
             <div className="group relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/60 to-black/80 p-6 backdrop-blur-2xl transition-all hover:border-primary/40">
               <div className="flex items-start justify-between">
                 <div className="space-y-2">
@@ -172,9 +163,7 @@ const Sense50Dashboard = () => {
                 <div className="space-y-1">
                   <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">24h Volume</p>
                   <p className="font-mono text-4xl font-black text-white tracking-tight">
-                    {stats?.daily_volume !== undefined 
-                      ? formatCurrency(stats.daily_volume, 'USD') 
-                      : '148,500.00 USD'}
+                    {stats?.daily_volume !== undefined ? formatCurrency(stats.daily_volume, 'USD') : '148,500.00 USD'}
                   </p>
                   <p className="text-[10px] font-medium text-slate-600 uppercase tracking-wider">Aggregate Flow</p>
                 </div>
@@ -194,7 +183,6 @@ const Sense50Dashboard = () => {
             </div>
           </div>
 
-          {/* Center Analysis - Large Chart */}
           <div className="col-span-12 lg:col-span-8 rounded-2xl border border-white/10 bg-gradient-to-b from-slate-900/40 to-black/60 p-6 backdrop-blur-xl transition-all hover:border-primary/30 relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary to-transparent opacity-50" />
             <div className="mb-8 flex items-center justify-between">
@@ -259,7 +247,6 @@ const Sense50Dashboard = () => {
             </div>
           </div>
 
-          {/* Bottom Ledger - Full Width */}
           <div className="col-span-12 rounded-2xl border border-white/10 bg-gradient-to-b from-slate-900/40 to-black/60 backdrop-blur-xl overflow-hidden transition-all duration-300 hover:border-primary/30 shadow-2xl">
             <div className="border-b border-white/10 p-6 flex items-center justify-between bg-white/[0.02]">
               <div>

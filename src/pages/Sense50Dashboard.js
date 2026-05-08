@@ -26,14 +26,15 @@ const Sense50Dashboard = () => {
 
   useEffect(() => {
     fetchData();
-    if (user?.address) {
-      updateWalletBalances();
+    const userAddr = user?.web3_address || user?.address;
+    if (userAddr) {
+      updateWalletBalances(userAddr);
     }
   }, [user]);
 
-  const updateWalletBalances = async () => {
+  const updateWalletBalances = async (address) => {
     try {
-      const balances = await fetchWalletBalances(user.address);
+      const balances = await fetchWalletBalances(address);
       setWalletBalances(balances);
     } catch (e) {
       console.error('Balance update error:', e);

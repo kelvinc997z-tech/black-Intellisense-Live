@@ -6,9 +6,11 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '../contexts/AuthContext';
+import { MoonPayWidget } from '../lib/moonpay';
 
 const OnrampPage = () => {
   const { user } = useAuth();
+  const { handleOnramp, handleOfframp } = MoonPayWidget({ address: user?.address });
   const [mode, setMode] = useState('onramp'); // 'onramp' or 'offramp'
   const [amount, setAmount] = useState('');
   const [currency, setCurrency] = useState('USDT');
@@ -23,24 +25,12 @@ const OnrampPage = () => {
 
     setLoading(true);
     try {
-      // Integration with Reown/WalletConnect Onramp would typically happen here
-      // For now, we simulate the process or redirect to a provider like MoonPay/Ramp
       if (mode === 'onramp') {
-        // Simulation: Redirect to a provider's embedded widget
-        toast.info('Redirecting to secure Onramp provider...');
-        // window.location.href = `https://ramp.network/buy?wallet=${user.address}&amount=${amount}...`;
+        handleOnramp();
+        toast.success('Redirecting to MoonPay Deposit...');
       } else {
-        // Offramp usually requires a backend request for institutional platforms
-        await fetch('/api/withdraw', {
-          method: 'POST',
-          body: JSON.stringify({
-            userId: user.id,
-            amount,
-            currency,
-            type: 'offramp'
-          })
-        });
-        toast.success('Withdrawal request submitted for review.');
+        handleOfframp();
+        toast.success('Redirecting to MoonPay Withdrawal...');
       }
     } catch (error) {
       toast.error('Transaction failed. Please try again.');

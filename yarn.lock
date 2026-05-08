@@ -1302,6 +1302,27 @@
   resolved "https://registry.npmjs.org/@eslint/js/-/js-8.57.1.tgz"
   integrity sha512-d9zaMRSTIKDLhctzH12MtXvJKSSUhaHcjV+2Z+GK+EEY7XKpP5yR4x+N3TAcHTcu963nIr+TMcCb4DBCYX1z6Q==
 
+"@ethersproject/bytes@^5.8.0":
+  version "5.8.0"
+  resolved "https://registry.npmjs.org/@ethersproject/bytes/-/bytes-5.8.0.tgz"
+  integrity sha512-vTkeohgJVCPVHu5c25XWaWQOZ4v+DkGoC42/TS2ond+PARCxTJvgTFUNDZovyQ/uAQ4EcpqqowKydcdmRKjg7A==
+  dependencies:
+    "@ethersproject/logger" "^5.8.0"
+
+"@ethersproject/logger@^5.8.0":
+  version "5.8.0"
+  resolved "https://registry.npmjs.org/@ethersproject/logger/-/logger-5.8.0.tgz"
+  integrity sha512-Qe6knGmY+zPPWTC+wQrpitodgBfH7XoceCGL5bJVejmH+yCS3R8jJm8iiWuvWbG76RUmyEG53oqv6GMVWqunjA==
+
+"@ethersproject/sha2@5.8.0":
+  version "5.8.0"
+  resolved "https://registry.npmjs.org/@ethersproject/sha2/-/sha2-5.8.0.tgz"
+  integrity sha512-dDOUrXr9wF/YFltgTBYS0tKslPEKr6AekjqDW2dbn1L1xmjGR+9GiKu4ajxovnrDbwxAKdHjW8jNcwfz8PAz4A==
+  dependencies:
+    "@ethersproject/bytes" "^5.8.0"
+    "@ethersproject/logger" "^5.8.0"
+    hash.js "1.1.7"
+
 "@humanwhocodes/config-array@^0.13.0":
   version "0.13.0"
   resolved "https://registry.npmjs.org/@humanwhocodes/config-array/-/config-array-0.13.0.tgz"
@@ -1879,6 +1900,21 @@
   resolved "https://registry.npmjs.org/@remix-run/router/-/router-1.23.2.tgz"
   integrity sha512-Ic6m2U/rMjTkhERIa/0ZtXJP17QUi2CbWE7cqx4J58M8aA3QTfW+2UlQ4psvTX9IO1RfNVhK3pcpdjej7L+t2w==
 
+"@reown/appkit-adapter-ethers@^1.8.19":
+  version "1.8.19"
+  resolved "https://registry.npmjs.org/@reown/appkit-adapter-ethers/-/appkit-adapter-ethers-1.8.19.tgz"
+  integrity sha512-rdN2LVVMyTWPPqXL/hwrydv2AAheNtZVE9G4C9NGVXxpN4y6T9qsPtuMBajvUfbL1iMOXN91wOEJBH9BiiDodQ==
+  dependencies:
+    "@reown/appkit" "1.8.19"
+    "@reown/appkit-common" "1.8.19"
+    "@reown/appkit-controllers" "1.8.19"
+    "@reown/appkit-polyfills" "1.8.19"
+    "@reown/appkit-scaffold-ui" "1.8.19"
+    "@reown/appkit-utils" "1.8.19"
+    "@reown/appkit-wallet" "1.8.19"
+    "@walletconnect/universal-provider" "2.23.7"
+    valtio "2.1.7"
+
 "@reown/appkit-common@1.8.19":
   version "1.8.19"
   resolved "https://registry.npmjs.org/@reown/appkit-common/-/appkit-common-1.8.19.tgz"
@@ -1972,7 +2008,7 @@
     "@walletconnect/logger" "3.0.2"
     zod "3.22.4"
 
-"@reown/appkit@^1.8.19":
+"@reown/appkit@^1.8.19", "@reown/appkit@1.8.19":
   version "1.8.19"
   resolved "https://registry.npmjs.org/@reown/appkit/-/appkit-1.8.19.tgz"
   integrity sha512-wB+xatkRbOy0AY1cZxxtcKzzPk3l3CTFulDbaISLVmZI6ZnQrOFuLnYc285zGsC6DB4d6bmwYUh89zcMLa4PvQ==
@@ -5925,7 +5961,7 @@ etag@~1.8.1:
   resolved "https://registry.npmjs.org/etag/-/etag-1.8.1.tgz"
   integrity sha512-aIL5Fx7mawVa300al2BnEE4iNvo1qETxLrPI/o05L7z6go7fCw1J6EQmbK4FmJ2AS7kgVF/KEZWufBfdClMcPg==
 
-ethers@^6.16.0:
+ethers@^6.16.0, ethers@>=6:
   version "6.16.0"
   resolved "https://registry.npmjs.org/ethers/-/ethers-6.16.0.tgz"
   integrity sha512-U1wulmetNymijEhpSEQ7Ct/P/Jw9/e7R1j5XIbPRydgV2DjLVMsULDlNksq3RQnFgKoLlZf88ijYtWEXcPa07A==
@@ -6556,6 +6592,14 @@ has-tostringtag@^1.0.2:
   integrity sha512-NqADB8VjPFLM2V0VvHUewwwsw0ZWBaIdgo+ieHtK3hasLz4qeCRjYcqfB6AQrBggRKppKF8L52/VqdVsO47Dlw==
   dependencies:
     has-symbols "^1.0.3"
+
+hash.js@1.1.7:
+  version "1.1.7"
+  resolved "https://registry.npmjs.org/hash.js/-/hash.js-1.1.7.tgz"
+  integrity sha512-taOaskGt4z4SOANNseOviYDvjEJinIkRgmp7LbKP2YTTmVxWBl87s/uzK9r+44BclBSp2X7K1hqeNfz9JbBeXA==
+  dependencies:
+    inherits "^2.0.3"
+    minimalistic-assert "^1.0.1"
 
 hasown@^2.0.2:
   version "2.0.2"
@@ -8151,7 +8195,7 @@ mini-css-extract-plugin@^2.4.5:
     schema-utils "^4.0.0"
     tapable "^2.2.1"
 
-minimalistic-assert@^1.0.0:
+minimalistic-assert@^1.0.0, minimalistic-assert@^1.0.1:
   version "1.0.1"
   resolved "https://registry.npmjs.org/minimalistic-assert/-/minimalistic-assert-1.0.1.tgz"
   integrity sha512-UtJcAD4yEaGtjPezWuO9wC4nwUnVH/8/Im3yEHQP4b67cXlD/Qr9hdITCU1xDbSEXg2XKNaP8jsReV7vQd00/A==

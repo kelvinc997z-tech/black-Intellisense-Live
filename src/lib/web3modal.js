@@ -1,5 +1,6 @@
 import { createAppKit } from '@reown/appkit/react';
-import { defaultConfig } from '@reown/appkit/react';
+import { mainnet, polygon, arbitrum } from '@reown/appkit/networks';
+import { EthersAdapter } from '@reown/appkit-adapter-ethers';
 
 export const projectId = '2584923e5deca98b6b6cafe381ee9096';
 
@@ -15,7 +16,8 @@ let modalInstance = null;
 export const initWeb3Modal = () => {
   try {
     modalInstance = createAppKit({
-      ethersConfig: defaultConfig(),
+      adapters: [new EthersAdapter()],
+      networks: [mainnet, polygon, arbitrum],
       metadata,
       projectId,
       enableAnalytics: false,

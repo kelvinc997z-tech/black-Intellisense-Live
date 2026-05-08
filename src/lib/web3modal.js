@@ -1,3 +1,4 @@
+import React from 'react';
 import { createWeb3Modal } from '@web3modal/ethers/react';
 import { defaultConfig } from '@web3modal/ethers/react';
 
@@ -17,11 +18,21 @@ export const web3ModalConfig = {
   enableAnalytics: false,
 };
 
-export const initWeb3Modal = () => {
-  createWeb3Modal({
-    ethersConfig: defaultConfig(),
-    metadata,
-    projectId,
-    enableAnalytics: false,
-  });
+export const Web3ModalProvider = ({ children }) => {
+  try {
+    // Initialize Web3Modal only once
+    if (!window.__WEB3_MODAL_INITIALIZED__) {
+      createWeb3Modal({
+        ethersConfig: defaultConfig(),
+        metadata,
+        projectId,
+        enableAnalytics: false,
+      });
+      window.__WEB3_MODAL_INITIALIZED__ = true;
+    }
+  } catch (error) {
+    console.error('Web3Modal Initialization Error:', error);
+  }
+
+  return <>{children}</>;
 };

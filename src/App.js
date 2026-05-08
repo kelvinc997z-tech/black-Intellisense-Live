@@ -18,6 +18,7 @@ import PriceFeedsPage from './pages/PriceFeedsPage';
 import WalletsPage from './pages/WalletsPage';
 import AdminCommandCenter from './pages/AdminCommandCenter';
 import AuditLogsPage from './pages/AuditLogsPage';
+import FiatSettlements from './pages/FiatSettlements';
 import IntelliTradePage from './pages/IntelliTradePage';
 import OrderManagementPage from './pages/OrderManagementPage';
 import MarkCRMPage from './pages/MarkCRMPage';
@@ -59,6 +60,14 @@ function App() {
               element={
                 <PrivateRoute>
                   <AuditLogsPage />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/admin/fiat-settlements"
+              element={
+                <PrivateRoute>
+                  <FiatSettlements />
                 </PrivateRoute>
               }
             />

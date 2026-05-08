@@ -80,6 +80,7 @@ routes_to_load = [
     ("Payment Automation", "routes.payment_automation", "/api/payments/automation", ["Payment Automation"]),
     ("Admin", "routes.admin", "/api/admin", ["Admin"]),
     ("System", "routes.system", "/api/system", ["System"]),
+    ("Fiat Gateway", "routes.fiat", "/api/fiat", ["Fiat"]),
 ]
 
 for name, path, prefix, tags in routes_to_load:

@@ -45,6 +45,16 @@ class SettlementStatus(str, Enum):
     COMPLETED = "completed"
     REJECTED = "rejected"
 
+class FiatRequestType(str, Enum):
+    DEPOSIT = "deposit"
+    WITHDRAWAL = "withdrawal"
+
+class FiatRequestStatus(str, Enum):
+    PENDING = "pending"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+    COMPLETED = "completed"
+
 # --- SQLAlchemy Models (Simplified Style) ---
 
 class DBUser(Base):
@@ -195,6 +205,30 @@ class DBUserVerification(Base):
     expires_at = Column(DateTime, nullable=True)
     is_heartbeat_active = Column(Boolean, default=False) # New: Track if this user is on the heartbeat schedule
     last_heartbeat_at = Column(DateTime, nullable=True)   # New: Last successful solvency check
+
+class DBUserBankDetail(Base):
+    __tablename__ = "user_bank_details"
+    id = Column(String, primary_key=True)
+    user_id = Column(String, ForeignKey("users.id"), unique=True)
+    bank_name = Column(String)
+    account_number = Column(String)
+    account_holder = Column(String)
+    is_verified = Column(Boolean, default=False)
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+class DBFiatRequest(Base):
+    __tablename__ = "fiat_requests"
+    id = Column(String, primary_key=True)
+    user_id = Column(String, ForeignKey("users.id"))
+    type = Column(SQLEnum(FiatRequestType))
+    amount = Column(Float)
+    currency = Column(String, default="IDR")
+    status = Column(SQLEnum(FiatRequestStatus), default=FiatRequestStatus.PENDING)
+    proof_hash = Column(String, nullable=True)
+    admin_id = Column(String, ForeignKey("users.id"), nullable=True)
+    admin_notes = Column(String, nullable=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 class DBExchangeAPIConfig(Base):
     __tablename__ = "exchange_api_configs"
@@ -476,3 +510,42 @@ class P2PMerchantPriceCreate(BaseModel):
     min_amount: float
     max_amount: float
     payment_methods: List[str]
+
+class UserBankDetail(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: str
+    user_id: str
+    bank_name: str
+    account_number: str
+    account_holder: str
+    is_verified: bool
+    updated_at: datetime
+
+class UserBankDetailCreate(BaseModel):
+    bank_name: str
+    account_number: str
+    account_holder: str
+
+class FiatRequest(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: str
+    user_id: str
+    type: FiatRequestType
+    amount: float
+    currency: str
+    status: FiatRequestStatus
+    proof_hash: Optional[str] = None
+    admin_id: Optional[str] = None
+    admin_notes: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
+
+class FiatRequestCreate(BaseModel):
+    type: FiatRequestType
+    amount: float
+    currency: str = "IDR"
+    proof_hash: Optional[str] = None
+
+class FiatRequestUpdate(BaseModel):
+    status: FiatRequestStatus
+    admin_notes: Optional[str] = None

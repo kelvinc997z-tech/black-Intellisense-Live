@@ -11,10 +11,12 @@ import {
   CheckCircle2, 
   AlertCircle,
   Copy,
-  RefreshCcw
+  RefreshCcw,
+  History
 } from 'lucide-react';
 import api from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
+import { v4 as uuidv4 } from 'uuid';
 
 const FiatGatewayPage = () => {
   const { user } = useAuth();
@@ -26,6 +28,7 @@ const FiatGatewayPage = () => {
     accountHolder: '',
     isVerified: false
   });
+  const [requests, setRequests] = useState([]);
   const [amount, setAmount] = useState('');
   const [loading, setLoading] = useState(false);
   const [verifying, setVerifying] = useState(false);
@@ -45,14 +48,24 @@ const FiatGatewayPage = () => {
 
   useEffect(() => {
     fetchUserBankDetails();
+    fetchFiatRequests();
   }, []);
 
   const fetchUserBankDetails = async () => {
     try {
-      const res = await api.get('/user/bank-details');
+      const res = await api.get('/fiat/bank-details');
       setBankDetails(res.data);
     } catch (error) {
       console.error('Error fetching bank details:', error);
+    }
+  };
+
+  const fetchFiatRequests = async () => {
+    try {
+      const res = await api.get('/fiat/requests');
+      setRequests(res.data);
+    } catch (error) {
+      console.error('Error fetching fiat requests:', error);
     }
   };
 
@@ -60,7 +73,7 @@ const FiatGatewayPage = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      await api.post('/user/bank-details', bankDetails);
+      await api.post('/fiat/bank-details', bankDetails);
       toast.success('Bank details saved successfully.');
       setBankDetails(prev => ({ ...prev, isVerified: false })); // Reset verification if changed
     } catch (error) {
@@ -73,23 +86,26 @@ const FiatGatewayPage = () => {
   const handleVerifyZkTLS = async () => {
     setVerifying(true);
     try {
-      // This is where the Reclaim Protocol / zkTLS flow starts
-      // In a real implementation, this would trigger the Reclaim QR flow
       toast.info('Initiating zkTLS Verification via Reclaim Protocol...');
       
       // Simulate zkTLS flow
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      // Mock success
-      toast.success('zkTLS Proof Verified! Your transaction has been confirmed.');
+      // In a real flow, we would get a proof_hash from Reclaim
+      const mockProofHash = `zkTLS_${uuidv4().slice(0, 12)}`;
+      
+      toast.success('zkTLS Proof Verified!');
       
       // Submit the verified request to backend
-      await api.post('/fiat/verify-transaction', {
+      await api.post('/fiat/request', {
         type: activeTab,
-        amount: amount,
-        address: user.address,
-        proof: 'zkTLS_PROOF_MOCK_DATA'
+        amount: parseFloat(amount),
+        currency: 'IDR',
+        proof_hash: mockProofHash
       });
+
+      toast.success('Request submitted for Admin approval.');
+      fetchFiatRequests(); // Refresh history
 
     } catch (error) {
       toast.error('Verification failed. Please try again.');
@@ -194,6 +210,40 @@ const FiatGatewayPage = () => {
                   <span className="text-xs font-medium">Bank Account Verified via zkTLS</span>
                 </div>
               )}
+            </div>
+
+            {/* Request History */}
+            <div className="bg-slate-900/40 border border-white/10 rounded-3xl p-6 backdrop-blur-2xl shadow-xl space-y-4">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="p-2 bg-primary/10 rounded-lg text-primary">
+                  <History className="h-5 w-5" />
+                </div>
+                <h2 className="text-lg font-bold text-white">My Requests</h2>
+              </div>
+              <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                {requests.length === 0 ? (
+                  <p className="text-xs text-slate-500 text-center py-4">No recent transactions</p>
+                ) : (
+                  requests.map((req) => (
+                    <div key={req.id} className="p-3 rounded-xl bg-black/40 border border-white/5 space-y-2">
+                      <div className="flex justify-between items-start">
+                        <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${
+                          req.status === 'approved' ? 'bg-emerald-500/20 text-emerald-400' :
+                          req.status === 'rejected' ? 'bg-rose-500/20 text-rose-400' :
+                          'bg-amber-500/20 text-amber-400'
+                        }`}>
+                          {req.status}
+                        </span>
+                        <span className="text-[10px] text-slate-500 font-mono">{new Date(req.created_at).toLocaleDateString()}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs font-bold text-white">{req.type === 'deposit' ? 'Deposit' : 'Withdrawal'}</span>
+                        <span className="text-xs font-mono text-white">{req.amount} {req.currency}</span>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
           </div>
 

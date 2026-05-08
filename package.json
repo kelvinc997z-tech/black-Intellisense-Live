@@ -7,8 +7,6 @@
     "@radix-ui/react-toast": "^1.1.5",
     "@reown/appkit": "^1.8.19",
     "@reown/appkit-adapter-ethers": "^1.8.19",
-    "@web3modal/ethers": "^5.1.11",
-    "@web3modal/react": "^2.7.1",
     "axios": "^1.6.7",
     "circomlib": "^2.0.5",
     "class-variance-authority": "^0.7.0",

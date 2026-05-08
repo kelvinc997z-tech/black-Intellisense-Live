@@ -8,8 +8,7 @@ export const MoonPayWidget = ({ address, currency = 'USDT' }) => {
   };
 
   const handleOfframp = () => {
-    const moonpayUrl = `https://sell.moonpay.com/?apiKey=${MoonPayConfig.apiKey}&currency=usd&cryptoCurrency=${L_S_T_T_H_E_T_H_C_U_R_R_E_N_C_Y_V_A_L_U_E}&walletAddress=${address}`;
-    // In actual implementation, currency would be passed as a prop
+    const moonpayUrl = `https://sell.moonpay.com/?apiKey=${MoonPayConfig.apiKey}&currency=usd&cryptoCurrency=${currency}&walletAddress=${address}`;
     window.open(moonpayUrl, '_blank');
   };
 
@@ -21,7 +20,7 @@ export const fetchWalletBalances = async (address) => {
     const provider = new ethers.JsonRpcProvider('https://eth.llamarpc.com');
     
     const TOKENS = {
-      USDT: '0xdAC17F958D2ee523_S_T_L_T_H_E_S_T_S_T_E_P_S_B_S_P_A_C_E',
+      USDT: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
       USDC: '0xA0b86991c6218b36c1d19D4a2e9Eb0CE3606eb48',
       ETH: null,
     };
@@ -36,7 +35,7 @@ export const fetchWalletBalances = async (address) => {
     ];
 
     for (const [symbol, addr] of Object.entries(TOKENS)) {
-      if (!addr || addr.includes('_S_T_L')) continue;
+      if (!addr) continue;
       const contract = new ethers.Contract(addr, erc20Abi, provider);
       const balance = await contract.balanceOf(address);
       const decimals = await contract.decimals();

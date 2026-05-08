@@ -1,7 +1,7 @@
 import { createWeb3Modal } from '@web3modal/ethers/react';
 import { defaultConfig } from '@web3modal/ethers/react';
 
-export const projectId = 'YOUR_WALLETCONNECT_PROJECT_ID'; 
+export const projectId = '2584923e5deca98b6b6cafe381ee9096';
 
 export const metadata = {
   name: 'Black IntelliSense',

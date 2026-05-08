@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Layout from '../components/layout/Layout';
 import api from '../lib/api';
+import { formatCurrency, formatNumber } from '../lib/utils';
 import { 
   TrendingUp, TrendingDown, DollarSign, Activity, Clock, 
   Zap, ShieldAlert, Globe, Server, Cpu, ArrowUpRight,
@@ -114,7 +115,11 @@ const Sense50Dashboard = () => {
               <div className="flex items-start justify-between">
                 <div className="space-y-1">
                   <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">Liquid Inventory</p>
-                  <p className="font-mono text-4xl font-black text-white tracking-tight">{formatCurrency(stats?.total_balance || 520000, 'USD')}</p>
+                  <p className="font-mono text-4xl font-black text-white tracking-tight">
+                    {stats?.total_balance 
+                      ? formatCurrency(stats.total_balance, 'USD') 
+                      : '520,000.00 USD'}
+                  </p>
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] font-medium text-slate-600 uppercase tracking-wider">Total USDT Available</span>
                     <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded border border-emerald-400/20">
@@ -152,7 +157,11 @@ const Sense50Dashboard = () => {
               <div className="flex items-start justify-between">
                 <div className="space-y-1">
                   <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">24h Volume</p>
-                  <p className="font-mono text-4xl font-black text-white tracking-tight">{formatCurrency(stats?.daily_volume || 148500, 'USD')}</p>
+                  <p className="font-mono text-4xl font-black text-white tracking-tight">
+                    {stats?.daily_volume 
+                      ? formatCurrency(stats.daily_volume, 'USD') 
+                      : '148,500.00 USD'}
+                  </p>
                   <p className="text-[10px] font-medium text-slate-600 uppercase tracking-wider">Aggregate Flow</p>
                 </div>
                 <div className="rounded-xl bg-slate-800/50 p-3 text-cyan-400"><Activity className="h-6 w-6" /></div>
@@ -273,7 +282,7 @@ const Sense50Dashboard = () => {
                         </span>
                       </td>
                       <td className="p-4 font-mono text-sm font-bold text-white">
-                        {formatNumber(activity.amount)} <span className="text-slate-500 font-normal text-xs ml-1">USDT</span>
+                        {activity.amount ? formatNumber(activity.amount) : '0'} <span className="text-slate-500 font-normal text-xs ml-1">USDT</span>
                       </td>
                       <td className="p-4">
                         <span

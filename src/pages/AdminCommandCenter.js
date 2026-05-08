@@ -4,7 +4,7 @@ import api from '../lib/api';
 import { 
   Activity, ShieldAlert, Cpu, Globe, 
   Users, DollarSign, Zap, Terminal,
-  ArrowUpRight, RefreshCw
+  ArrowUpRight, RefreshCw, TrendingUp
 } from 'lucide-react';
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,

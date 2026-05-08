@@ -1,5 +1,5 @@
-import { createWeb3Modal } from '@web3modal/ethers/react';
-import { defaultConfig } from '@web3modal/ethers/react';
+import { createWeb3Modal } from '@reown/appkit';
+import { defaultConfig } from '@reown/appkit';
 
 export const projectId = '2584923e5deca98b6b6cafe381ee9096';
 

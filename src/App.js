@@ -15,6 +15,8 @@ import P2PTradingPage from './pages/P2PTradingPage';
 import MarkupConfigPage from './pages/MarkupConfigPage';
 import PriceFeedsPage from './pages/PriceFeedsPage';
 import WalletsPage from './pages/WalletsPage';
+import AdminCommandCenter from './pages/AdminCommandCenter';
+import AuditLogsPage from './pages/AuditLogsPage';
 import IntelliTradePage from './pages/IntelliTradePage';
 import OrderManagementPage from './pages/OrderManagementPage';
 import MarkCRMPage from './pages/MarkCRMPage';
@@ -40,6 +42,22 @@ function App() {
           
           {/* Admin / Sense50 Routes */}
           <Route path="/admin" element={<Navigate to="/sense50" replace />} />
+          <Route
+            path="/admin/command-center"
+            element={
+              <PrivateRoute>
+                <AdminCommandCenter />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/admin/audit-logs"
+            element={
+              <PrivateRoute>
+                <AuditLogsPage />
+              </PrivateRoute>
+            }
+          />
           <Route
             path="/sense50"
             element={

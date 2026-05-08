@@ -50,8 +50,38 @@ const AdminCommandCenter = () => {
   return (
     <Layout>
       <div className="p-4 max-w-[1800px] mx-auto space-y-6">
+        {/* HUD Header */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 items-center border border-white/10 bg-black/40 p-6 rounded-2xl backdrop-blur-md relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 blur-3xl pointer-events-none" />
+          <div className="lg:col-span-2 space-y-1">
+            <div className="flex items-center gap-2 text-primary font-mono text-[10px] uppercase tracking-[0.3em] font-bold">
+              <Zap className="h-3 w-3 animate-pulse" />
+              System Status: <span className="text-emerald-400">Operational</span>
+            </div>
+            <h1 className="font-heading text-5xl font-black tracking-tighter text-white">
+              SENSE<span className="text-primary">50</span>
+            </h1>
+            <p className="text-slate-500 font-medium text-xs max-w-sm leading-relaxed">
+              Sense50 Bridge Engine • Institutional Liquidity Aggregation • High-Frequency Execution
+            </p>
+          </div>
+          <div className="lg:col-span-2 flex flex-wrap gap-3 justify-end">
+            <div className="flex items-center gap-4 px-4 py-2 rounded-lg border border-white/10 bg-black/60 backdrop-blur-md">
+              <div className="flex items-center gap-2">
+                <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider">Node: US-EAST-1</span>
+              </div>
+              <div className="h-3 w-px bg-white/10" />
+              <div className="flex items-center gap-2">
+                <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider">API: Active</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Top HUD */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
           {[
             { label: 'Total Volume', value: `$${(systemStats?.total_volume / 1e6).toFixed(2)}M`, icon: DollarSign, color: 'text-primary' },
             { label: 'Active Sessions', value: systemStats?.active_users, icon: Users, color: 'text-emerald-400' },

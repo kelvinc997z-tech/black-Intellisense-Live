@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import api from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
+import Layout from '../components/layout/Layout';
 import { v4 as uuidv4 } from 'uuid';
 
 const FiatGatewayPage = () => {
@@ -28,27 +29,16 @@ const FiatGatewayPage = () => {
     accountHolder: '',
     isVerified: false
   });
+  const [adminConfig, setAdminConfig] = useState(null);
   const [requests, setRequests] = useState([]);
   const [amount, setAmount] = useState('');
   const [loading, setLoading] = useState(false);
   const [verifying, setVerifying] = useState(false);
 
-  // Mock Admin Data (Should be moved to a config or fetched from API)
-  const ADMIN_DATA = {
-    bank: {
-      name: 'Bank Central Asia (BCA)',
-      accountNumber: '880012345678',
-      accountHolder: 'SENSE 50 BRIDGE ENGINE',
-    },
-    usdt: {
-      address: '0x742d35Cc6634C0532925a3cCb42083EcF88Ef603',
-      network: 'Ethereum (ERC20)',
-    }
-  };
-
   useEffect(() => {
     fetchUserBankDetails();
     fetchFiatRequests();
+    fetchAdminConfig();
   }, []);
 
   const fetchUserBankDetails = async () => {
@@ -66,6 +56,26 @@ const FiatGatewayPage = () => {
       setRequests(res.data);
     } catch (error) {
       console.error('Error fetching fiat requests:', error);
+    }
+  };
+
+  const fetchAdminConfig = async () => {
+    try {
+      // In a real app, this would be a call to /api/admin/settlement-config
+      // Mocking for now but structured to be easily replaced
+      setAdminConfig({
+        bank: {
+          name: 'Bank Central Asia (BCA)',
+          accountNumber: '880012345678',
+          accountHolder: 'SENSE 50 BRIDGE ENGINE',
+        },
+        usdt: {
+          address: '0x742d35Cc6634C0532925a3cCb42083EcF88Ef603',
+          network: 'Ethereum (ERC20)',
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching admin config:', error);
     }
   };
 
@@ -88,15 +98,12 @@ const FiatGatewayPage = () => {
     try {
       toast.info('Initiating zkTLS Verification via Reclaim Protocol...');
       
-      // Simulate zkTLS flow
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      // In a real flow, we would get a proof_hash from Reclaim
       const mockProofHash = `zkTLS_${uuidv4().slice(0, 12)}`;
       
       toast.success('zkTLS Proof Verified!');
       
-      // Submit the verified request to backend
       await api.post('/fiat/request', {
         type: activeTab,
         amount: parseFloat(amount),
@@ -105,7 +112,7 @@ const FiatGatewayPage = () => {
       });
 
       toast.success('Request submitted for Admin approval.');
-      fetchFiatRequests(); // Refresh history
+      fetchFiatRequests();
 
     } catch (error) {
       toast.error('Verification failed. Please try again.');
@@ -120,11 +127,11 @@ const FiatGatewayPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0b] text-slate-200 p-6 font-sans">
-      <div className="max-w-5xl mx-auto">
+    <Layout>
+      <div className="p-6 max-w-7xl mx-auto space-y-8">
         
         {/* Header */}
-        <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-extrabold text-white tracking-tight">
               Fiat <span className="text-primary">Gateway</span>
@@ -294,20 +301,20 @@ const FiatGatewayPage = () => {
                         <div className="space-y-3">
                           <div className="flex justify-between items-center">
                             <span className="text-sm text-slate-400">Bank</span>
-                            <span className="text-sm text-white font-medium">{ADMIN_DATA.bank.name}</span>
+                            <span className="text-sm text-white font-medium">{adminConfig?.bank?.name || 'Loading...'}</span>
                           </div>
                           <div className="flex justify-between items-center">
                             <span className="text-sm text-slate-400">Account</span>
                             <div className="flex items-center gap-2">
-                              <span className="text-sm text-white font-mono">{ADMIN_DATA.bank.accountNumber}</span>
-                              <button onClick={() => copyToClipboard(ADMIN_DATA.bank.accountNumber)} className="p-1 hover:text-primary transition-colors">
+                              <span className="text-sm text-white font-mono">{adminConfig?.bank?.accountNumber || 'Loading...'}</span>
+                              <button onClick={() => copyToClipboard(adminConfig?.bank?.accountNumber)} className="p-1 hover:text-primary transition-colors">
                                 <Copy className="h-3 w-3" />
                               </button>
                             </div>
                           </div>
                           <div className="flex justify-between items-center">
                             <span className="text-sm text-slate-400">Holder</span>
-                            <span className="text-sm text-white font-medium">{ADMIN_DATA.bank.accountHolder}</span>
+                            <span className="text-sm text-white font-medium">{adminConfig?.bank?.accountHolder || 'Loading...'}</span>
                           </div>
                         </div>
                       ) : (
@@ -315,15 +322,15 @@ const FiatGatewayPage = () => {
                           <div className="flex justify-between items-center">
                             <span className="text-sm text-slate-400">USDT Address</span>
                             <div className="flex items-center gap-2">
-                              <span className="text-sm text-white font-mono truncate max-w-[150px]">{ADMIN_DATA.usdt.address}</span>
-                              <button onClick={() => copyToClipboard(ADMIN_DATA.usdt.address)} className="p-1 hover:text-primary transition-colors">
+                              <span className="text-sm text-white font-mono truncate max-w-[150px]">{adminConfig?.usdt?.address || 'Loading...'}</span>
+                              <button onClick={() => copyToClipboard(adminConfig?.usdt?.address)} className="p-1 hover:text-primary transition-colors">
                                 <Copy className="h-3 w-3" />
                               </button>
                             </div>
                           </div>
                           <div className="flex justify-between items-center">
                             <span className="text-sm text-slate-400">Network</span>
-                            <span className="text-sm text-white font-medium">{ADMIN_DATA.usdt.network}</span>
+                            <span className="text-sm text-white font-medium">{adminConfig?.usdt?.network || 'Loading...'}</span>
                           </div>
                         </div>
                       )}
@@ -361,7 +368,7 @@ const FiatGatewayPage = () => {
           </div>
         </div>
       </div>
-    </div>
+    </Layout>
   );
 };
 

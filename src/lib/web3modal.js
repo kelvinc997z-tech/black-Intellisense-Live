@@ -1,6 +1,6 @@
-import { createAppKit } from '@reown/appkit/react';
-import { mainnet, polygon, arbitrum } from '@reown/appkit/networks';
-import { EthersAdapter } from '@reown/appkit-adapter-ethers';
+import React from 'react';
+import { createWeb3Modal } from '@web3modal/ethers/react';
+import { defaultConfig } from '@web3modal/ethers/react';
 
 export const projectId = '2584923e5deca98b6b6cafe381ee9096';
 
@@ -11,31 +11,26 @@ export const metadata = {
   icons: ['https://blackintellisense.com/assets/logo.png'],
 };
 
-let modalInstance = null;
-
-export const initWeb3Modal = () => {
-  try {
-    modalInstance = createAppKit({
-      adapters: [new EthersAdapter()],
-      networks: [mainnet, polygon, arbitrum],
-      metadata,
-      projectId,
-      enableAnalytics: false,
-    });
-    return modalInstance;
-  } catch (error) {
-    console.error('Web3Modal Critical Init Error:', error);
-    return null;
+export const Web3ModalProvider = ({ children }) => {
+  if (typeof window !== 'undefined' && !window.__WEB3MODAL_INIT__) {
+    try {
+      createWeb3Modal({
+        ethersConfig: defaultConfig(),
+        metadata,
+        projectId,
+        enableAnalytics: false,
+      });
+      window.__WEB3MODAL_INIT__ = true;
+    } catch (error) {
+      console.error('Web3Modal Init Error:', error);
+    }
   }
+  return <>{children}</>;
 };
 
 export const openWeb3Modal = () => {
   try {
-    if (modalInstance && modalInstance.open) {
-      modalInstance.open();
-    } else {
-      window.dispatchEvent(new CustomEvent('appkit:open'));
-    }
+    window.dispatchEvent(new CustomEvent('web3modal:open'));
   } catch (e) {
     console.error('Error opening Web3Modal:', e);
   }

@@ -24,8 +24,6 @@ import MarkCRMPage from './pages/MarkCRMPage';
 import VerificationPage from './pages/VerificationPage';
 import './App.css';
 
-initWeb3Modal();
-
 const PrivateRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
 

@@ -14,6 +14,7 @@ const OnrampPage = () => {
   const [mode, setMode] = useState('onramp'); // 'onramp' or 'offramp'
   const [amount, setAmount] = useState('');
   const [currency, setCurrency] = useState('USDT');
+  const [paymentMethod, setPaymentMethod] = useState('card'); // 'card' or 'bank'
   const [loading, setLoading] = useState(false);
 
   const handleTransaction = async (e) => {
@@ -97,11 +98,27 @@ const OnrampPage = () => {
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Payment Method</label>
                   <div className="grid grid-cols-2 gap-3">
-                    <button type="button" className="flex items-center justify-center gap-2 p-4 rounded-2xl border border-white/10 bg-white/5 text-slate-400 hover:border-primary/50 hover:text-primary transition-all">
+                    <button 
+                      type="button" 
+                      onClick={() => setPaymentMethod('card')}
+                      className={`flex items-center justify-center gap-2 p-4 rounded-2xl border transition-all ${
+                        paymentMethod === 'card' 
+                        ? 'border-primary bg-primary/10 text-primary shadow-lg shadow-primary/10' 
+                        : 'border-white/10 bg-white/5 text-slate-400 hover:border-primary/50 hover:text-primary'
+                      }`}
+                    >
                       <CreditCard className="h-4 w-4" />
                       <span className="text-xs font-bold">Card</span>
                     </button>
-                    <button type="button" className="flex items-center justify-center gap-2 p-4 rounded-2xl border border-white/10 bg-white/5 text-slate-400 hover:border-primary/50 hover:text-primary transition-all">
+                    <button 
+                      type="button" 
+                      onClick={() => setPaymentMethod('bank')}
+                      className={`flex items-center justify-center gap-2 p-4 rounded-2xl border transition-all ${
+                        paymentMethod === 'bank' 
+                        ? 'border-primary bg-primary/10 text-primary shadow-lg shadow-primary/10' 
+                        : 'border-white/10 bg-white/5 text-slate-400 hover:border-primary/50 hover:text-primary'
+                      }`}
+                    >
                       <Banknote className="h-4 w-4" />
                       <span className="text-xs font-bold">Bank</span>
                     </button>

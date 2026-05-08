@@ -251,8 +251,12 @@ const Login = () => {
             
             <button
               onClick={verifyWeb3Identity}
-              disabled={loading || web3Loading || !isConnected}
-              className="w-full flex items-center justify-center gap-3 rounded-xl border border-orange-500/30 bg-orange-500/10 px-4 py-3 font-semibold text-orange-400 transition-all hover:bg-orange-500/20 hover:border-orange-500/60 active:scale-[0.98] disabled:opacity-50 group"
+              disabled={loading || web3Loading}
+              className={`w-full flex items-center justify-center gap-3 rounded-xl border px-4 py-3 font-semibold transition-all active:scale-[0.98] group ${
+                !isConnected 
+                ? 'border-white/5 bg-white/5 text-slate-600 cursor-not-allowed' 
+                : 'border-orange-500/30 bg-orange-500/10 text-orange-400 hover:bg-orange-500/20 hover:border-orange-500/60'
+              }`}
             >
               <ShieldCheck className="h-4 w-4" />
               <span>{web3Loading ? 'Verifying...' : 'Verify Identity & Login'}</span>

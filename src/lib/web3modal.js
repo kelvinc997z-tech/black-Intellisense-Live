@@ -1,4 +1,3 @@
-import React from 'react';
 import { createWeb3Modal } from '@web3modal/ethers/react';
 import { defaultConfig } from '@web3modal/ethers/react';
 
@@ -11,28 +10,16 @@ export const metadata = {
   icons: ['https://blackintellisense.com/assets/logo.png'],
 };
 
-export const web3ModalConfig = {
-  ethersConfig: defaultConfig(),
-  metadata,
-  projectId,
-  enableAnalytics: false,
-};
-
-export const Web3ModalProvider = ({ children }) => {
+export const initWeb3Modal = () => {
   try {
-    // Initialize Web3Modal only once
-    if (!window.__WEB3_MODAL_INITIALIZED__) {
-      createWeb3Modal({
-        ethersConfig: defaultConfig(),
-        metadata,
-        projectId,
-        enableAnalytics: false,
-      });
-      window.__WEB3_MODAL_INITIALIZED__ = true;
-    }
+    createWeb3Modal({
+      ethersConfig: defaultConfig(),
+      metadata,
+      projectId,
+      enableAnalytics: false,
+    });
+    console.log('Web3Modal initialized successfully');
   } catch (error) {
     console.error('Web3Modal Initialization Error:', error);
   }
-
-  return <>{children}</>;
 };

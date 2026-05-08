@@ -9,8 +9,7 @@ import {
   Wallet
 } from 'lucide-react';
 import { 
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, 
-  ResponsiveContainer, LineChart, Line 
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line 
 } from 'recharts';
 import { useAuth } from '../contexts/AuthContext';
 import { fetchWalletBalances } from '../lib/moonpay';
@@ -26,6 +25,9 @@ const Sense50Dashboard = () => {
 
   useEffect(() => {
     fetchData();
+  }, []);
+
+  useEffect(() => {
     const userAddr = user?.web3_address || user?.address;
     if (userAddr) {
       updateWalletBalances(userAddr);
@@ -35,7 +37,9 @@ const Sense50Dashboard = () => {
   const updateWalletBalances = async (address) => {
     try {
       const balances = await fetchWalletBalances(address);
-      setWalletBalances(balances);
+      if (balances) {
+        setWalletBalances(balances);
+      }
     } catch (e) {
       console.error('Balance update error:', e);
     }
@@ -43,21 +47,27 @@ const Sense50Dashboard = () => {
 
   const fetchData = async () => {
     try {
-      const [statsRes, activitiesRes, historyRes, balanceRes] = await Promise.all([
+      const [statsRes, activitiesRes, historyRes, balanceRes] = await Promise.allSettled([
         api.get('/trades/stats'),
         api.get('/trades/recent'),
         api.get('/prices/history'),
         api.get('/wallets/total-balance')
       ]);
 
+      // Extract data safely from Promise.allSettled
+      const statsData = statsRes.status === 'fulfilled' ? statsRes.value.data : null;
+      const activitiesData = activitiesRes.status === 'fulfilled' ? activitiesRes.value.data : { activities: [] };
+      const historyData = historyRes.status === 'fulfilled' ? historyRes.value.data : { history: [] };
+      const balanceData = balanceRes.status === 'fulfilled' ? balanceRes.value.data : { total_balance: { USDT: 0 } };
+
       setStats({
-        ...statsRes.data,
-        total_balance: balanceRes.data.total_balance.USDT || 520000
+        ...statsData,
+        total_balance: balanceData?.total_balance?.USDT || 0
       });
-      setActivities(activitiesRes.data.activities);
-      setPriceHistory(historyRes.data.history);
+      setActivities(activitiesData?.activities || []);
+      setPriceHistory(historyData?.history || []);
     } catch (error) {
-      console.error('Error fetching dashboard data:', error);
+      console.error('Critical error fetching dashboard data:', error);
     } finally {
       setLoading(false);
     }
@@ -68,11 +78,14 @@ const Sense50Dashboard = () => {
       <Layout>
         <div className="min-h-[80vh] flex flex-col items-center justify-center space-y-4">
           <div className="h-12 w-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
-          <p className="font-mono text-sm text-muted-foreground animate-pulse uppercase tracking-widest">Initializing Bridge Engine...</p>
+          <p className="font-mono text-sm text-slate-500 animate-pulse uppercase tracking-widest">Initializing Bridge Engine...</p>
         </div>
       </Layout>
     );
   }
+
+  // Defensive check for priceHistory to prevent chart crash
+  const safePriceHistory = Array.isArray(priceHistory) ? priceHistory : [];
 
   return (
     <Layout>
@@ -117,7 +130,7 @@ const Sense50Dashboard = () => {
                 <div className="space-y-1">
                   <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">Liquid Inventory</p>
                   <p className="font-mono text-4xl font-black text-white tracking-tight">
-                    {stats?.total_balance 
+                    {stats?.total_balance !== undefined 
                       ? formatCurrency(stats.total_balance, 'USD') 
                       : '520,000.00 USD'}
                   </p>
@@ -159,7 +172,7 @@ const Sense50Dashboard = () => {
                 <div className="space-y-1">
                   <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">24h Volume</p>
                   <p className="font-mono text-4xl font-black text-white tracking-tight">
-                    {stats?.daily_volume 
+                    {stats?.daily_volume !== undefined 
                       ? formatCurrency(stats.daily_volume, 'USD') 
                       : '148,500.00 USD'}
                   </p>
@@ -198,7 +211,7 @@ const Sense50Dashboard = () => {
             </div>
             <div className="h-[400px] w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={priceHistory}>
+                <AreaChart data={safePriceHistory}>
                   <defs>
                     <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#06B6D4" stopOpacity={0.4} />
@@ -212,7 +225,13 @@ const Sense50Dashboard = () => {
                     fontSize={10} 
                     tickLine={false} 
                     axisLine={false}
-                    tickFormatter={(val) => new Date(val).getHours() + ':00'}
+                    tickFormatter={(val) => {
+                      try {
+                        return new Date(val).getHours() + ':00';
+                      } catch (e) {
+                        return '00:00';
+                      }
+                    }}
                   />
                   <YAxis 
                     stroke="#475569" 
@@ -220,7 +239,7 @@ const Sense50Dashboard = () => {
                     tickLine={false} 
                     axisLine={false}
                     domain={['auto', 'auto']}
-                    tickFormatter={(val) => val.toFixed(4)}
+                    tickFormatter={(val) => val ? val.toFixed(4) : '0.0000'}
                   />
                   <Tooltip
                     contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '12px', fontSize: '12px' }}
@@ -266,39 +285,46 @@ const Sense50Dashboard = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
-                  {activities.map((activity, idx) => (
-                    <tr key={idx} className="transition-colors hover:bg-white/5 group">
-                      <td className="p-4 font-mono text-xs text-slate-400">{activity.time}</td>
-                      <td className="p-4 font-mono text-sm font-bold text-white">{activity.client}</td>
-                      <td className="p-4">
-                        <span
-                          className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase ${
-                            activity.type === 'Buy'
-                              ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                              : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
-                          }`}
-                        >
-                          {activity.type === 'Buy' ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-                          {activity.type}
-                        </span>
-                      </td>
-                      <td className="p-4 font-mono text-sm font-bold text-white">
-                        {activity.amount ? formatNumber(activity.amount) : '0'} <span className="text-slate-500 font-normal text-xs ml-1">USDT</span>
-                      </td>
-                      <td className="p-4">
-                        <span
-                          className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase ${
-                            activity.status === 'Completed'
-                              ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                              : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-                          }`}
-                        >
-                          <div className={`h-1 w-1 rounded-full ${activity.status === 'Completed' ? 'bg-emerald-400' : 'bg-amber-400'} animate-pulse`} />
-                          {activity.status}
-                        </span>
+                  {activities.length === 0 ? (
+                    <tr>
+                      <td colSpan="5" className="p-12 text-center text-slate-500 font-mono text-sm italic">
+                        No recent execution flow detected.
                       </td>
                     </tr>
-                  ))}
+                  ) : (
+                    activities.map((activity, idx) => (
+                      <tr key={idx} className="transition-colors hover:bg-white/5 group">
+                        <td className="p-4 font-mono text-xs text-slate-400">{activity.time || '---'}</td>
+                        <td className="p-4 font-mono text-sm font-bold text-white">{activity.client || 'Unknown'}</td>
+                        <td className="p-4">
+                          <span
+                            className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase ${
+                              activity.type === 'Buy'
+                                ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                                : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                            }`}
+                          >
+                            {activity.type === 'Buy' ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+                            {activity.type || 'N/A'}
+                          </span>
+                        </td>
+                        <td className="p-4 font-mono text-sm font-bold text-white">
+                          {activity.amount ? formatNumber(activity.amount) : '0'} <span className="text-slate-500 font-normal text-xs ml-1">USDT</span>
+                        </td>
+                        <td className="p-4">
+                          <span
+                            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase ${
+                              activity.status === 'Completed'
+                                ? 'bg-emerald-500/20 text-emerald-400'
+                                : 'bg-amber-500/20 text-amber-400'
+                            }`}
+                          >
+                            {activity.status || 'Pending'}
+                          </span>
+                        </td>
+                      </tr>
+                    ))
+                  }
                 </tbody>
               </table>
             </div>

@@ -3,14 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'sonner';
 import { ethers } from 'ethers';
-import { useWeb3Modal } from '@web3modal/ethers/react';
+import { openWeb3Modal } from '../lib/web3modal';
 import api from '../lib/api';
 import { ShieldCheck, Lock, Mail, LayoutDashboard, TrendingUp, ChevronRight } from 'lucide-react';
 
 const Login = () => {
   const navigate = useNavigate();
   const { login, loginWithWeb3 } = useAuth();
-  const { open } = useWeb3Modal();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -69,7 +68,7 @@ const Login = () => {
   };
 
   const handleWeb3Login = async () => {
-    open();
+    openWeb3Modal();
   };
 
   const verifyWeb3Identity = async () => {

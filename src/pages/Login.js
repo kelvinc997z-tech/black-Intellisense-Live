@@ -3,8 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'sonner';
 import { ethers } from 'ethers';
-import { useAppKitAccount, useAppKitProvider } from '@reown/appkit/react';
-import { openWeb3Modal } from '../lib/web3modal';
+import { useAppKitAccount, useAppKitProvider, useAppKit } from '@reown/appkit/react';
 import api from '../lib/api';
 import { ShieldCheck, Lock, Mail, LayoutDashboard, TrendingUp, ChevronRight } from 'lucide-react';
 
@@ -13,6 +12,7 @@ const Login = () => {
   const { login, loginWithWeb3 } = useAuth();
   const { address, isConnected } = useAppKitAccount();
   const { walletProvider } = useAppKitProvider();
+  const { open } = useAppKit();
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -75,14 +75,14 @@ const Login = () => {
     if (isConnected) {
       verifyWeb3Identity();
     } else {
-      openWeb3Modal();
+      open();
     }
   };
 
   const verifyWeb3Identity = async () => {
     if (!isConnected || !address) {
       toast.error('Please connect your wallet first!');
-      openWeb3Modal();
+      open();
       return;
     }
 

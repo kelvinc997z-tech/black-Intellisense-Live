@@ -2,7 +2,11 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Toaster } from 'sonner';
+import { initWeb3Modal } from './lib/web3modal';
 import Login from './pages/Login';
+
+initWeb3Modal();
+
 import TradingPage from './pages/TradingPage';
 import OrdersPage from './pages/OrdersPage';
 import AssetsPage from './pages/AssetsPage';

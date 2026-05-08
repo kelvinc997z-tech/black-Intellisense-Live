@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Layout from '../components/layout/Layout';
 import api from '../lib/api';
-import { Send, User } from 'lucide-react';
+import { Send, User, Search, MessageSquare, Circle } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -11,6 +11,7 @@ const ChatPage = () => {
   const [newMessage, setNewMessage] = useState('');
   const [trades, setTrades] = useState([]);
   const [selectedTrade, setSelectedTrade] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
@@ -59,7 +60,6 @@ const ChatPage = () => {
     if (!newMessage.trim() || !selectedTrade) return;
 
     try {
-      // For demo, we'll use a mock receiver ID
       const trade = trades.find(t => t.id === selectedTrade);
       const receiverId = trade?.buyer_id === user.id ? trade?.seller_id : trade?.buyer_id;
 
@@ -76,95 +76,156 @@ const ChatPage = () => {
     }
   };
 
+  const filteredTrades = trades.filter(t => 
+    t.symbol.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    t.id.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <Layout>
-      <div data-testid="chat-page" className="space-y-6">
-        <div>
-          <h1 className="font-heading text-4xl font-bold tracking-tight">Trade Chat</h1>
-          <p className="mt-2 text-base text-muted-foreground">
-            Communicate with counterparties about trades
-          </p>
+      <div className="p-4 max-w-[1800px] mx-auto space-y-6">
+        {/* HUD Header */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 items-center border border-white/10 bg-black/40 p-6 rounded-2xl backdrop-blur-md relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 blur-3xl pointer-events-none" />
+          <div className="lg:col-span-2 space-y-1">
+            <div className="flex items-center gap-2 text-primary font-mono text-[10px] uppercase tracking-[0.3em] font-bold">
+              <MessageSquare className="h-3 w-3 animate-pulse" />
+              Communication Channel: <span className="text-emerald-400">Secure</span>
+            </div>
+            <h1 className="font-heading text-5xl font-black tracking-tighter text-white">
+              INTEL<span className="text-primary">CHAT</span>
+            </h1>
+            <p className="text-slate-500 font-medium text-xs max-w-sm leading-relaxed">
+              IntelliTrade Messaging • Real-time Counterparty Communication • Encrypted Trade Streams
+            </p>
+          </div>
+          <div className="lg:col-span-2 flex flex-wrap gap-3 justify-end">
+            <div className="flex items-center gap-4 px-4 py-2 rounded-lg border border-white/10 bg-black/60 backdrop-blur-md">
+              <div className="flex items-center gap-2">
+                <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider">Signal: Stable</span>
+              </div>
+              <div className="h-3 w-px bg-white/10" />
+              <div className="flex items-center gap-2">
+                <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider">Latency: 12ms</span>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-4">
-          {/* Trade List */}
-          <div className="rounded-sm border border-border bg-card/40 backdrop-blur-sm lg:col-span-1">
-            <div className="border-b border-border p-4">
-              <h3 className="font-heading text-lg font-semibold">Trades</h3>
-            </div>
-            <div className="divide-y divide-border">
-              {trades.length === 0 ? (
-                <div className="p-4 text-center text-sm text-muted-foreground">
-                  No trades available
+          {/* Trade List Sidebar */}
+          <div className="lg:col-span-1 flex flex-col gap-4">
+            <div className="rounded-2xl border border-white/10 bg-black/40 backdrop-blur-xl overflow-hidden transition-all hover:border-primary/30 shadow-2xl">
+              <div className="p-4 border-b border-white/10 bg-white/[0.02]">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+                  <input 
+                    type="text" 
+                    placeholder="Search trades..." 
+                    className="w-full pl-10 pr-4 py-2 rounded-xl bg-white/5 border border-white/10 text-sm text-white focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
                 </div>
-              ) : (
-                trades.slice(0, 10).map((trade) => (
-                  <button
-                    key={trade.id}
-                    onClick={() => setSelectedTrade(trade.id)}
-                    className={`w-full p-4 text-left transition-colors hover:bg-muted/30 ${
-                      selectedTrade === trade.id ? 'bg-primary/10' : ''
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="font-mono text-sm font-semibold">
-                        {trade.symbol}
-                      </span>
-                      <span className="font-mono text-xs text-muted-foreground">
-                        ${trade.amount}
-                      </span>
-                    </div>
-                    <p className="mt-1 font-mono text-xs text-muted-foreground">
-                      {trade.id.substring(0, 8)}...
-                    </p>
-                  </button>
-                ))
-              )}
+              </div>
+              <div className="max-h-[600px] overflow-y-auto divide-y divide-white/5">
+                {filteredTrades.length === 0 ? (
+                  <div className="p-8 text-center text-sm text-slate-500 font-mono italic">
+                    No active trades found.
+                  </div>
+                ) : (
+                  filteredTrades.map((trade) => (
+                    <button
+                      key={trade.id}
+                      onClick={() => setSelectedTrade(trade.id)}
+                      className={`w-full p-4 text-left transition-all duration-300 group ${
+                        selectedTrade === trade.id 
+                          ? 'bg-primary/10 text-primary border-l-2 border-primary' 
+                          : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="font-mono text-sm font-bold">{trade.symbol}</span>
+                        <span className={`font-mono text-xs ${selectedTrade === trade.id ? 'text-primary' : 'text-slate-500'}`}>
+                          ${trade.amount}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className={`h-1.5 w-1.5 rounded-full ${selectedTrade === trade.id ? 'bg-primary animate-pulse' : 'bg-slate-600'}`} />
+                        <p className="font-mono text-[10px] opacity-60 truncate">
+                          ID: {trade.id}
+                        </p>
+                      </div>
+                    </button>
+                  ))
+                )}
+              </div>
             </div>
           </div>
 
-          {/* Chat Area */}
-          <div className="rounded-sm border border-border bg-card/40 backdrop-blur-sm lg:col-span-3">
+          {/* Chat Main Area */}
+          <div className="lg:col-span-3 rounded-2xl border border-white/10 bg-gradient-to-b from-slate-900/40 to-black/60 backdrop-blur-xl overflow-hidden shadow-2xl transition-all hover:border-primary/30 relative">
             {selectedTrade ? (
-              <div className="flex h-[600px] flex-col">
+              <div className="flex h-[650px] flex-col relative">
                 {/* Chat Header */}
-                <div className="border-b border-border p-4">
-                  <h3 className="font-heading text-lg font-semibold">
-                    Trade #{selectedTrade.substring(0, 8)}
-                  </h3>
+                <div className="border-b border-white/10 p-4 bg-white/[0.02] flex items-center justify-between backdrop-blur-md z-10">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center text-primary">
+                      <MessageSquare className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <h3 className="font-heading text-lg font-bold text-white tracking-tight">
+                        Trade #{selectedTrade.substring(0, 8)}
+                      </h3>
+                      <div className="flex items-center gap-2">
+                        <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                        <span className="text-[10px] font-mono text-emerald-400 uppercase tracking-wider">Encrypted Session</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
-                {/* Messages */}
-                <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                {/* Messages Area */}
+                <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]">
                   {messages.length === 0 ? (
-                    <div className="flex h-full items-center justify-center text-muted-foreground">
-                      No messages yet. Start the conversation!
+                    <div className="flex h-full flex-col items-center justify-center text-slate-500 space-y-4">
+                      <div className="h-16 w-16 rounded-full bg-white/5 flex items-center justify-center border border-white/10">
+                        <MessageSquare className="h-8 w-8 opacity-20" />
+                      </div>
+                      <p className="font-mono text-sm italic">No messages in this stream. Initialize communication.</p>
                     </div>
                   ) : (
-                    messages.map((msg) => {
+                    messages.map((msg, idx) => {
                       const isOwnMessage = msg.sender_id === user.id;
                       return (
                         <div
-                          key={msg.id}
+                          key={idx}
                           className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}
                         >
                           <div
-                            className={`max-w-[70%] rounded-sm p-3 ${
+                            className={`max-w-[75%] group transition-all duration-300 ${
                               isOwnMessage
-                                ? 'bg-primary text-primary-foreground'
-                                : 'bg-secondary text-foreground'
-                            }`}
+                                ? 'bg-primary/20 border border-primary/30 text-white rounded-2xl rounded-tr-none'
+                                : 'bg-white/5 border border-white/10 text-slate-300 rounded-2xl rounded-tl-none'
+                            } p-4 shadow-lg backdrop-blur-sm`}
                           >
-                            <div className="flex items-center gap-2 mb-1">
-                              <User className="h-3 w-3" />
-                              <span className="font-mono text-xs opacity-70">
-                                {isOwnMessage ? 'You' : 'Counterparty'}
+                            <div className="flex items-center gap-2 mb-2">
+                              <User className={`h-3 w-3 ${isOwnMessage ? 'text-primary' : 'text-slate-500'}`} />
+                              <span className="font-mono text-[10px] uppercase font-bold opacity-60">
+                                {isOwnMessage ? 'Operator' : 'Counterparty'}
                               </span>
                             </div>
-                            <p className="text-sm">{msg.message}</p>
-                            <p className="mt-1 text-xs opacity-60">
-                              {new Date(msg.created_at).toLocaleTimeString()}
+                            <p className="text-sm leading-relaxed font-medium">
+                              {msg.message}
                             </p>
+                            <div className="flex items-center justify-end gap-2 mt-2">
+                              <span className="font-mono text-[9px] opacity-40">
+                                {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              </span>
+                              {isOwnMessage && <Circle className="h-1 w-1 fill-primary text-primary" />}
+                            </div>
                           </div>
                         </div>
                       );
@@ -173,32 +234,36 @@ const ChatPage = () => {
                   <div ref={messagesEndRef} />
                 </div>
 
-                {/* Message Input */}
-                <form onSubmit={handleSendMessage} className="border-t border-border p-4">
-                  <div className="flex gap-2">
+                {/* Input Area */}
+                <form onSubmit={handleSendMessage} className="p-4 bg-white/[0.02] border-t border-white/10 backdrop-blur-md">
+                  <div className="flex gap-3 items-center bg-black/40 p-2 rounded-2xl border border-white/10 focus-within:border-primary/50 transition-all">
                     <input
-                      data-testid="message-input"
                       type="text"
                       value={newMessage}
                       onChange={(e) => setNewMessage(e.target.value)}
-                      placeholder="Type a message..."
-                      className="flex-1 rounded-sm border border-input bg-slate-950/50 px-4 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                      placeholder="Enter encrypted message..."
+                      className="flex-1 bg-transparent px-4 py-2 text-sm text-white focus:outline-none font-mono"
                     />
                     <button
-                      data-testid="send-message-btn"
                       type="submit"
                       disabled={!newMessage.trim()}
-                      className="flex items-center gap-2 rounded-sm bg-primary px-4 py-2 font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                      className="flex items-center gap-2 rounded-xl bg-primary px-5 py-2 font-bold text-white text-xs uppercase tracking-widest hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-[0_0_15px_rgba(6,182,212,0.4)]"
                     >
-                      <Send className="h-4 w-4" />
+                      <Send className="h-3 w-3" />
                       Send
                     </button>
                   </div>
                 </form>
               </div>
             ) : (
-              <div className="flex h-[600px] items-center justify-center text-muted-foreground">
-                Select a trade to start chatting
+              <div className="flex h-[650px] flex-col items-center justify-center text-slate-500 space-y-4">
+                <div className="h-20 w-20 rounded-full bg-white/5 flex items-center justify-center border border-white/10 animate-pulse">
+                  <MessageSquare className="h-10 w-10 opacity-20" />
+                </div>
+                <div className="text-center">
+                  <p className="font-heading text-xl font-bold text-white tracking-tight mb-1">No Session Active</p>
+                  <p className="font-mono text-sm italic">Select a trade from the ledger to establish a secure link.</p>
+                </div>
               </div>
             )}
           </div>

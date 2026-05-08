@@ -3,12 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'sonner';
 import { ethers } from 'ethers';
+import { useWeb3Modal } from '@web3modal/ethers/react';
 import api from '../lib/api';
 import { ShieldCheck, Lock, Mail, LayoutDashboard, TrendingUp, ChevronRight } from 'lucide-react';
 
 const Login = () => {
   const navigate = useNavigate();
   const { login, loginWithWeb3 } = useAuth();
+  const { open } = useWeb3Modal();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -67,8 +69,12 @@ const Login = () => {
   };
 
   const handleWeb3Login = async () => {
+    open();
+  };
+
+  const verifyWeb3Identity = async () => {
     if (!window.ethereum) {
-      toast.error('MetaMask not detected! Please install the extension.');
+      toast.error('Web3 Provider not detected!');
       return;
     }
 
@@ -100,7 +106,7 @@ const Login = () => {
       }
     } catch (error) {
       console.error('Web3 Login Error:', error);
-      const errorMsg = error.response?.data?.detail || error.message || 'MetaMask authentication failed';
+      const errorMsg = error.response?.data?.detail || error.message || 'Web3 authentication failed';
       toast.error(errorMsg);
     } finally {
       setWeb3Loading(false);
@@ -221,17 +227,28 @@ const Login = () => {
             <div className="h-px flex-1 bg-white/10"></div>
           </div>
 
-          <button
-            onClick={handleWeb3Login}
-            disabled={loading || web3Loading}
-            className="w-full flex items-center justify-center gap-3 rounded-xl border border-orange-500/30 bg-orange-500/5 px-4 py-3 font-semibold text-orange-400 transition-all hover:bg-orange-500/10 hover:border-orange-500/60 active:scale-[0.98] disabled:opacity-50 group"
-          >
-            <div className="relative">
-              <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg" alt="MetaMask" className="h-5 w-5 transition-transform group-hover:scale-110" />
-              <div className="absolute -inset-1 bg-orange-500/20 blur-md opacity-0 group-hover:opacity-100 transition-opacity rounded-full" />
-            </div>
-            <span>{web3Loading ? 'Verifying...' : 'Connect MetaMask'}</span>
-          </button>
+          <div className="flex flex-col gap-3">
+            <button
+              onClick={handleWeb3Login}
+              disabled={loading || web3Loading}
+              className="w-full flex items-center justify-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-semibold text-slate-300 transition-all hover:bg-white/10 hover:border-white/20 active:scale-[0.98] disabled:opacity-50 group"
+            >
+              <div className="flex gap-2">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg" alt="MetaMask" className="h-5 w-5" />
+                <img src="https://raw.githubusercontent.com/walletconnect/walletconnect-assets/master/logos/walletconnect.svg" alt="WalletConnect" className="h-5 w-5" />
+              </div>
+              <span>{web3Loading ? 'Processing...' : 'Connect Web3 Wallet'}</span>
+            </button>
+            
+            <button
+              onClick={verifyWeb3Identity}
+              disabled={loading || web3Loading}
+              className="w-full flex items-center justify-center gap-3 rounded-xl border border-orange-500/30 bg-orange-500/10 px-4 py-3 font-semibold text-orange-400 transition-all hover:bg-orange-500/20 hover:border-orange-500/60 active:scale-[0.98] disabled:opacity-50 group"
+            >
+              <ShieldCheck className="h-4 w-4" />
+              <span>{web3Loading ? 'Verifying...' : 'Verify Identity & Login'}</span>
+            </button>
+          </div>
 
           <div className="mt-8 text-center">
             <p className="text-[10px] font-medium text-slate-600 uppercase tracking-widest">

@@ -33,6 +33,25 @@ The system is split into three primary platforms:
 - **Frontend Resilience**: Added safe-array guards across all data-mapping components to eliminate "blank screen" crashes caused by API errors.
 - **Routing Fixes**: Corrected navigation paths for the Order Management system.
 
+### 💸 Internal Fiat Gateway & zkTLS Verification
+The system has migrated from third-party providers (MoonPay) to a private, internal settlement system to ensure maximum privacy and control.
+
+#### 🔄 Workflow
+**1. Fiat Deposit (On-Ramp: Fiat $\rightarrow$ USDT)**
+- **Transfer**: User transfers fiat to the official SENSE 50 institutional bank account.
+- **Verification**: User utilizes **zkTLS (via Reclaim Protocol)** to provide a cryptographic proof of the bank transfer.
+- **Settlement**: Upon zkTLS confirmation, the system credits USDT to the user's wallet.
+
+**2. Fiat Withdrawal (Off-Ramp: USDT $\rightarrow$ Fiat)**
+- **USDT Transfer**: User sends USDT to the SENSE 50 secure vault.
+- **Verification**: User provides **zkTLS proof** that the on-chain transaction was successfully sent to the institutional address.
+- **Settlement**: SENSE 50 processes the fiat transfer to the user's verified bank account.
+
+#### 🛡️ Key Features
+- **Bank Management**: Secure storage and verification of user's bank account details.
+- **Privacy-Preserving**: zkTLS ensures that only the necessary transaction data is verified without exposing sensitive account credentials.
+- **Direct Settlement**: Eliminates third-party fees and delays by acting as the direct counterparty.
+
 ## 🔑 Demo Credentials
 
 | Role | Email | Password |

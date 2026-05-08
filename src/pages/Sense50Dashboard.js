@@ -311,7 +311,7 @@ const Sense50Dashboard = () => {
                         </td>
                       </tr>
                     ))
-                  }
+                  )}
                 </tbody>
               </table>
             </div>

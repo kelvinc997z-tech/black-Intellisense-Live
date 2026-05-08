@@ -80,6 +80,10 @@ async def register_user(user_data: UserCreate, db: AsyncSession = Depends(get_db
     
     return map_db_user_to_pydantic(user_doc)
 
+@router.get("/ping")
+async def auth_ping():
+    return {"message": "Auth router is alive!"}
+
 @router.post("/login")
 async def login(credentials: UserLogin, db: AsyncSession = Depends(get_db)):
     try:

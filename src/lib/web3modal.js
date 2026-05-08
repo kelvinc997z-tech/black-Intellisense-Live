@@ -30,11 +30,15 @@ export const Web3ModalProvider = ({ children }) => {
   return <>{children}</>;
 };
 
-export const openWeb3Modal = () => {
+export const openWeb3Modal = async () => {
   try {
-    // AppKit uses a custom event or can be triggered via their hook, 
-    // but for a simple utility function:
-    window.dispatchEvent(new CustomEvent('appkit:open'));
+    // The correct way to open the AppKit modal via API if not using the hook
+    // AppKit provides a global object or we can use the internal event
+    if (window.AppKit) {
+      window.AppKit.open();
+    } else {
+      window.dispatchEvent(new CustomEvent('appkit:open'));
+    }
   } catch (e) {
     console.error('Error opening AppKit Modal:', e);
   }

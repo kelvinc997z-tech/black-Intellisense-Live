@@ -1,26 +1,43 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Layout from '../components/layout/Layout';
 import api from '../lib/api';
-import { formatCurrency, formatNumber } from '../lib/utils';
 import { 
   TrendingUp, TrendingDown, DollarSign, Activity, Clock, 
   Zap, ShieldAlert, Globe, Server, Cpu, ArrowUpRight,
-  BarChart3, Layers, Terminal, Cpu as CpuIcon, Database, ShieldCheck
+  BarChart3, Layers, Terminal, Cpu as CpuIcon, Database, ShieldCheck,
+  Wallet
 } from 'lucide-react';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, 
   ResponsiveContainer, LineChart, Line 
 } from 'recharts';
+import { useAuth } from '../contexts/AuthContext';
+import { fetchWalletBalances } from '../lib/moonpay';
+import { toast } from 'sonner';
 
 const Sense50Dashboard = () => {
+  const { user } = useAuth();
   const [stats, setStats] = useState(null);
   const [activities, setActivities] = useState([]);
   const [priceHistory, setPriceHistory] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [walletBalances, setWalletBalances] = useState(null);
 
   useEffect(() => {
     fetchData();
-  }, []);
+    if (user?.address) {
+      updateWalletBalances();
+    }
+  }, [user]);
+
+  const updateWalletBalances = async () => {
+    try {
+      const balances = await fetchWalletBalances(user.address);
+      setWalletBalances(balances);
+    } catch (e) {
+      console.error('Balance update error:', e);
+    }
+  };
 
   const fetchData = async () => {
     try {
@@ -106,6 +123,28 @@ const Sense50Dashboard = () => {
                   </div>
                 </div>
                 <div className="rounded-xl bg-slate-800/50 p-3 text-primary"><DollarSign className="h-6 w-6" /></div>
+              </div>
+            </div>
+
+            {/* Wallet Asset Quick-View */}
+            <div className="group relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/60 to-black/80 p-6 backdrop-blur-2xl transition-all hover:border-primary/40">
+              <div className="flex items-start justify-between">
+                <div className="space-y-2">
+                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">Connected Wallet Assets</p>
+                  <div className="space-y-1">
+                    {walletBalances ? (
+                      Object.entries(walletBalances).map(([symbol, balance]) => (
+                        <div key={symbol} className="flex justify-between items-center gap-4">
+                          <span className="text-xs font-mono text-slate-400">{symbol}</span>
+                          <span className="text-xs font-mono font-bold text-white">{parseFloat(balance).toFixed(4)}</span>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="h-8 w-full bg-white/5 animate-pulse rounded" />
+                    )}
+                  </div>
+                </div>
+                <div className="rounded-xl bg-slate-800/50 p-3 text-cyan-400"><Wallet className="h-6 w-6" /></div>
               </div>
             </div>
 

@@ -37,6 +37,7 @@ const Layout = ({ children }) => {
         { name: 'Wallets', icon: Wallet, path: '/sense50/wallets' },
         { name: 'Markup Config', icon: Settings, path: '/sense50/markup' },
         { name: 'Price Feeds', icon: TrendingUp, path: '/sense50/prices' },
+        { name: 'On/Off Ramp', icon: ArrowUpRight, path: '/onramp' },
       ],
     },
     {

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'sonner';
 import { ethers } from 'ethers';
+import { useAppKitAccount, useAppKitProvider } from '@reown/appkit/react';
 import { openWeb3Modal } from '../lib/web3modal';
 import api from '../lib/api';
 import { ShieldCheck, Lock, Mail, LayoutDashboard, TrendingUp, ChevronRight } from 'lucide-react';
@@ -10,6 +11,9 @@ import { ShieldCheck, Lock, Mail, LayoutDashboard, TrendingUp, ChevronRight } fr
 const Login = () => {
   const navigate = useNavigate();
   const { login, loginWithWeb3 } = useAuth();
+  const { address, isConnected } = useAppKitAccount();
+  const { walletProvider } = useAppKitProvider();
+  
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -68,28 +72,34 @@ const Login = () => {
   };
 
   const handleWeb3Login = async () => {
-    openWeb3Modal();
+    if (isConnected) {
+      verifyWeb3Identity();
+    } else {
+      openWeb3Modal();
+    }
   };
 
   const verifyWeb3Identity = async () => {
-    if (!window.ethereum) {
-      toast.error('Web3 Provider not detected!');
+    if (!isConnected || !address) {
+      toast.error('Please connect your wallet first!');
+      openWeb3Modal();
       return;
     }
 
     setWeb3Loading(true);
     try {
-      const provider = new ethers.BrowserProvider(window.ethereum);
+      // Use the provider from AppKit instead of window.ethereum
+      const provider = walletProvider ? new ethers.BrowserProvider(walletProvider) : new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
-      const address = await signer.getAddress();
+      const userAddress = await signer.getAddress();
 
-      const nonceRes = await api.post('/auth/web3/nonce', { address });
+      const nonceRes = await api.post('/auth/web3/nonce', { address: userAddress });
       const nonce = nonceRes.data.nonce;
 
       const message = `Welcome to Black IntelliSense! Sign this message to login.\nNonce: ${nonce}`;
       const signature = await signer.signMessage(message);
 
-      const userData = await loginWithWeb3(address, signature, nonce);
+      const userData = await loginWithWeb3(userAddress, signature, nonce);
       
       if (portalMode === 'admin' && userData.role !== 'admin') {
         toast.error('Access Denied: Admin privileges required for Sense50.');
@@ -236,12 +246,12 @@ const Login = () => {
                 <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg" alt="MetaMask" className="h-5 w-5" />
                 <img src="https://raw.githubusercontent.com/walletconnect/walletconnect-assets/master/logos/walletconnect.svg" alt="WalletConnect" className="h-5 w-5" />
               </div>
-              <span>{web3Loading ? 'Processing...' : 'Connect Web3 Wallet'}</span>
+              <span>{web3Loading ? 'Processing...' : isConnected ? 'Wallet Connected' : 'Connect Web3 Wallet'}</span>
             </button>
             
             <button
               onClick={verifyWeb3Identity}
-              disabled={loading || web3Loading}
+              disabled={loading || web3Loading || !isConnected}
               className="w-full flex items-center justify-center gap-3 rounded-xl border border-orange-500/30 bg-orange-500/10 px-4 py-3 font-semibold text-orange-400 transition-all hover:bg-orange-500/20 hover:border-orange-500/60 active:scale-[0.98] disabled:opacity-50 group"
             >
               <ShieldCheck className="h-4 w-4" />

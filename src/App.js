@@ -23,6 +23,7 @@ import OrderManagementPage from './pages/OrderManagementPage';
 import MarkCRMPage from './pages/MarkCRMPage';
 import VerificationPage from './pages/VerificationPage';
 import OnrampPage from './pages/OnrampPage';
+import FiatGatewayPage from './pages/FiatGatewayPage';
 import './App.css';
 
 const PrivateRoute = ({ children }) => {
@@ -196,6 +197,14 @@ function App() {
               element={
                 <PrivateRoute>
                   <OnrampPage />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/fiat-gateway"
+              element={
+                <PrivateRoute>
+                  <FiatGatewayPage />
                 </PrivateRoute>
               }
             />

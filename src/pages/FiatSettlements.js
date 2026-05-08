@@ -2,9 +2,8 @@ import React, { useState, useEffect } from 'react';
 import Layout from '../components/layout/Layout';
 import api from '../lib/api';
 import { 
-  CheckCircle, XCircle, Filter, Search, 
-  ArrowUpRight, ArrowDownLeft, ShieldCheck,
-  ExternalLink, Clock, User
+  CheckCircle, XCircle, Search, 
+  ExternalLink, User
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -47,18 +46,20 @@ const FiatSettlements = () => {
 
   const filteredRequests = requests.filter(req => {
     const matchesFilter = filter === 'all' || req.status === filter;
-    const matchesSearch = req.user_id?.toLowerCase().includes(search.toLowerCase()) || 
-                         req.currency?.toLowerCase().includes(search.toLowerCase());
+    const matchesSearch = (req.user_id || '').toLowerCase().includes(search.toLowerCase()) || 
+                         (req.currency || '').toLowerCase().includes(search.toLowerCase());
     return matchesFilter && matchesSearch;
   });
 
-  if (loading) return (
-    <Layout>
-      <div className="flex h-screen items-center justify-center bg-black text-white">
-        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
-      </div>
-    </Layout>
-  );
+  if (loading) {
+    return (
+      <Layout>
+        <div className="flex h-screen items-center justify-center bg-black text-white">
+          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
@@ -167,7 +168,7 @@ const FiatSettlements = () => {
                         <td className="px-6 py-4 text-right">
                           <div className="flex justify-end gap-2">
                             {req.status === 'pending' && (
-                              <>
+                              <React.Fragment>
                                 <button 
                                   onClick={() => handleUpdateStatus(req.id, 'rejected', 'Invalid proof or incorrect amount')}
                                   disabled={updating === req.id}
@@ -184,20 +185,21 @@ const FiatSettlements = () => {
                                 >
                                   <CheckCircle className="h-4 w-4" />
                                 </button>
-                            </>
-                          )}
-                          {updating === req.id && (
-                            <div className="h-8 w-8 flex items-center justify-center">
-                              <div className="h-4 w-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                            </div>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                              </React.Fragment>
+                            )}
+                            {updating === req.id && (
+                              <div className="h-8 w-8 flex items-center justify-center">
+                                <div className="h-4 w-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>

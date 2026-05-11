@@ -81,16 +81,24 @@ const LandingPage = ({ onGetStarted }) => {
                   <div className="h-4 w-32 bg-white/10 rounded-full" />
                   <div className="h-4 w-16 bg-cyan-500/40 rounded-full" />
                 </div>
-                {[1, 2, 3].map(i => (
-                  <div key={i} className="h-20 w-full bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-lg bg-cyan-500/20" />
-                    <div className="flex-1 space-y-2">
-                      <div className="h-3 w-1/2 bg-white/20 rounded-full" />
-                      <div className="h-2 w-1/3 bg-white/10 rounded-full" />
+                {[
+                  { symbol: 'BTC/USDT', price: '64,231.50', change: '+2.4%', color: 'text-green-400' },
+                  { symbol: 'ETH/USDT', price: '3,452.12', change: '-1.2%', color: 'text-red-400' },
+                  { symbol: 'USDT/USD', price: '1.0000', change: '0.00%', color: 'text-gray-400' },
+                ].map((pair, i) => (
+                  <div key={i} className="h-20 w-full bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center gap-4 hover:border-cyan-500/30 transition-colors">
+                    <div className="w-10 h-10 rounded-lg bg-cyan-500/20 flex items-center justify-center font-bold text-xs text-cyan-400">
+                      {pair.symbol.split('/')[0]}
                     </div>
-                    <div className="h-6 w-12 bg-cyan-500/40 rounded-lg" />
+                    <div className="flex-1 space-y-1">
+                      <div className="text-xs font-mono text-gray-400 uppercase">{pair.symbol}</div>
+                      <div className="text-lg font-bold font-mono text-white">${pair.price}</div>
+                    </div>
+                    <div className={`px-3 py-1 rounded-lg bg-white/5 border border-white/10 font-mono text-xs font-bold ${pair.color}`}>
+                      {pair.change}
+                    </div>
                   </div>
-                ))}
+                ))},
                 <div className="mt-8 p-6 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 space-y-4">
                   <div className="flex justify-between items-center border-b border-cyan-500/20 pb-2">
                     <div className="text-cyan-400 font-mono text-xs">SYSTEM_STATUS: ACTIVE</div>

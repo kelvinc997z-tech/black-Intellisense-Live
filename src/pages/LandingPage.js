@@ -7,7 +7,7 @@ const LandingPage = ({ onGetStarted }) => {
   const [prices, setPrices] = useState([
     { symbol: 'BTC/USDT', price: 'Loading...', change: '...', color: 'text-gray-400' },
     { symbol: 'ETH/USDT', price: 'Loading...', change: '...', color: 'text-gray-400' },
-    { symbol: 'USDT/IDR', price: '15,820.00', change: '0.05%', color: 'text-green-400' },
+    { symbol: 'USD/IDR', price: '15,820.00', change: '0.05%', color: 'text-green-400' },
   ]);
 
   const [tickerData, setTickerData] = useState([]);
@@ -38,7 +38,7 @@ const LandingPage = ({ onGetStarted }) => {
             color: parseFloat(eth.priceChangePercent) >= 0 ? 'text-green-400' : 'text-red-400' 
           },
           { 
-            symbol: 'USDT/IDR', 
+            symbol: 'USD/IDR', 
             price: '15,820.00', 
             change: '0.05%', 
             color: 'text-green-400' 

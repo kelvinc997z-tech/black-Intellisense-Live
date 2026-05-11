@@ -66,7 +66,10 @@ const GlobeScene = () => {
 
   useFrame((state) => {
     if (globeRef.current) {
+      const { x, y } = state.mouse;
       globeRef.current.rotation.y += 0.0015;
+      globeRef.current.rotation.x = THREE.MathUtils.lerp(globeRef.current.rotation.x, y * 0.5, 0.1);
+      globeRef.current.rotation.z = THREE.MathUtils.lerp(globeRef.current.rotation.z, x * 0.5, 0.1);
     }
   });
 

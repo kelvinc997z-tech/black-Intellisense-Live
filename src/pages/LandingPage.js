@@ -96,9 +96,9 @@ const LandingPage = ({ onGetStarted }) => {
         </div>
       </div>
 
-      <motion.div style={{ y: backgroundY }}>
+      <div className="fixed inset-0 -z-10">
         <NetworkBackground />
-      </motion.div>
+      </div>
       
       {/* Navigation */}
       <nav className="relative z-10 flex items-center justify-between px-8 py-6 max-w-7xl mx-auto">
@@ -330,6 +330,89 @@ const LandingPage = ({ onGetStarted }) => {
         </div>
       </motion.section>
 
+      {/* Security Section */}
+      <section id="security" className="relative z-10 bg-white/[0.02] border-y border-white/5 backdrop-blur-md py-32">
+        <div className="max-w-7xl mx-auto px-8 grid lg:grid-cols-2 gap-16 items-center">
+          <div className="relative">
+            <div className="aspect-video bg-black border border-cyan-500/30 rounded-2xl overflow-hidden p-4 font-mono text-xs text-cyan-400 shadow-inner">
+              <div className="flex gap-2 mb-4">
+                <div className="w-3 h-3 rounded-full bg-red-500" />
+                <div className="w-3 h-3 rounded-full bg-yellow-500" />
+                <div className="w-3 h-3 rounded-full bg-green-500" />
+              </div>
+              <div className="space-y-1">
+                <p>{`> Initializing zkTLS Handshake...`}</p>
+                <p>{`> Verifying Bank Proof... [SUCCESS]`}</p>
+                <p>{`> Cryptographic Attestation: 0x7f...a1`}</p>
+                <p>{`> Verifying on-chain transaction...`}</p>
+                <p className="text-white">{`> Settlement Confirmed: 1,250,000 USDT`}</p>
+                <p className="animate-pulse">_</p>
+              </div>
+            </div>
+            <div className="absolute -z-10 inset-0 bg-cyan-500/10 blur-3xl" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2 text-cyan-400 font-bold uppercase tracking-widest text-sm mb-4">
+              <Lock className="w-4 h-4" /> Privacy-Preserving
+            </div>
+            <h2 className="text-4xl font-bold mb-6 uppercase tracking-tighter">zkTLS Verification</h2>
+            <p className="text-gray-400 mb-8 leading-relaxed">
+              Our internal settlement system utilizes zkTLS (via Reclaim Protocol) to ensure maximum privacy. 
+              Verify bank transfers and on-chain movements without exposing sensitive account credentials.
+            </p>
+            <ul className="space-y-4">
+              {['Direct Settlement', 'Zero Third-Party Fees', 'Cryptographic Proof of Funds'].map((item, i) => (
+                <li key={i} className="flex items-center gap-3 text-sm text-gray-300">
+                  <div className="w-1.5 h-1.5 rounded-full bg-cyan-500" /> {item}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </section>
+
+
+      {/* Security Section */}
+      <section id="security" className="relative z-10 bg-white/[0.02] border-y border-white/5 backdrop-blur-md py-32">
+        <div className="max-w-7xl mx-auto px-8 grid lg:grid-cols-2 gap-16 items-center">
+          <div className="relative">
+            <div className="aspect-video bg-black border border-cyan-500/30 rounded-2xl overflow-hidden p-4 font-mono text-xs text-cyan-400 shadow-inner">
+              <div className="flex gap-2 mb-4">
+                <div className="w-3 h-3 rounded-full bg-red-500" />
+                <div className="w-3 h-3 rounded-full bg-yellow-500" />
+                <div className="w-3 h-3 rounded-full bg-green-500" />
+              </div>
+              <div className="space-y-1">
+                <p>{`> Initializing zkTLS Handshake...`}</p>
+                <p>{`> Verifying Bank Proof... [SUCCESS]`}</p>
+                <p>{`> Cryptographic Attestation: 0x7f...a1`}</p>
+                <p>{`> Verifying on-chain transaction...`}</p>
+                <p className="text-white">{`> Settlement Confirmed: 1,250,000 USDT`}</p>
+                <p className="animate-pulse">_</p>
+              </div>
+            </div>
+            <div className="absolute -z-10 inset-0 bg-cyan-500/10 blur-3xl" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2 text-cyan-400 font-bold uppercase tracking-widest text-sm mb-4">
+              <Lock className="w-4 h-4" /> Privacy-Preserving
+            </div>
+            <h2 className="text-4xl font-bold mb-6 uppercase tracking-tighter">zkTLS Verification</h2>
+            <p className="text-gray-400 mb-8 leading-relaxed">
+              Our internal settlement system utilizes zkTLS (via Reclaim Protocol) to ensure maximum privacy. 
+              Verify bank transfers and on-chain movements without exposing sensitive account credentials.
+            </p>
+            <ul className="space-y-4">
+              {['Direct Settlement', 'Zero Third-Party Fees', 'Cryptographic Proof of Funds'].map((item, i) => (
+                <li key={i} className="flex items-center gap-3 text-sm text-gray-300">
+                  <div className="w-1.5 h-1.5 rounded-full bg-cyan-500" /> {item}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </section>
+
       {/* Contact Section */}
       <section id="contact" className="relative z-10 max-w-7xl mx-auto px-8 py-32">
         <div className="grid lg:grid-cols-2 gap-16 items-center">
@@ -399,47 +482,6 @@ const LandingPage = ({ onGetStarted }) => {
               </button>
             </form>
           </motion.div>
-        </div>
-      </section>
-
-      {/* Security Section */}
-      <section id="security" className="relative z-10 bg-white/[0.02] border-y border-white/5 backdrop-blur-md py-32">
-        <div className="max-w-7xl mx-auto px-8 grid lg:grid-cols-2 gap-16 items-center">
-          <div className="relative">
-            <div className="aspect-video bg-black border border-cyan-500/30 rounded-2xl overflow-hidden p-4 font-mono text-xs text-cyan-400 shadow-inner">
-              <div className="flex gap-2 mb-4">
-                <div className="w-3 h-3 rounded-full bg-red-500" />
-                <div className="w-3 h-3 rounded-full bg-yellow-500" />
-                <div className="w-3 h-3 rounded-full bg-green-500" />
-              </div>
-              <div className="space-y-1">
-                <p>{`> Initializing zkTLS Handshake...`}</p>
-                <p>{`> Verifying Bank Proof... [SUCCESS]`}</p>
-                <p>{`> Cryptographic Attestation: 0x7f...a1`}</p>
-                <p>{`> Verifying on-chain transaction...`}</p>
-                <p className="text-white">{`> Settlement Confirmed: 1,250,000 USDT`}</p>
-                <p className="animate-pulse">_</p>
-              </div>
-            </div>
-            <div className="absolute -z-10 inset-0 bg-cyan-500/10 blur-3xl" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2 text-cyan-400 font-bold uppercase tracking-widest text-sm mb-4">
-              <Lock className="w-4 h-4" /> Privacy-Preserving
-            </div>
-            <h2 className="text-4xl font-bold mb-6 uppercase tracking-tighter">zkTLS Verification</h2>
-            <p className="text-gray-400 mb-8 leading-relaxed">
-              Our internal settlement system utilizes zkTLS (via Reclaim Protocol) to ensure maximum privacy. 
-              Verify bank transfers and on-chain movements without exposing sensitive account credentials.
-            </p>
-            <ul className="space-y-4">
-              {['Direct Settlement', 'Zero Third-Party Fees', 'Cryptographic Proof of Funds'].map((item, i) => (
-                <li key={i} className="flex items-center gap-3 text-sm text-gray-300">
-                  <div className="w-1.5 h-1.5 rounded-full bg-cyan-500" /> {item}
-                </li>
-              ))}
-            </ul>
-          </div>
         </div>
       </section>
 

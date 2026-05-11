@@ -105,9 +105,14 @@ const LandingPage = ({ onGetStarted }) => {
 
       {/* Features Grid */}
       <section id="features" className="relative z-10 max-w-7xl mx-auto px-8 py-32">
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/40 to-transparent -z-10" />
         <div className="text-center mb-20">
-          <h2 className="text-4xl font-bold mb-4 uppercase tracking-tighter">Infrastructure</h2>
-          <p className="text-gray-400 max-w-2xl mx-auto">The complete ecosystem for institutional asset management and high-frequency OTC settlement.</p>
+          <h2 className="text-4xl font-bold mb-4 uppercase tracking-tighter text-white drop-shadow-[0_0_10px_rgba(6,182,212,0.8)]">
+            Infrastructure
+          </h2>
+          <p className="text-gray-300 max-w-2xl mx-auto text-lg leading-relaxed drop-shadow-md">
+            The complete ecosystem for institutional asset management and high-frequency OTC settlement.
+          </p>
         </div>
         <div className="grid md:grid-cols-3 gap-8">
           <FeatureCard 

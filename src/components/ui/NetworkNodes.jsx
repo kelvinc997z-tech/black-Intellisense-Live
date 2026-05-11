@@ -1,104 +1,124 @@
 import React, { useRef, useMemo } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { Sphere, Float, MeshDistortMaterial } from '@react-three/drei';
+import { Sphere, Float, MeshDistortMaterial, PerspectiveCamera } from '@react-three/drei';
 import * as THREE from 'three';
 
-const Node = ({ position, color, size = 0.1 }) => {
+const GlobeConnection = ({ start, end, color }) => {
+  const curve = useMemo(() => {
+    const mid = new THREE.Vector3().addVectors(start, end).multiplyScalar(0.5);
+    mid.normalize().multiplyScalar(2); // Pull the arc outwards
+    return new THREE.QuadraticBezierCurve3(start, mid, end);
+  }, [start, end]);
+
+  const points = useMemo(() => curve.getPoints(50), [curve]);
+
   return (
-    <Float speed={2} rotationIntensity={0.5} floatIntensity={0.5}>
-      <Sphere args={[size, 16, 16]} position={position}>
-        <MeshDistortMaterial 
-          color={color} 
-          speed={2} 
-          distort={0.3} 
-          emissive={color} 
-          emissiveIntensity={2} 
+    <line>
+      <bufferGeometry attach="geometry">
+        <bufferAttribute 
+          attach="attributes-position" 
+          count={points.length * 3} 
+          array={new Float32Array(points.flatMap(p => [p.x, p.y, p.z]))} 
+          itemSize={3} 
         />
-      </Sphere>
-    </Float>
+      </bufferGeometry>
+      <lineBasicMaterial attach="material" color={color} transparent opacity={0.4} linewidth={1} />
+    </line>
   );
 };
 
-const Connections = ({ nodes }) => {
-  const lines = useMemo(() => {
-    const lineGeometries = [];
-    for (let i = 0; i < nodes.length; i++) {
-      for (let j = i + 1; j < nodes.length; j++) {
-        if (Math.random() > 0.7) {
-          const points = [
-            new THREE.Vector3(...nodes[i]),
-            new THREE.Vector3(...nodes[j]),
-          ];
-          lineGeometries.push(points);
-        }
-      }
+const GlobeScene = () => {
+  const globeRef = useRef();
+  
+  const { points, connections } = useMemo(() => {
+    const pts = [];
+    const conn = [];
+    const numPoints = 40;
+    
+    for (let i = 0; i < numPoints; i++) {
+      const phi = Math.acos(-1 + (2 * i) / numPoints);
+      const theta = Math.sqrt(numPoints * Math.PI) * phi;
+      pts.push(new THREE.Vector3(
+        Math.sin(phi) * Math.cos(theta),
+        Math.cos(phi),
+        Math.sin(phi) * Math.sin(theta)
+      ).multiplyScalar(2));
     }
-    return lineGeometries;
-  }, [nodes]);
-
-  return (
-    <>
-      {lines.map((points, idx) => (
-        <line key={idx}>
-          <bufferGeometry attach="geometry">
-            <bufferAttribute 
-              attach="attributes-position" 
-              count={points.length * 3} 
-              array={new Float32Array(points.flatMap(p => [p.x, p.y, p.z]))} 
-              itemSize={3} 
-            />
-          </bufferGeometry>
-          <lineBasicMaterial attach="material" color="#00f2ff" transparent opacity={0.3} />
-        </line>
-      ))}
-    </>
-  );
-};
-
-const NetworkBackground = () => {
-  const nodes = useMemo(() => {
-    return Array.from({ length: 40 }, () => [
-      (Math.random() - 0.5) * 12,
-      (Math.random() - 0.5) * 12,
-      (Math.random() - 0.5) * 12,
-    ]);
+    
+    for (let i = 0; i < numPoints; i++) {
+      const targets = [Math.floor(Math.random() * numPoints), Math.floor(Math.random() * numPoints)];
+      targets.forEach(t => {
+        if (i !== t) conn.push([pts[i], pts[t]]);
+      });
+    }
+    
+    return { points: pts, connections: conn };
   }, []);
 
-  const colors = ['#00f2ff', '#0066ff', '#0033ff'];
+  useFrame((state) => {
+    if (globeRef.current) {
+      globeRef.current.rotation.y += 0.002;
+      globeRef.current.rotation.x += 0.001;
+    }
+  });
 
   return (
-    <div className="absolute inset-0 -z-10 bg-[#020617]">
-      <Canvas camera={{ position: [0, 0, 5], fov: 75 }}>
-        <color attach="background" args={['#020617']} />
-        <ambientLight intensity={0.5} />
+    <group ref={globeRef}>
+      {/* The Globe Sphere */}
+      <Sphere args={[2, 64, 64]}>
+        <meshStandardMaterial 
+          color="#001a33" 
+          wireframe 
+          transparent 
+          opacity={0.2} 
+          emissive="#00f2ff" 
+          emissiveIntensity={0.5} 
+        />
+      </Sphere>
+      
+      {/* The Core Glow */}
+      <Sphere args={[1.9, 32, 32]}>
+        <meshBasicMaterial color="#003366" transparent opacity={0.3} />
+      </Sphere>
+
+      {/* Connection Arcs */}
+      {connections.map((conn, i) => (
+        <GlobeConnection key={i} start={conn[0]} end={conn[1]} color="#00f2ff" />
+      ))}
+
+      {/* City Nodes */}
+      {points.map((p, i) => (
+        <mesh key={i} position={p}>
+          <sphereGeometry args={[0.03, 16, 16]} />
+          <meshBasicMaterial color="#00f2ff" />
+        </mesh>
+      ))}
+    </group>
+  );
+};
+
+const TerminalBackground = () => {
+  return (
+    <div className="absolute inset-0 -z-10 bg-[#010409]">
+      <Canvas>
+        <PerspectiveCamera makeDefault position={[0, 0, 6]} />
+        <color attach="background" args={['#010409']} />
+        <ambientLight intensity={0.4} />
         <pointLight position={[10, 10, 10]} intensity={1} color="#00f2ff" />
         <pointLight position={[-10, -10, -10]} intensity={0.5} color="#0066ff" />
         
-        {/* Central Hub Core */}
-        <Float speed={1.5} rotationIntensity={1} floatIntensity={0.5}>
-          <Sphere args={[0.6, 32, 32]} position={[0, 0, 0]}>
-            <MeshDistortMaterial 
-              color="#00f2ff" 
-              speed={3} 
-              distort={0.4} 
-              emissive="#00f2ff" 
-              emissiveIntensity={3} 
-            />
-          </Sphere>
+        <Float speed={1} rotationIntensity={0.2} floatIntensity={0.2}>
+          <GlobeScene />
         </Float>
         
-        <Connections nodes={nodes} />
-        {nodes.map((pos, i) => (
-          <Node key={i} position={pos} color={colors[i % colors.length]} />
-        ))}
-        
-        <mesh rotation={[0, 0, 0]}>
-          <sphereGeometry args={[15, 32, 32]} />
-          <meshBasicMaterial color="#000" side={THREE.BackSide} />
+        {/* Environmental Glow */}
+        <mesh position={[0, -3, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+          <planeGeometry args={[20, 20]} />
+          <meshStandardMaterial color="#001a33" transparent opacity={0.4} />
         </mesh>
       </Canvas>
     </div>
   );
 };
 
-export default NetworkBackground;
+export default TerminalBackground;

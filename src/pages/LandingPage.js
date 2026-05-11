@@ -4,6 +4,7 @@ import NetworkBackground from '../components/ui/NetworkNodes';
 import ThreeText from '../components/ui/ThreeText';
 import { ArrowRight, Shield, Zap, Globe, Lock, BarChart3, Cpu, Layers, Activity } from 'lucide-react';
 import TechCore from '../components/ui/TechCore';
+import ZKVisualization from '../components/ui/ZKVisualization';
 
 const ZKTerminal = () => {
   const [logs, setLogs] = useState([]);
@@ -410,18 +411,20 @@ const LandingPage = ({ onGetStarted }) => {
 
 
       {/* Security Section */}
-      <section id="security" className="relative z-10 bg-white/[0.02] border-y border-white/5 backdrop-blur-md py-32">
-        <div className="max-w-7xl mx-auto px-8 grid lg:grid-cols-2 gap-16 items-center">
-          <div className="relative">
-            <div className="aspect-video bg-black border border-cyan-500/30 rounded-2xl overflow-hidden p-4 font-mono text-xs text-cyan-400 shadow-inner">
-              <div className="flex gap-2 mb-4">
-                <div className="w-3 h-3 rounded-full bg-red-500" />
-                <div className="w-3 h-3 rounded-full bg-yellow-500" />
-                <div className="w-3 h-3 rounded-full bg-green-500" />
+      <section id="security" className="relative z-10 bg-white/[0.02] border-y border-white/5 backdrop-blur-md py-32 overflow-hidden">
+        <div className="max-w-7xl mx-auto px-8 grid lg:grid-cols-2 gap-16 items-center relative">
+          <div className="relative h-[400px]">
+            <ZKVisualization />
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+               <div className="bg-black/40 backdrop-blur-md border border-cyan-500/30 rounded-2xl p-4 font-mono text-xs text-cyan-400 shadow-2xl w-full max-w-md">
+                <div className="flex gap-2 mb-4">
+                  <div className="w-3 h-3 rounded-full bg-red-500" />
+                  <div className="w-3 h-3 rounded-full bg-yellow-500" />
+                  <div className="w-3 h-3 rounded-full bg-green-500" />
+                </div>
+                <ZKTerminal />
               </div>
-              <ZKTerminal />
             </div>
-            <div className="absolute -z-10 inset-0 bg-cyan-500/10 blur-3xl" />
           </div>
           <div>
             <div className="flex items-center gap-2 text-cyan-400 font-bold uppercase tracking-widest text-sm mb-4">

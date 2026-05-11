@@ -300,7 +300,15 @@ const LandingPage = ({ onGetStarted }) => {
             color="text-green-400"
             bg="bg-green-500/10"
             border="border-green-500/30"
-            features={["zkTLS Identity Verification", "Solvency Heartbeat", "Multisig Asset Approval", "Immutable Audit Logs"]}
+            features={["zkTLS Zero-Knowledge Proofs", "Identity Attestation", "Solvency Heartbeat", "Immutable Audit Logs"]}
+          />
+          <CapabilityCard 
+            title="Smart Contract Engine"
+            icon={<Lock className="w-6 h-6" />}
+            color="text-yellow-400"
+            bg="bg-yellow-500/10"
+            border="border-yellow-500/30"
+            features={["Automated Solvency Vaults", "Multisig Asset Approval", "Smart Settlement Logic", "On-Chain Governance"]}
           />
           <CapabilityCard 
             title="Treasury Mgmt"

@@ -50,9 +50,11 @@ const LandingPage = ({ onGetStarted }) => {
               THE DARK POOL <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-600">EVOLVED.</span>
             </h1>
-            <p className="text-lg text-white max-w-lg mb-10 leading-relaxed drop-shadow-lg font-medium">
-              Professional-grade multi-platform trading infrastructure designed for institutional dark pools and OTC trading. Centralized liquidity, precision pricing, and cryptographic security.
-            </p>
+            <div className="inline-block p-4 rounded-2xl bg-white/5 backdrop-blur-md border border-white/10 mb-10 shadow-xl">
+              <p className="text-lg text-white max-w-lg leading-relaxed drop-shadow-md font-medium">
+                Professional-grade multi-platform trading infrastructure designed for institutional dark pools and OTC trading. Centralized liquidity, precision pricing, and cryptographic security.
+              </p>
+            </div>
             <div className="flex flex-wrap gap-4">
               <button 
                 onClick={onGetStarted}

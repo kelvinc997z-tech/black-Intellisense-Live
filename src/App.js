@@ -1,9 +1,10 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Toaster } from 'sonner';
 import { Web3ModalProvider } from './lib/web3modal';
 import Login from './pages/Login';
+import LandingPage from './pages/LandingPage';
 import TradingPage from './pages/TradingPage';
 import OrdersPage from './pages/OrdersPage';
 import AssetsPage from './pages/AssetsPage';
@@ -37,12 +38,18 @@ const PrivateRoute = ({ children }) => {
   return isAuthenticated ? children : <Navigate to="/login" />;
 };
 
+const LandingWrapper = () => {
+  const navigate = useNavigate();
+  return <LandingPage onGetStarted={() => navigate('/login')} />;
+};
+
 function App() {
   return (
     <Web3ModalProvider>
       <AuthProvider>
         <BrowserRouter>
           <Routes>
+            <Route path="/" element={<LandingWrapper />} />
             <Route path="/login" element={<Login />} />
             
             {/* Admin / Sense50 Routes */}
@@ -217,7 +224,6 @@ function App() {
                 </PrivateRoute>
               }
             />
-            <Route path="/" element={<Navigate to="/trading" />} />
           </Routes>
         </BrowserRouter>
         <Toaster position="top-right" theme="dark" />

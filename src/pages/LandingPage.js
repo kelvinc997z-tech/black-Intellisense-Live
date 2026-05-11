@@ -10,10 +10,8 @@ const LandingPage = ({ onGetStarted }) => {
       
       {/* Navigation */}
       <nav className="relative z-10 flex items-center justify-between px-8 py-6 max-w-7xl mx-auto">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-cyan-500 rounded-lg rotate-45 flex items-center justify-center">
-            <div className="w-4 h-4 bg-[#020617] rotate-45" />
-          </div>
+        <div className="flex items-center gap-3">
+          <img src="/assets/logo.jpg" alt="Black IntelliSense Logo" className="w-10 h-10 object-contain" />
           <span className="text-xl font-bold tracking-tighter uppercase">Black IntelliSense</span>
         </div>
         <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-400">

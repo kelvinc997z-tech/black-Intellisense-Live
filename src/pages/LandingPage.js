@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import NetworkBackground from '../components/ui/NetworkNodes';
-import { ArrowRight, Shield, Zap, Globe, Lock } from 'lucide-react';
+import { ArrowRight, Shield, Zap, Globe, Lock, BarChart3, Cpu, Layers, Activity } from 'lucide-react';
 
 const LandingPage = ({ onGetStarted }) => {
   const [prices, setPrices] = useState([
@@ -9,6 +9,8 @@ const LandingPage = ({ onGetStarted }) => {
     { symbol: 'ETH/USDT', price: 'Loading...', change: '...', color: 'text-gray-400' },
     { symbol: 'USDT/USD', price: '1.0000', change: '0.00%', color: 'text-gray-400' },
   ]);
+
+  const [tickerData, setTickerData] = useState([]);
 
   useEffect(() => {
     const fetchPrices = async () => {
@@ -18,7 +20,10 @@ const LandingPage = ({ onGetStarted }) => {
         
         const btc = data.find(i => i.symbol === 'BTCUSDT');
         const eth = data.find(i => i.symbol === 'ETHUSDT');
-        
+        const sol = data.find(i => i.symbol === 'SOLUSDT');
+        const bnb = data.find(i => i.symbol === 'BNBUSDT');
+        const xrp = data.find(i => i.symbol === 'XRPUSDT');
+
         setPrices([
           { 
             symbol: 'BTC/USDT', 
@@ -39,6 +44,12 @@ const LandingPage = ({ onGetStarted }) => {
             color: 'text-gray-400' 
           },
         ]);
+
+        setTickerData([btc, eth, sol, bnb, xrp].map(item => ({
+          symbol: item.symbol.replace('USDT', ''),
+          price: parseFloat(item.lastPrice).toFixed(2),
+          change: item.priceChangePercent
+        })));
       } catch (error) {
         console.error('Price fetch error:', error);
       }
@@ -49,8 +60,36 @@ const LandingPage = ({ onGetStarted }) => {
     return () => clearInterval(interval);
   }, []);
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: { staggerChildren: 0.2 }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.5 } }
+  };
+
   return (
-    <div className="relative min-h-screen text-white font-sans selection:bg-cyan-500/30">
+    <div className="relative min-h-screen text-white font-sans selection:bg-cyan-500/30 bg-[#020617]">
+      {/* TOP PRICE TICKER */}
+      <div className="relative z-50 w-full bg-black/80 border-b border-cyan-500/20 backdrop-blur-md overflow-hidden py-2">
+        <div className="flex whitespace-nowrap animate-marquee">
+          {[...tickerData, ...tickerData].map((item, i) => (
+            <div key={i} className="flex items-center gap-3 mx-8 text-xs font-mono">
+              <span className="text-gray-500">{item.symbol}</span>
+              <span className="text-white font-bold">${item.price}</span>
+              <span className={parseFloat(item.change) >= 0 ? 'text-green-400' : 'text-red-400'}>
+                {parseFloat(item.change) >= 0 ? '▲' : '▼'} {Math.abs(parseFloat(item.change)).toFixed(2)}%
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
       <NetworkBackground />
       
       {/* Navigation */}
@@ -60,8 +99,8 @@ const LandingPage = ({ onGetStarted }) => {
           <span className="text-xl font-bold tracking-tighter uppercase">Black IntelliSense</span>
         </div>
         <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-400">
-          <a href="#features" className="hover:text-cyan-400 transition-colors">Infrastructure</a>
-          <a href="#security" className="hover:text-cyan-400 transition-colors">zkTLS Security</a>
+          <a href="#advantages" className="hover:text-cyan-400 transition-colors">Advantages</a>
+          <a href="#security" className="hover:text-cyan-400 transition-colors">zkTLS</a>
           <a href="#platforms" className="hover:text-cyan-400 transition-colors">Platforms</a>
           <button 
             onClick={onGetStarted}
@@ -74,33 +113,35 @@ const LandingPage = ({ onGetStarted }) => {
 
       {/* Hero Section */}
       <main className="relative z-10 max-w-7xl mx-auto px-8 pt-24 pb-32">
-        {/* Subtle overlay to ensure text readability against 3D background */}
         <div className="absolute inset-0 bg-gradient-to-b from-[#020617]/80 via-transparent to-[#020617]/90 -z-10 pointer-events-none" />
         
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           <motion.div 
-            initial={{ opacity: 0, x: -50 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8 }}
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
             className="relative"
           >
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-bold uppercase tracking-widest mb-6 backdrop-blur-sm">
+            <motion.div variants={itemVariants} className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-bold uppercase tracking-widest mb-6 backdrop-blur-sm">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500"></span>
               </span>
               Institutional Grade Infrastructure
-            </div>
-            <h1 className="text-6xl lg:text-8xl font-black tracking-tighter leading-[0.9] mb-6 drop-shadow-[0_0_25px_rgba(0,242,255,0.6)]">
+            </motion.div>
+            
+            <motion.h1 variants={itemVariants} className="text-6xl lg:text-8xl font-black tracking-tighter leading-[0.9] mb-6 drop-shadow-[0_0_25px_rgba(0,242,255,0.6)]">
               THE DARK POOL <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-600">EVOLVED.</span>
-            </h1>
-            <div className="inline-block p-4 rounded-2xl bg-white/5 backdrop-blur-md border border-white/10 mb-10 shadow-xl">
+            </motion.h1>
+            
+            <motion.div variants={itemVariants} className="inline-block p-4 rounded-2xl bg-white/5 backdrop-blur-md border border-white/10 mb-10 shadow-xl">
               <p className="text-lg text-white max-w-lg leading-relaxed drop-shadow-md font-medium">
                 Professional-grade multi-platform trading infrastructure designed for institutional dark pools and OTC trading. Centralized liquidity, precision pricing, and cryptographic security.
               </p>
-            </div>
-            <div className="flex flex-wrap gap-4">
+            </motion.div>
+            
+            <motion.div variants={itemVariants} className="flex flex-wrap gap-4">
               <button 
                 onClick={onGetStarted}
                 className="group px-8 py-4 bg-cyan-500 text-black font-bold rounded-xl hover:bg-cyan-400 transition-all flex items-center gap-2 shadow-[0_0_20px_rgba(6,182,212,0.5)]"
@@ -110,7 +151,7 @@ const LandingPage = ({ onGetStarted }) => {
               <button className="px-8 py-4 bg-white/5 backdrop-blur-md border border-white/10 font-bold rounded-xl hover:bg-white/10 transition-all text-white">
                 Documentation
               </button>
-            </div>
+            </motion.div>
           </motion.div>
 
           <motion.div 
@@ -139,7 +180,7 @@ const LandingPage = ({ onGetStarted }) => {
                       {pair.change}
                     </div>
                   </div>
-                ))},
+                ))}
                 <div className="mt-8 p-6 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 space-y-4">
                   <div className="flex justify-between items-center border-b border-cyan-500/20 pb-2">
                     <div className="text-cyan-400 font-mono text-xs">SYSTEM_STATUS: ACTIVE</div>
@@ -178,32 +219,64 @@ const LandingPage = ({ onGetStarted }) => {
         </div>
       </main>
 
-      {/* Features Grid */}
-      <section id="features" className="relative z-10 max-w-7xl mx-auto px-8 py-32">
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/40 to-transparent -z-10" />
+      {/* Strategic Advantages Section */}
+      <section id="advantages" className="relative z-10 max-w-7xl mx-auto px-8 py-32">
         <div className="text-center mb-20">
-          <h2 className="text-4xl font-bold mb-4 uppercase tracking-tighter text-white drop-shadow-[0_0_10px_rgba(6,182,212,0.8)]">
-            Infrastructure
-          </h2>
-          <p className="text-gray-300 max-w-2xl mx-auto text-lg leading-relaxed drop-shadow-md">
-            The complete ecosystem for institutional asset management and high-frequency OTC settlement.
-          </p>
+          <motion.h2 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-4xl font-bold mb-4 uppercase tracking-tighter text-white drop-shadow-[0_0_10px_rgba(6,182,212,0.8)]"
+          >
+            Strategic Advantage
+          </motion.h2>
+          <motion.p 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.1 }}
+            className="text-gray-300 max-w-2xl mx-auto text-lg leading-relaxed"
+          >
+            Engineered for high-frequency institutional settlement and absolute privacy.
+          </motion.p>
         </div>
+        
         <div className="grid md:grid-cols-3 gap-8">
-          <FeatureCard 
-            icon={<Globe className="w-6 h-6" />} 
-            title="Centralized API" 
-            desc="The core engine handling authentication, exchange connectivity, and order matching across all roles." 
+          <AdvantageCard 
+            icon={<BarChart3 className="w-6 h-6" />} 
+            title="Deep Liquidity" 
+            desc="Access centralized institutional liquidity pools with minimal slippage for high-value OTC orders."
+            tag="Market Efficiency"
           />
-          <FeatureCard 
-            icon={<Zap className="w-6 h-6" />} 
-            title="Sense50 Admin" 
-            desc="High-performance dashboard for Market Makers to configure markups and manage counterparty requests." 
+          <AdvantageCard 
+            icon={<Cpu className="w-6 h-6" />} 
+            title="Precision Pricing" 
+            desc="Low-latency pricing engines ensuring institutional precision across all major crypto pairs."
+            tag="Ultra Low Latency"
           />
-          <FeatureCard 
+          <AdvantageCard 
+            icon={<Layers className="w-6 h-6" />} 
+            title="Unified Infra" 
+            desc="One core engine powering Sense50 for Makers and IntelliTrade for Counterparties."
+            tag="Scalable Ecosystem"
+          />
+          <AdvantageCard 
+            icon={<Lock className="w-6 h-6" />} 
+            title="Zero-Knowledge" 
+            desc="zkTLS verification eliminates third-party trust and preserves absolute account privacy."
+            tag="Privacy-First"
+          />
+          <AdvantageCard 
+            icon={<Activity className="w-6 h-6" />} 
+            title="Rapid Settlement" 
+            desc="Direct cryptographic attestation for near-instantaneous institutional settlement."
+            tag="High Frequency"
+          />
+          <AdvantageCard 
             icon={<Shield className="w-6 h-6" />} 
-            title="IntelliTrade" 
-            desc="Streamlined counterparty interface for OTC orders, portfolio tracking, and secure institutional chat." 
+            title="Institutional Guard" 
+            desc="Multi-sig approvals and cryptographic proofs for assets exceeding $100k."
+            tag="Asset Security"
           />
         </div>
       </section>
@@ -262,14 +335,18 @@ const LandingPage = ({ onGetStarted }) => {
   );
 };
 
-const FeatureCard = ({ icon, title, desc }) => (
-  <div className="p-8 rounded-3xl bg-black/40 backdrop-blur-xl border border-white/10 hover:border-cyan-500/50 hover:bg-black/60 transition-all group shadow-2xl">
+const AdvantageCard = ({ icon, title, desc, tag }) => (
+  <motion.div 
+    whileHover={{ y: -5, backgroundColor: 'rgba(255,255,255,0.07)' }}
+    className="p-8 rounded-3xl bg-black/40 backdrop-blur-xl border border-white/10 hover:border-cyan-500/50 transition-all group shadow-2xl"
+  >
     <div className="w-12 h-12 rounded-2xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform shadow-[0_0_15px_rgba(6,182,212,0.3)]">
       {icon}
     </div>
+    <div className="text-[10px] font-mono text-cyan-500 uppercase tracking-widest mb-2">{tag}</div>
     <h3 className="text-xl font-bold mb-3 uppercase tracking-tighter text-white drop-shadow-md">{title}</h3>
     <p className="text-gray-300 text-sm leading-relaxed">{desc}</p>
-  </div>
+  </motion.div>
 );
 
 export default LandingPage;

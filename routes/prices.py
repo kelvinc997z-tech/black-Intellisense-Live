@@ -25,6 +25,30 @@ async def fetch_coinmarketcap_price():
         print(f"Error fetching price: {e}")
     return 1.0  # Fallback to 1.0 if API fails
 
+async def fetch_yahoo_usd_idr():
+    """Fetch real USD/IDR price from Yahoo Finance"""
+    url = "https://query1.finance.yahoo.com/v8/finance/chart/USDIDR=X"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    }
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, headers=headers) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    # Path: chart -> result[0] -> meta -> regularMarketPrice
+                    return data["chart"]["result"][0]["meta"]["regularMarketPrice"]
+    except Exception as e:
+        print(f"Error fetching Yahoo Finance price: {e}")
+    return None
+
+@router.get("/usd-idr")
+async def get_usd_idr():
+    price = await fetch_yahoo_usd_idr()
+    if price:
+        return {"symbol": "USD/IDR", "price": price}
+    return {"symbol": "USD/IDR", "price": 15800.0, "error": "Fallback price used"}
+
 def generate_mock_price_feed(exchange: ExchangeType, base_price: float, symbol: str = "USDT"):
     bid_price = base_price - random.uniform(0.0001, 0.0003)
     ask_price = base_price + random.uniform(0.0001, 0.0003)

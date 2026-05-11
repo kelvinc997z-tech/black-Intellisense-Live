@@ -1,9 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import NetworkBackground from '../components/ui/NetworkNodes';
+import ThreeText from '../components/ui/ThreeText';
 import { ArrowRight, Shield, Zap, Globe, Lock, BarChart3, Cpu, Layers, Activity } from 'lucide-react';
 
 const LandingPage = ({ onGetStarted }) => {
+  const { scrollYProgress } = useScroll();
+  const backgroundY = useTransform(scrollYProgress, [0, 1], [0, -200]);
+  const heroY = useTransform(scrollYProgress, [0, 1], [0, 100]);
+  const cardY = useTransform(scrollYProgress, [0, 1], [0, -50]);
+
   const [prices, setPrices] = useState([
     { symbol: 'BTC/USDT', price: 'Loading...', change: '...', color: 'text-gray-400' },
     { symbol: 'ETH/USDT', price: 'Loading...', change: '...', color: 'text-gray-400' },
@@ -24,31 +30,35 @@ const LandingPage = ({ onGetStarted }) => {
         const bnb = data.find(i => i.symbol === 'BNBUSDT');
         const xrp = data.find(i => i.symbol === 'XRPUSDT');
 
-        // Fetch real USD/IDR from a reliable Forex API (Frankfurter)
-        const fxResponse = await fetch('https://api.frankfurter.app/latest?from=USD&to=IDR');
-        const fxData = await fxResponse.json();
-        const usdIdrPrice = fxData.rates.IDR.toLocaleString(undefined, { minimumFractionDigits: 2 });
+        // Fetch real USD/IDR from project API (Yahoo Finance source)
+        try {
+          const fxResponse = await fetch('/api/prices/usd-idr');
+          const fxData = await fxResponse.json();
+          const usdIdrPrice = parseFloat(fxData.price).toLocaleString(undefined, { minimumFractionDigits: 2 });
 
-        setPrices([
-          { 
-            symbol: 'BTC/USDT', 
-            price: parseFloat(btc.lastPrice).toLocaleString(undefined, { minimumFractionDigits: 2 }), 
-            change: `${parseFloat(btc.priceChangePercent).toFixed(2)}%`, 
-            color: parseFloat(btc.priceChangePercent) >= 0 ? 'text-green-400' : 'text-red-400' 
-          },
-          { 
-            symbol: 'ETH/USDT', 
-            price: parseFloat(eth.lastPrice).toLocaleString(undefined, { minimumFractionDigits: 2 }), 
-            change: `${parseFloat(eth.priceChangePercent).toFixed(2)}%`, 
-            color: parseFloat(eth.priceChangePercent) >= 0 ? 'text-green-400' : 'text-red-400' 
-          },
-          { 
-            symbol: 'USD/IDR', 
-            price: usdIdrPrice, 
-            change: 'Real-time', 
-            color: 'text-cyan-400' 
-          },
-        ]);
+          setPrices([
+            { 
+              symbol: 'BTC/USDT', 
+              price: parseFloat(btc.lastPrice).toLocaleString(undefined, { minimumFractionDigits: 2 }), 
+              change: `${parseFloat(btc.priceChangePercent).toFixed(2)}%`, 
+              color: parseFloat(btc.priceChangePercent) >= 0 ? 'text-green-400' : 'text-red-400' 
+            },
+            { 
+              symbol: 'ETH/USDT', 
+              price: parseFloat(eth.lastPrice).toLocaleString(undefined, { minimumFractionDigits: 2 }), 
+              change: `${parseFloat(eth.priceChangePercent).toFixed(2)}%`, 
+              color: parseFloat(eth.priceChangePercent) >= 0 ? 'text-green-400' : 'text-red-400' 
+            },
+            { 
+              symbol: 'USD/IDR', 
+              price: usdIdrPrice, 
+              change: 'Yahoo Finance', 
+              color: 'text-cyan-400' 
+            },
+          ]);
+        } catch (err) {
+          console.error('FX fetch error:', err);
+        }
 
         setTickerData([btc, eth, sol, bnb, xrp].map(item => ({
           symbol: item.symbol.replace('USDT', ''),
@@ -95,7 +105,9 @@ const LandingPage = ({ onGetStarted }) => {
         </div>
       </div>
 
-      <NetworkBackground />
+      <motion.div style={{ y: backgroundY }}>
+        <NetworkBackground />
+      </motion.div>
       
       {/* Navigation */}
       <nav className="relative z-10 flex items-center justify-between px-8 py-6 max-w-7xl mx-auto">
@@ -151,17 +163,9 @@ const LandingPage = ({ onGetStarted }) => {
                     </motion.span>
                   ))}
                   <br />
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-600">
-                    {"EVOLVED.".split("").map((char, i) => (
-                      <motion.span 
-                        key={i} 
-                        className="inline-block"
-                        whileHover={{ scale: 1.2, color: '#fff', transition: { type: 'spring' } }}
-                      >
-                        {char === ' ' ? '\u00A0' : char}
-                      </motion.span>
-                    ))}
-                  </span>
+                  <div className="h-32 lg:h-48 w-full flex items-center justify-center">
+                    <ThreeText />
+                  </div>
                 </span>
                 {/* Neon Scanline */}
                 <div className="absolute inset-0 w-full h-px bg-gradient-to-r from-transparent via-cyan-400 to-transparent opacity-50 animate-scanline z-20 pointer-events-none" />
@@ -254,8 +258,12 @@ const LandingPage = ({ onGetStarted }) => {
         </div>
       </main>
 
-      {/* Enterprise Suite Section */}
-      <section id="platforms" className="relative z-10 max-w-7xl mx-auto px-8 py-32">
+      {/* Institutional Ecosystem Section */}
+      <motion.section 
+        id="platforms" 
+        style={{ y: cardY }}
+        className="relative z-10 max-w-7xl mx-auto px-8 py-32"
+      >
         <div className="text-center mb-20">
           <motion.h2 
             initial={{ opacity: 0, y: 20 }}
@@ -263,70 +271,62 @@ const LandingPage = ({ onGetStarted }) => {
             viewport={{ once: true }}
             className="text-4xl font-bold mb-4 uppercase tracking-tighter text-white drop-shadow-[0_0_10px_rgba(6,182,212,0.8)]"
           >
-            Enterprise Suite
+            Institutional Ecosystem
           </motion.h2>
           <p className="text-gray-300 max-w-2xl mx-auto text-lg leading-relaxed">
-            Integrated ecosystem for the modern institutional trading flow.
+            A complete toolset for high-frequency liquidity management and institutional OTC settlement.
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 grid md:grid-cols-2 gap-8">
-            <div className="p-8 rounded-3xl bg-gradient-to-br from-cyan-500/10 to-blue-600/10 border border-cyan-500/30 backdrop-blur-xl">
-              <div className="w-12 h-12 rounded-xl bg-cyan-500 text-black flex items-center justify-center mb-6 font-bold">S50</div>
-              <h3 className="text-2xl font-bold mb-4 uppercase tracking-tighter">Sense50 Admin</h3>
-              <p className="text-gray-400 text-sm leading-relaxed mb-6">
-                The Market Maker's command center. Configure dynamic markups, manage high-value counterparty requests, and monitor liquidity distribution in real-time.
-              </p>
-              <ul className="space-y-2 text-xs font-mono text-cyan-400/80">
-                <li>{`> Dynamic Markup Engine`}</li>
-                <li>{`> Counterparty Risk Monitor`}</li>
-                <li>{`> Liquidity Distribution Map`}</li>
-              </ul>
-            </div>
-            <div className="p-8 rounded-3xl bg-gradient-to-br from-blue-500/10 to-indigo-600/10 border border-blue-500/30 backdrop-blur-xl">
-              <div className="w-12 h-12 rounded-xl bg-blue-500 text-white flex items-center justify-center mb-6 font-bold">IT</div>
-              <h3 className="text-2xl font-bold mb-4 uppercase tracking-tighter">IntelliTrade</h3>
-              <p className="text-gray-400 text-sm leading-relaxed mb-6">
-                The elite counterparty terminal. Streamlined OTC order placement, precise portfolio tracking, and secure institutional communication.
-              </p>
-              <ul className="space-y-2 text-xs font-mono text-blue-400/80">
-                <li>{`> One-Click OTC Execution`}</li>
-                <li>{`> Multi-Asset Portfolio View`}</li>
-                <li>{`> Secure Institutional Chat`}</li>
-              </ul>
-            </div>
-          </div>
-          
-          <div className="space-y-8">
-            <div className="p-6 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-md">
-              <div className="flex items-center gap-3 mb-4">
-                <Shield className="w-5 h-5 text-cyan-400" />
-                <h4 className="font-bold uppercase text-sm tracking-widest">zkTLS Attestation</h4>
-              </div>
-              <p className="text-gray-400 text-xs leading-relaxed">
-                Cryptographic proof of funds and identity without exposing sensitive credentials.
-              </p>
-            </div>
-            <div className="p-6 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-md">
-              <div className="flex items-center gap-3 mb-4">
-                <Activity className="w-5 h-5 text-green-400" />
-                <h4 className="font-bold uppercase text-sm tracking-widest">Solvency Heartbeat</h4>
-              </div>
-              <p className="text-gray-400 text-xs leading-relaxed">
-                Automated periodic verification of user solvency to maintain ecosystem trust.
-              </p>
-            </div>
-            <div className="p-6 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-md">
-              <div className="flex items-center gap-3 mb-4">
-                <Lock className="w-5 h-5 text-red-400" />
-                <h4 className="font-bold uppercase text-sm tracking-widest">Multisig Approval</h4>
-              </div>
-              <p className="text-gray-400 text-xs leading-relaxed">
-                Mandatory multi-admin sign-off for all high-value asset settlements &gt; $100k.
-              </p>
-            </div>
-          </div>
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <CapabilityCard 
+            title="Liquidity Hub"
+            icon={<Layers className="w-6 h-6" />}
+            color="text-cyan-400"
+            bg="bg-cyan-500/10"
+            border="border-cyan-500/30"
+            features={["High-Frequency Trading Terminal", "Institutional P2P Desk", "Advanced Order Management", "Multi-Exchange Aggregator"]}
+          />
+          <CapabilityCard 
+            title="Ops Command"
+            icon={<Cpu className="w-6 h-6" />}
+            color="text-blue-400"
+            bg="bg-blue-500/10"
+            border="border-blue-500/30"
+            features={["Sense50 Admin Dashboard", "Global Command Center", "Dynamic Markup Engine", "Client Risk CRM"]}
+          />
+          <CapabilityCard 
+            title="Settlement Engine"
+            icon={<Globe className="w-6 h-6" />}
+            color="text-indigo-400"
+            bg="bg-indigo-500/10"
+            border="border-indigo-500/30"
+            features={["Institutional Fiat Gateway", "High-Value Settlement", "Payment Automation", "Secure Asset Onramps"]}
+          />
+          <CapabilityCard 
+            title="Security & Trust"
+            icon={<Shield className="w-6 h-6" />}
+            color="text-green-400"
+            bg="bg-green-500/10"
+            border="border-green-500/30"
+            features={["zkTLS Identity Verification", "Solvency Heartbeat", "Multisig Asset Approval", "Immutable Audit Logs"]}
+          />
+          <CapabilityCard 
+            title="Treasury Mgmt"
+            icon={<BarChart3 className="w-6 h-6" />}
+            color="text-purple-400"
+            bg="bg-purple-500/10"
+            border="border-purple-500/30"
+            features={["Multi-Asset Portfolio Tracking", "Cold/Hot Wallet Integration", "Institutional Price Feeds", "Asset Allocation View"]}
+          />
+          <CapabilityCard 
+            title="Secure Comms"
+            icon={<Activity className="w-6 h-6" />}
+            color="text-red-400"
+            bg="bg-red-500/10"
+            border="border-red-500/30"
+            features={["Encrypted Client-Broker Chat", "Real-time Notification Hub", "Compliance-Logged Comms", "Secure Request Flow"]}
+          />
         </div>
       </section>
 
@@ -396,6 +396,28 @@ const AdvantageCard = ({ icon, title, desc, tag }) => (
     <div className="text-[10px] font-mono text-cyan-500 uppercase tracking-widest mb-2">{tag}</div>
     <h3 className="text-xl font-bold mb-3 uppercase tracking-tighter text-white drop-shadow-md">{title}</h3>
     <p className="text-gray-300 text-sm leading-relaxed">{desc}</p>
+  </motion.div>
+);
+
+const CapabilityCard = ({ icon, title, color, bg, border, features }) => (
+  <motion.div 
+    whileHover={{ y: -5 }}
+    className={`p-8 rounded-3xl ${bg} ${border} backdrop-blur-xl transition-all group relative overflow-hidden`}
+  >
+    <div className="relative z-10">
+      <div className={`w-12 h-12 rounded-xl ${bg} ${color} flex items-center justify-center mb-6 font-bold border border-white/10 shadow-lg`}>
+        {icon}
+      </div>
+      <h3 className="text-2xl font-bold mb-6 uppercase tracking-tighter text-white">{title}</h3>
+      <ul className="space-y-3">
+        {features.map((feat, i) => (
+          <li key={i} className="flex items-center gap-3 text-sm text-gray-300 font-medium">
+            <div className={`w-1 h-1 rounded-full ${color.replace('text', 'bg')}`} /> {feat}
+          </li>
+        ))}
+      </ul>
+    </div>
+    <div className="absolute -bottom-4 -right-4 w-24 h-24 bg-white/5 blur-2xl rounded-full group-hover:bg-white/10 transition-colors" />
   </motion.div>
 );
 

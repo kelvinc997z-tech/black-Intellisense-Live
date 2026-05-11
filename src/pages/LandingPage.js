@@ -32,7 +32,7 @@ const LandingPage = ({ onGetStarted }) => {
       {/* Hero Section */}
       <main className="relative z-10 max-w-7xl mx-auto px-8 pt-24 pb-32">
         {/* Subtle overlay to ensure text readability against 3D background */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#020617]/60 via-transparent to-[#020617]/80 -z-10 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#020617]/80 via-transparent to-[#020617]/90 -z-10 pointer-events-none" />
         
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           <motion.div 
@@ -48,11 +48,11 @@ const LandingPage = ({ onGetStarted }) => {
               </span>
               Institutional Grade Infrastructure
             </div>
-            <h1 className="text-6xl lg:text-8xl font-black tracking-tighter leading-[0.9] mb-6 drop-shadow-[0_0_15px_rgba(0,242,255,0.3)]">
+            <h1 className="text-6xl lg:text-8xl font-black tracking-tighter leading-[0.9] mb-6 drop-shadow-[0_0_25px_rgba(0,242,255,0.6)]">
               THE DARK POOL <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-600">EVOLVED.</span>
             </h1>
-            <p className="text-lg text-gray-300 max-w-lg mb-10 leading-relaxed drop-shadow-sm">
+            <p className="text-lg text-white max-w-lg mb-10 leading-relaxed drop-shadow-lg font-medium">
               Professional-grade multi-platform trading infrastructure designed for institutional dark pools and OTC trading. Centralized liquidity, precision pricing, and cryptographic security.
             </p>
             <div className="flex flex-wrap gap-4">

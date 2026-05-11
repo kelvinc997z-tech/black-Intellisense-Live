@@ -89,9 +89,35 @@ const LandingPage = ({ onGetStarted }) => {
                     <div className="h-6 w-12 bg-cyan-500/40 rounded-lg" />
                   </div>
                 ))}
-                <div className="mt-8 p-6 rounded-2xl bg-cyan-500/10 border border-cyan-500/30">
-                  <div className="text-cyan-400 font-mono text-xs mb-2">SYSTEM_STATUS: ACTIVE</div>
-                  <div className="text-2xl font-bold">Liquidity Hub Stable</div>
+                <div className="mt-8 p-6 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 space-y-4">
+                  <div className="flex justify-between items-center border-b border-cyan-500/20 pb-2">
+                    <div className="text-cyan-400 font-mono text-xs">SYSTEM_STATUS: ACTIVE</div>
+                    <div className="flex items-center gap-2 text-[10px] font-mono text-cyan-400/70">
+                      <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+                      LIVE_FEED
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 py-2">
+                    <div className="space-y-1">
+                      <div className="text-gray-500 font-mono text-[10px] uppercase">zkTLS Proof</div>
+                      <div className="text-xs font-bold text-cyan-400">VERIFIED</div>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="text-gray-500 font-mono text-[10px] uppercase">Pool Volume</div>
+                      <div className="text-xs font-bold text-white">$1.24B</div>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="text-gray-500 font-mono text-[10px] uppercase">Latency</div>
+                      <div className="text-xs font-bold text-white">4.2ms</div>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="text-gray-500 font-mono text-[10px] uppercase">Node Status</div>
+                      <div className="text-xs font-bold text-green-400">STABLE</div>
+                    </div>
+                  </div>
+                  <div className="pt-2 border-t border-cyan-500/20">
+                    <div className="text-2xl font-bold tracking-tight">Liquidity Hub Stable</div>
+                  </div>
                 </div>
               </div>
             </div>

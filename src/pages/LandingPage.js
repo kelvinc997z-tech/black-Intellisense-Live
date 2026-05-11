@@ -21,30 +21,34 @@ const LandingPage = ({ onGetStarted }) => {
 
   useEffect(() => {
     const fetchPrices = async () => {
-      try {
-        const [btcRes, ethRes, fxRes, tickerRes] = await Promise.all([
-          fetch('/api/prices/btc'),
-          fetch('/api/prices/eth'),
-          fetch('/api/prices/usd-idr'),
-          fetch('/api/prices/ticker')
-        ]);
+      const safeFetch = async (url) => {
+        try {
+          const res = await fetch(url);
+          if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+          return await res.json();
+        } catch (e) {
+          console.error(`Fetch error for ${url}:`, e);
+          return null;
+        }
+      };
 
-        const btcData = await btcRes.json();
-        const ethData = await ethRes.json();
-        const fxData = await fxRes.json();
-        const tickerData = await tickerRes.json();
+      const [btcData, ethData, fxData, tickerData] = await Promise.all([
+        safeFetch('/api/prices/btc'),
+        safeFetch('/api/prices/eth'),
+        safeFetch('/api/prices/usd-idr'),
+        safeFetch('/api/prices/ticker')
+      ]);
 
+      if (tickerData) {
         setTickerData(tickerData);
-
-        setPrices(prev => prev.map(p => {
-          if (p.symbol === 'BTC/USDT') return { ...p, price: parseFloat(btcData.price).toLocaleString(undefined, { minimumFractionDigits: 2 }), color: 'text-cyan-400' };
-          if (p.symbol === 'ETH/USDT') return { ...p, price: parseFloat(ethData.price).toLocaleString(undefined, { minimumFractionDigits: 2 }), color: 'text-cyan-400' };
-          if (p.symbol === 'USD/IDR') return { ...p, price: parseFloat(fxData.price).toLocaleString(undefined, { minimumFractionDigits: 2 }), color: 'text-cyan-400' };
-          return p;
-        }));
-      } catch (error) {
-        console.error('Price fetch error:', error);
       }
+
+      setPrices(prev => prev.map(p => {
+        if (p.symbol === 'BTC/USDT' && btcData) return { ...p, price: parseFloat(btcData.price).toLocaleString(undefined, { minimumFractionDigits: 2 }), color: 'text-cyan-400' };
+        if (p.symbol === 'ETH/USDT' && ethData) return { ...p, price: parseFloat(ethData.price).toLocaleString(undefined, { minimumFractionDigits: 2 }), color: 'text-cyan-400' };
+        if (p.symbol === 'USD/IDR' && fxData) return { ...p, price: parseFloat(fxData.price).toLocaleString(undefined, { minimumFractionDigits: 2 }), color: 'text-cyan-400' };
+        return p;
+      }));
     };
 
     fetchPrices();

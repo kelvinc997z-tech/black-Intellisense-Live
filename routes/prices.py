@@ -25,19 +25,24 @@ async def fetch_coinmarketcap_price():
         print(f"Error fetching price: {e}")
     return 1.0  # Fallback to 1.0 if API fails
 
-async def fetch_yahoo_price(symbol):
+async def fetch_yahoo_price(symbol, session=None):
     """Fetch real price from Yahoo Finance for a given symbol (e.g., 'USDIDR=X', 'BTC-USD')"""
     url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}"
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
     }
     try:
-        async with aiohttp.ClientSession() as session:
+        if session:
             async with session.get(url, headers=headers) as response:
                 if response.status == 200:
                     data = await response.json()
-                    # Path: chart -> result[0] -> meta -> regularMarketPrice
                     return data["chart"]["result"][0]["meta"]["regularMarketPrice"]
+        else:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url, headers=headers) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        return data["chart"]["result"][0]["meta"]["regularMarketPrice"]
     except Exception as e:
         print(f"Error fetching Yahoo Finance price for {symbol}: {e}")
     return None
@@ -61,7 +66,7 @@ async def get_ticker():
     results = []
     async with aiohttp.ClientSession() as session:
         for name, sym in symbols.items():
-            price = await fetch_yahoo_price(sym)
+            price = await fetch_yahoo_price(sym, session=session)
             results.append({
                 "symbol": name,
                 "price": f"{price:.2f}" if price else "0.00",

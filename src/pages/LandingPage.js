@@ -21,43 +21,24 @@ const LandingPage = ({ onGetStarted }) => {
   useEffect(() => {
     const fetchPrices = async () => {
       try {
-        const response = await fetch('https://api.binance.com/api/v3/ticker/24hr');
-        const data = await response.json();
-        
-        const btc = data.find(i => i.symbol === 'BTCUSDT');
-        const eth = data.find(i => i.symbol === 'ETHUSDT');
-        const sol = data.find(i => i.symbol === 'SOLUSDT');
-        const bnb = data.find(i => i.symbol === 'BNBUSDT');
-        const xrp = data.find(i => i.symbol === 'XRPUSDT');
+        const [btcRes, ethRes, fxRes] = await Promise.all([
+          fetch('/api/prices/btc'),
+          fetch('/api/prices/eth'),
+          fetch('/api/prices/usd-idr')
+        ]);
 
-        setTickerData([btc, eth, sol, bnb, xrp].map(item => ({
-          symbol: item.symbol.replace('USDT', ''),
-          price: parseFloat(item.lastPrice).toFixed(2),
-          change: item.priceChangePercent
-        })));
+        const btcData = await btcRes.json();
+        const ethData = await ethRes.json();
+        const fxData = await fxRes.json();
 
-        // Update Crypto prices immediately
         setPrices(prev => prev.map(p => {
-          if (p.symbol === 'BTC/USDT') return { ...p, price: parseFloat(btc.lastPrice).toLocaleString(undefined, { minimumFractionDigits: 2 }), change: `${parseFloat(btc.priceChangePercent).toFixed(2)}%`, color: parseFloat(btc.priceChangePercent) >= 0 ? 'text-green-400' : 'text-red-400' };
-          if (p.symbol === 'ETH/USDT') return { ...p, price: parseFloat(eth.lastPrice).toLocaleString(undefined, { minimumFractionDigits: 2 }), change: `${parseFloat(eth.priceChangePercent).toFixed(2)}%`, color: parseFloat(eth.priceChangePercent) >= 0 ? 'text-green-400' : 'text-red-400' };
+          if (p.symbol === 'BTC/USDT') return { ...p, price: parseFloat(btcData.price).toLocaleString(undefined, { minimumFractionDigits: 2 }), color: 'text-cyan-400' };
+          if (p.symbol === 'ETH/USDT') return { ...p, price: parseFloat(ethData.price).toLocaleString(undefined, { minimumFractionDigits: 2 }), color: 'text-cyan-400' };
+          if (p.symbol === 'USD/IDR') return { ...p, price: parseFloat(fxData.price).toLocaleString(undefined, { minimumFractionDigits: 2 }), color: 'text-cyan-400' };
           return p;
         }));
       } catch (error) {
-        console.error('Crypto price fetch error:', error);
-      }
-
-      // Fetch USD/IDR separately to avoid blocking other prices
-      try {
-        const fxResponse = await fetch('/api/prices/usd-idr');
-        if (!fxResponse.ok) throw new Error(`HTTP error! status: ${fxResponse.status}`);
-        const fxData = await fxResponse.json();
-        const usdIdrPrice = parseFloat(fxData.price).toLocaleString(undefined, { minimumFractionDigits: 2 });
-
-        setPrices(prev => prev.map(p => 
-          p.symbol === 'USD/IDR' ? { ...p, price: usdIdrPrice, change: 'Yahoo Finance', color: 'text-cyan-400' } : p
-        ));
-      } catch (err) {
-        console.error('USD/IDR fetch error:', err);
+        console.error('Price fetch error:', error);
       }
     };
 

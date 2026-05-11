@@ -3,6 +3,7 @@ import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion'
 import NetworkBackground from '../components/ui/NetworkNodes';
 import ThreeText from '../components/ui/ThreeText';
 import { ArrowRight, Shield, Zap, Globe, Lock, BarChart3, Cpu, Layers, Activity } from 'lucide-react';
+import TechCore from '../components/ui/TechCore';
 
 const LandingPage = ({ onGetStarted }) => {
   const { scrollYProgress } = useScroll();
@@ -241,7 +242,8 @@ const LandingPage = ({ onGetStarted }) => {
         style={{ y: cardY }}
         className="relative z-10 max-w-7xl mx-auto px-8 py-32"
       >
-        <div className="text-center mb-20">
+        <TechCore />
+        <div className="text-center mb-20 relative z-10">
           <motion.h2 
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -255,7 +257,7 @@ const LandingPage = ({ onGetStarted }) => {
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 relative z-10">
           <CapabilityCard 
             title="Liquidity Hub"
             icon={<Layers className="w-6 h-6" />}
@@ -458,23 +460,26 @@ const AdvantageCard = ({ icon, title, desc, tag }) => (
 
 const CapabilityCard = ({ icon, title, color, bg, border, features }) => (
   <motion.div 
-    whileHover={{ y: -5 }}
-    className={`p-8 rounded-3xl ${bg} ${border} backdrop-blur-xl transition-all group relative overflow-hidden`}
+    whileHover={{ y: -10, scale: 1.02 }}
+    className={`p-8 rounded-3xl ${bg} ${border} backdrop-blur-2xl transition-all group relative overflow-hidden border-t-2 border-white/20 shadow-2xl`}
   >
+    <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none" />
     <div className="relative z-10">
-      <div className={`w-12 h-12 rounded-xl ${bg} ${color} flex items-center justify-center mb-6 font-bold border border-white/10 shadow-lg`}>
+      <div className={`w-12 h-12 rounded-xl ${bg} ${color} flex items-center justify-center mb-6 font-bold border border-white/10 shadow-[0_0_15px_rgba(0,242,255,0.2)] group-hover:shadow-[0_0_20px_rgba(0,242,255,0.4)] transition-all`}>
         {icon}
       </div>
-      <h3 className="text-2xl font-bold mb-6 uppercase tracking-tighter text-white">{title}</h3>
+      <h3 className="text-2xl font-bold mb-6 uppercase tracking-tighter text-white group-hover:text-cyan-400 transition-colors">{title}</h3>
       <ul className="space-y-3">
         {features.map((feat, i) => (
-          <li key={i} className="flex items-center gap-3 text-sm text-gray-300 font-medium">
+          <li key={i} className="flex items-center gap-3 text-sm text-gray-300 font-medium group-hover:text-white transition-colors">
             <div className={`w-1 h-1 rounded-full ${color.replace('text', 'bg')}`} /> {feat}
           </li>
         ))}
       </ul>
     </div>
-    <div className="absolute -bottom-4 -right-4 w-24 h-24 bg-white/5 blur-2xl rounded-full group-hover:bg-white/10 transition-colors" />
+    <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-white/5 blur-3xl rounded-full group-hover:bg-cyan-500/20 transition-all duration-500" />
+    {/* Animated Border Effect */}
+    <div className="absolute inset-0 border-2 border-transparent group-hover:border-cyan-500/30 rounded-3xl transition-all duration-500 pointer-events-none" />
   </motion.div>
 );
 

@@ -5,6 +5,49 @@ import ThreeText from '../components/ui/ThreeText';
 import { ArrowRight, Shield, Zap, Globe, Lock, BarChart3, Cpu, Layers, Activity } from 'lucide-react';
 import TechCore from '../components/ui/TechCore';
 
+const ZKTerminal = () => {
+  const [logs, setLogs] = useState([]);
+  const [isTyping, setIsTyping] = useState(false);
+
+  const generateLog = () => {
+    const sequences = [
+      { text: "> Initializing zkTLS Handshake...", delay: 1000 },
+      { text: `> Verifying Bank Proof... [${Math.random() > 0.1 ? 'SUCCESS' : 'RETRYING'}]`, delay: 1500 },
+      { text: `> Cryptographic Attestation: 0x${Math.random().toString(16).slice(2, 10)}...${Math.random().toString(16).slice(2, 4)}`, delay: 1200 },
+      { text: "> Verifying on-chain transaction...", delay: 1800 },
+      { text: `> Settlement Confirmed: ${ (Math.random() * 1000000 + 500000).toLocaleString(undefined, {maximumFractionDigits:0}) } USDT`, delay: 2000 },
+    ];
+
+    let currentLine = 0;
+    setLogs([]);
+    setIsTyping(true);
+
+    const runSequence = async () => {
+      for (const line of sequences) {
+        setLogs(prev => [...prev, line.text]);
+        await new Promise(resolve => setTimeout(resolve, line.delay));
+      }
+      setIsTyping(false);
+      setTimeout(runSequence, 3000); // Wait before restarting
+    };
+
+    runSequence();
+  };
+
+  useEffect(() => {
+    generateLog();
+  }, []);
+
+  return (
+    <div className="space-y-1">
+      {logs.map((log, i) => (
+        <p key={i} className={i === logs.length - 1 ? "text-white" : ""}>{log}</p>
+      ))}
+      <p className="animate-pulse">_</p>
+    </div>
+  );
+};
+
 const LandingPage = ({ onGetStarted }) => {
   const { scrollYProgress } = useScroll();
   const backgroundY = useTransform(scrollYProgress, [0, 1], [0, -200]);
@@ -376,14 +419,7 @@ const LandingPage = ({ onGetStarted }) => {
                 <div className="w-3 h-3 rounded-full bg-yellow-500" />
                 <div className="w-3 h-3 rounded-full bg-green-500" />
               </div>
-              <div className="space-y-1">
-                <p>{`> Initializing zkTLS Handshake...`}</p>
-                <p>{`> Verifying Bank Proof... [SUCCESS]`}</p>
-                <p>{`> Cryptographic Attestation: 0x7f...a1`}</p>
-                <p>{`> Verifying on-chain transaction...`}</p>
-                <p className="text-white">{`> Settlement Confirmed: 1,250,000 USDT`}</p>
-                <p className="animate-pulse">_</p>
-              </div>
+              <ZKTerminal />
             </div>
             <div className="absolute -z-10 inset-0 bg-cyan-500/10 blur-3xl" />
           </div>

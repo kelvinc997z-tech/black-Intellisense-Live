@@ -110,6 +110,7 @@ const LandingPage = ({ onGetStarted }) => {
           <a href="#advantages" className="hover:text-cyan-400 transition-colors">Advantages</a>
           <a href="#security" className="hover:text-cyan-400 transition-colors">zkTLS</a>
           <a href="#platforms" className="hover:text-cyan-400 transition-colors">Platforms</a>
+          <a href="#contact" className="hover:text-cyan-400 transition-colors">Contact</a>
           <button 
             onClick={onGetStarted}
             className="px-5 py-2 bg-cyan-500/10 border border-cyan-500/50 text-cyan-400 rounded-full hover:bg-cyan-500/20 transition-all"
@@ -329,6 +330,77 @@ const LandingPage = ({ onGetStarted }) => {
         </div>
       </motion.section>
 
+      {/* Contact Section */}
+      <section id="contact" className="relative z-10 max-w-7xl mx-auto px-8 py-32">
+        <div className="grid lg:grid-cols-2 gap-16 items-center">
+          <motion.div 
+            initial={{ opacity: 0, x: -20 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            className="space-y-6"
+          >
+            <h2 className="text-4xl font-bold uppercase tracking-tighter text-white drop-shadow-[0_0_10px_rgba(6,182,212,0.8)]">
+              Get in Touch
+            </h2>
+            <p className="text-gray-300 text-lg leading-relaxed">
+              Ready to elevate your trading infrastructure? Our institutional specialists are available for consultation and bespoke integration.
+            </p>
+            <div className="space-y-4">
+              <div className="flex items-center gap-4 text-gray-400">
+                <div className="w-10 h-10 rounded-lg bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
+                  <Globe className="w-5 h-5" />
+                </div>
+                <span>Global Support: support@blackintellisense.com</span>
+              </div>
+              <div className="flex items-center gap-4 text-gray-400">
+                <div className="w-10 h-10 rounded-lg bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
+                  <Activity className="w-5 h-5" />
+                </div>
+                <span>Operational Status: 24/7 Active</span>
+              </div>
+            </div>
+          </motion.div>
+
+          <motion.div 
+            initial={{ opacity: 0, x: 20 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            className="p-8 rounded-3xl bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl"
+          >
+            <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-xs font-mono text-gray-500 uppercase">Full Name</label>
+                  <input 
+                    type="text" 
+                    className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 text-white focus:border-cyan-500/50 outline-none transition-all"
+                    placeholder="John Doe"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-mono text-gray-500 uppercase">Institutional Email</label>
+                  <input 
+                    type="email" 
+                    className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 text-white focus:border-cyan-500/50 outline-none transition-all"
+                    placeholder="name@firm.com"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-mono text-gray-500 uppercase">Message</label>
+                <textarea 
+                  rows="4" 
+                  className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 text-white focus:border-cyan-500/50 outline-none transition-all"
+                  placeholder="Describe your institutional requirements..."
+                />
+              </div>
+              <button className="w-full py-4 bg-cyan-500 text-black font-bold rounded-xl hover:bg-cyan-400 transition-all shadow-[0_0_20px_rgba(6,182,212,0.5)]">
+                Request Consultation
+              </button>
+            </form>
+          </motion.div>
+        </div>
+      </section>
 
       {/* Security Section */}
       <section id="security" className="relative z-10 bg-white/[0.02] border-y border-white/5 backdrop-blur-md py-32">

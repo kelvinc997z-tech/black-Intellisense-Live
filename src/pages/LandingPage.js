@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import NetworkBackground from './components/ui/NetworkNodes';
+import NetworkBackground from '../components/ui/NetworkNodes';
 import { ArrowRight, Shield, Zap, Globe, Lock } from 'lucide-react';
 
 const LandingPage = ({ onGetStarted }) => {

@@ -31,24 +31,28 @@ const LandingPage = ({ onGetStarted }) => {
 
       {/* Hero Section */}
       <main className="relative z-10 max-w-7xl mx-auto px-8 pt-24 pb-32">
+        {/* Subtle overlay to ensure text readability against 3D background */}
+        <div className="absolute inset-0 bg-gradient-to-b from-[#020617]/60 via-transparent to-[#020617]/80 -z-10 pointer-events-none" />
+        
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           <motion.div 
             initial={{ opacity: 0, x: -50 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8 }}
+            className="relative"
           >
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-bold uppercase tracking-widest mb-6">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-bold uppercase tracking-widest mb-6 backdrop-blur-sm">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500"></span>
               </span>
               Institutional Grade Infrastructure
             </div>
-            <h1 className="text-6xl lg:text-8xl font-black tracking-tighter leading-[0.9] mb-6">
+            <h1 className="text-6xl lg:text-8xl font-black tracking-tighter leading-[0.9] mb-6 drop-shadow-[0_0_15px_rgba(0,242,255,0.3)]">
               THE DARK POOL <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-600">EVOLVED.</span>
             </h1>
-            <p className="text-lg text-gray-400 max-w-lg mb-10 leading-relaxed">
+            <p className="text-lg text-gray-300 max-w-lg mb-10 leading-relaxed drop-shadow-sm">
               Professional-grade multi-platform trading infrastructure designed for institutional dark pools and OTC trading. Centralized liquidity, precision pricing, and cryptographic security.
             </p>
             <div className="flex flex-wrap gap-4">
@@ -58,7 +62,7 @@ const LandingPage = ({ onGetStarted }) => {
               >
                 Launch Terminal <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </button>
-              <button className="px-8 py-4 bg-white/5 backdrop-blur-md border border-white/10 font-bold rounded-xl hover:bg-white/10 transition-all">
+              <button className="px-8 py-4 bg-white/5 backdrop-blur-md border border-white/10 font-bold rounded-xl hover:bg-white/10 transition-all text-white">
                 Documentation
               </button>
             </div>
@@ -179,12 +183,12 @@ const LandingPage = ({ onGetStarted }) => {
 };
 
 const FeatureCard = ({ icon, title, desc }) => (
-  <div className="p-8 rounded-3xl bg-white/[0.03] border border-white/10 hover:border-cyan-500/50 hover:bg-white/[0.05] transition-all group">
-    <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 text-cyan-400 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+  <div className="p-8 rounded-3xl bg-black/40 backdrop-blur-xl border border-white/10 hover:border-cyan-500/50 hover:bg-black/60 transition-all group shadow-2xl">
+    <div className="w-12 h-12 rounded-2xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform shadow-[0_0_15px_rgba(6,182,212,0.3)]">
       {icon}
     </div>
-    <h3 className="text-xl font-bold mb-3 uppercase tracking-tighter">{title}</h3>
-    <p className="text-gray-400 text-sm leading-relaxed">{desc}</p>
+    <h3 className="text-xl font-bold mb-3 uppercase tracking-tighter text-white drop-shadow-md">{title}</h3>
+    <p className="text-gray-300 text-sm leading-relaxed">{desc}</p>
   </div>
 );
 

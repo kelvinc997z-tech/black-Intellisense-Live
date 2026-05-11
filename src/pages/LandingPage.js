@@ -74,7 +74,7 @@ const LandingPage = ({ onGetStarted }) => {
   };
 
   return (
-    <div className="relative min-h-screen text-white font-sans selection:bg-cyan-500/30 bg-[#020617]">
+    <div className="relative min-h-screen text-white font-sans selection:bg-cyan-500/30">
       {/* TOP PRICE TICKER */}
       <div className="relative z-50 w-full bg-black/80 border-b border-cyan-500/20 backdrop-blur-md overflow-hidden py-2">
         <div className="flex whitespace-nowrap animate-marquee">

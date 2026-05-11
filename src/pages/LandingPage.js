@@ -328,7 +328,7 @@ const LandingPage = ({ onGetStarted }) => {
             features={["Encrypted Client-Broker Chat", "Real-time Notification Hub", "Compliance-Logged Comms", "Secure Request Flow"]}
           />
         </div>
-      </section>
+      </motion.section>
 
 
       {/* Security Section */}

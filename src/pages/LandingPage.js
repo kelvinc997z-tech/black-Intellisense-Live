@@ -21,15 +21,19 @@ const LandingPage = ({ onGetStarted }) => {
   useEffect(() => {
     const fetchPrices = async () => {
       try {
-        const [btcRes, ethRes, fxRes] = await Promise.all([
+        const [btcRes, ethRes, fxRes, tickerRes] = await Promise.all([
           fetch('/api/prices/btc'),
           fetch('/api/prices/eth'),
-          fetch('/api/prices/usd-idr')
+          fetch('/api/prices/usd-idr'),
+          fetch('/api/prices/ticker')
         ]);
 
         const btcData = await btcRes.json();
         const ethData = await ethRes.json();
         const fxData = await fxRes.json();
+        const tickerData = await tickerRes.json();
+
+        setTickerData(tickerData);
 
         setPrices(prev => prev.map(p => {
           if (p.symbol === 'BTC/USDT') return { ...p, price: parseFloat(btcData.price).toLocaleString(undefined, { minimumFractionDigits: 2 }), color: 'text-cyan-400' };

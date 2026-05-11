@@ -49,6 +49,26 @@ async def get_usd_idr():
         return {"symbol": "USD/IDR", "price": price}
     return {"symbol": "USD/IDR", "price": 15800.0, "error": "Fallback price used"}
 
+@router.get("/ticker")
+async def get_ticker():
+    symbols = {
+        "BTC": "BTC-USD",
+        "ETH": "ETH-USD",
+        "SOL": "SOL-USD",
+        "BNB": "BNB-USD",
+        "XRP": "XRP-USD"
+    }
+    results = []
+    async with aiohttp.ClientSession() as session:
+        for name, sym in symbols.items():
+            price = await fetch_yahoo_price(sym)
+            results.append({
+                "symbol": name,
+                "price": f"{price:.2f}" if price else "0.00",
+                "change": "0.00%" 
+            })
+    return results
+
 @router.get("/btc")
 async def get_btc():
     price = await fetch_yahoo_price("BTC-USD")

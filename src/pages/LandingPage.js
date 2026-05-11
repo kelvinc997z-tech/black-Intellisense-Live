@@ -240,6 +240,50 @@ const LandingPage = ({ onGetStarted }) => {
         </div>
       </main>
 
+      {/* Advantages Section */}
+      <section id="advantages" className="relative z-10 max-w-7xl mx-auto px-8 py-32">
+        <div className="text-center mb-20">
+          <motion.h2 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-4xl font-bold mb-4 uppercase tracking-tighter text-white drop-shadow-[0_0_10px_rgba(6,182,212,0.8)]"
+          >
+            The Dark Edge
+          </motion.h2>
+          <p className="text-gray-300 max-w-2xl mx-auto text-lg leading-relaxed">
+            Engineered for the 1%. Experience the pinnacle of institutional trading where privacy meets absolute precision.
+          </p>
+        </div>
+
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <AdvantageCard 
+            icon={<Shield className="w-6 h-6" />}
+            title="Invisible Execution"
+            desc="Execute high-volume trades with zero market impact. Our dark pool architecture ensures your strategy remains confidential and slippage-free."
+            tag="CONFIDENTIALITY"
+          />
+          <AdvantageCard 
+            icon={<Lock className="w-6 h-6" />}
+            title="Cryptographic Trust"
+            desc="Instant solvency and identity verification via zkTLS. Prove your assets without exposing sensitive bank credentials or private keys."
+            tag="PRIVACY"
+          />
+          <AdvantageCard 
+            icon={<Layers className="w-6 h-6" />}
+            title="Consolidated Liquidity"
+            desc="Single-point access to tier-1 institutional liquidity pools. Trade across multiple venues with unified pricing and zero fragmentation."
+            tag="EFFICIENCY"
+          />
+          <AdvantageCard 
+            icon={<Zap className="w-6 h-6" />}
+            title="Atomic Settlement"
+            desc="Eliminate counterparty risk with instantaneous, automated settlements. Assets are transferred the moment the trade is executed."
+            tag="SPEED"
+          />
+        </div>
+      </section>
+
       {/* Institutional Ecosystem Section */}
       <motion.section 
         id="platforms" 

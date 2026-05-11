@@ -32,17 +32,20 @@ async def fetch_yahoo_price(symbol, session=None):
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
     }
     try:
-        if session:
-            async with session.get(url, headers=headers) as response:
+        async def _do_fetch(s):
+            async with s.get(url, headers=headers, timeout=5) as response:
                 if response.status == 200:
                     data = await response.json()
-                    return data["chart"]["result"][0]["meta"]["regularMarketPrice"]
+                    result = data.get("chart", {}).get("result", [])
+                    if result and len(result) > 0:
+                        return result[0].get("meta", {}).get("regularMarketPrice")
+                return None
+
+        if session:
+            return await _do_fetch(session)
         else:
             async with aiohttp.ClientSession() as session:
-                async with session.get(url, headers=headers) as response:
-                    if response.status == 200:
-                        data = await response.json()
-                        return data["chart"]["result"][0]["meta"]["regularMarketPrice"]
+                return await _do_fetch(session)
     except Exception as e:
         print(f"Error fetching Yahoo Finance price for {symbol}: {e}")
     return None

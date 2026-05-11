@@ -88,9 +88,9 @@ const LandingPage = ({ onGetStarted }) => {
       }
 
       setPrices(prev => prev.map(p => {
-        if (p.symbol === 'BTC/USDT' && btcData) return { ...p, price: parseFloat(btcData.price).toLocaleString(undefined, { minimumFractionDigits: 2 }), color: 'text-cyan-400' };
-        if (p.symbol === 'ETH/USDT' && ethData) return { ...p, price: parseFloat(ethData.price).toLocaleString(undefined, { minimumFractionDigits: 2 }), color: 'text-cyan-400' };
-        if (p.symbol === 'USD/IDR' && fxData) return { ...p, price: parseFloat(fxData.price).toLocaleString(undefined, { minimumFractionDigits: 2 }), color: 'text-cyan-400' };
+        if (p.symbol === 'BTC/USDT') return { ...p, price: btcData ? parseFloat(btcData.price).toLocaleString(undefined, { minimumFractionDigits: 2 }) : '60,000.00', color: 'text-cyan-400' };
+        if (p.symbol === 'ETH/USDT') return { ...p, price: ethData ? parseFloat(ethData.price).toLocaleString(undefined, { minimumFractionDigits: 2 }) : '3,000.00', color: 'text-cyan-400' };
+        if (p.symbol === 'USD/IDR') return { ...p, price: fxData ? parseFloat(fxData.price).toLocaleString(undefined, { minimumFractionDigits: 2 }) : '15,800.00', color: 'text-cyan-400' };
         return p;
       }));
     };

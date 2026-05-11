@@ -24,6 +24,11 @@ const LandingPage = ({ onGetStarted }) => {
         const bnb = data.find(i => i.symbol === 'BNBUSDT');
         const xrp = data.find(i => i.symbol === 'XRPUSDT');
 
+        // Fetch real USD/IDR from a reliable Forex API (Frankfurter)
+        const fxResponse = await fetch('https://api.frankfurter.app/latest?from=USD&to=IDR');
+        const fxData = await fxResponse.json();
+        const usdIdrPrice = fxData.rates.IDR.toLocaleString(undefined, { minimumFractionDigits: 2 });
+
         setPrices([
           { 
             symbol: 'BTC/USDT', 
@@ -39,9 +44,9 @@ const LandingPage = ({ onGetStarted }) => {
           },
           { 
             symbol: 'USD/IDR', 
-            price: '15,820.00', 
-            change: '0.05%', 
-            color: 'text-green-400' 
+            price: usdIdrPrice, 
+            change: 'Real-time', 
+            color: 'text-cyan-400' 
           },
         ]);
 
@@ -130,9 +135,39 @@ const LandingPage = ({ onGetStarted }) => {
               Institutional Grade Infrastructure
             </motion.div>
             
-            <motion.h1 variants={itemVariants} className="text-6xl lg:text-8xl font-black tracking-tighter leading-[0.9] mb-6 drop-shadow-[0_0_25px_rgba(0,242,255,0.6)]">
-              THE DARK POOL <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-600">EVOLVED.</span>
+            <motion.h1 
+              variants={itemVariants} 
+              className="relative text-6xl lg:text-8xl font-black tracking-tighter leading-[0.9] mb-6 drop-shadow-[0_0_25px_rgba(0,242,255,0.6)]"
+            >
+              <div className="relative inline-block">
+                <span className="relative z-10">
+                  {"THE DARK POOL".split("").map((char, i) => (
+                    <motion.span 
+                      key={i} 
+                      className="inline-block"
+                      whileHover={{ y: -10, color: '#22d3ee', transition: { type: 'spring', stiffness: 300 } }}
+                    >
+                      {char === ' ' ? '\u00A0' : char}
+                    </motion.span>
+                  ))}
+                  <br />
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-600">
+                    {"EVOLVED.".split("").map((char, i) => (
+                      <motion.span 
+                        key={i} 
+                        className="inline-block"
+                        whileHover={{ scale: 1.2, color: '#fff', transition: { type: 'spring' } }}
+                      >
+                        {char === ' ' ? '\u00A0' : char}
+                      </motion.span>
+                    ))}
+                  </span>
+                </span>
+                {/* Neon Scanline */}
+                <div className="absolute inset-0 w-full h-px bg-gradient-to-r from-transparent via-cyan-400 to-transparent opacity-50 animate-scanline z-20 pointer-events-none" />
+                {/* Pulse Glow */}
+                <div className="absolute inset-0 bg-cyan-500/20 blur-3xl animate-pulse-glow -z-10" />
+              </div>
             </motion.h1>
             
             <motion.div variants={itemVariants} className="inline-block p-4 rounded-2xl bg-white/5 backdrop-blur-md border border-white/10 mb-10 shadow-xl">
@@ -219,8 +254,8 @@ const LandingPage = ({ onGetStarted }) => {
         </div>
       </main>
 
-      {/* Strategic Advantages Section */}
-      <section id="advantages" className="relative z-10 max-w-7xl mx-auto px-8 py-32">
+      {/* Enterprise Suite Section */}
+      <section id="platforms" className="relative z-10 max-w-7xl mx-auto px-8 py-32">
         <div className="text-center mb-20">
           <motion.h2 
             initial={{ opacity: 0, y: 20 }}
@@ -228,58 +263,73 @@ const LandingPage = ({ onGetStarted }) => {
             viewport={{ once: true }}
             className="text-4xl font-bold mb-4 uppercase tracking-tighter text-white drop-shadow-[0_0_10px_rgba(6,182,212,0.8)]"
           >
-            Strategic Advantage
+            Enterprise Suite
           </motion.h2>
-          <motion.p 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.1 }}
-            className="text-gray-300 max-w-2xl mx-auto text-lg leading-relaxed"
-          >
-            Engineered for high-frequency institutional settlement and absolute privacy.
-          </motion.p>
+          <p className="text-gray-300 max-w-2xl mx-auto text-lg leading-relaxed">
+            Integrated ecosystem for the modern institutional trading flow.
+          </p>
         </div>
-        
-        <div className="grid md:grid-cols-3 gap-8">
-          <AdvantageCard 
-            icon={<BarChart3 className="w-6 h-6" />} 
-            title="Deep Liquidity" 
-            desc="Access centralized institutional liquidity pools with minimal slippage for high-value OTC orders."
-            tag="Market Efficiency"
-          />
-          <AdvantageCard 
-            icon={<Cpu className="w-6 h-6" />} 
-            title="Precision Pricing" 
-            desc="Low-latency pricing engines ensuring institutional precision across all major crypto pairs."
-            tag="Ultra Low Latency"
-          />
-          <AdvantageCard 
-            icon={<Layers className="w-6 h-6" />} 
-            title="Unified Infra" 
-            desc="One core engine powering Sense50 for Makers and IntelliTrade for Counterparties."
-            tag="Scalable Ecosystem"
-          />
-          <AdvantageCard 
-            icon={<Lock className="w-6 h-6" />} 
-            title="Zero-Knowledge" 
-            desc="zkTLS verification eliminates third-party trust and preserves absolute account privacy."
-            tag="Privacy-First"
-          />
-          <AdvantageCard 
-            icon={<Activity className="w-6 h-6" />} 
-            title="Rapid Settlement" 
-            desc="Direct cryptographic attestation for near-instantaneous institutional settlement."
-            tag="High Frequency"
-          />
-          <AdvantageCard 
-            icon={<Shield className="w-6 h-6" />} 
-            title="Institutional Guard" 
-            desc="Multi-sig approvals and cryptographic proofs for assets exceeding $100k."
-            tag="Asset Security"
-          />
+
+        <div className="grid lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2 grid md:grid-cols-2 gap-8">
+            <div className="p-8 rounded-3xl bg-gradient-to-br from-cyan-500/10 to-blue-600/10 border border-cyan-500/30 backdrop-blur-xl">
+              <div className="w-12 h-12 rounded-xl bg-cyan-500 text-black flex items-center justify-center mb-6 font-bold">S50</div>
+              <h3 className="text-2xl font-bold mb-4 uppercase tracking-tighter">Sense50 Admin</h3>
+              <p className="text-gray-400 text-sm leading-relaxed mb-6">
+                The Market Maker's command center. Configure dynamic markups, manage high-value counterparty requests, and monitor liquidity distribution in real-time.
+              </p>
+              <ul className="space-y-2 text-xs font-mono text-cyan-400/80">
+                <li>{`> Dynamic Markup Engine`}</li>
+                <li>{`> Counterparty Risk Monitor`}</li>
+                <li>{`> Liquidity Distribution Map`}</li>
+              </ul>
+            </div>
+            <div className="p-8 rounded-3xl bg-gradient-to-br from-blue-500/10 to-indigo-600/10 border border-blue-500/30 backdrop-blur-xl">
+              <div className="w-12 h-12 rounded-xl bg-blue-500 text-white flex items-center justify-center mb-6 font-bold">IT</div>
+              <h3 className="text-2xl font-bold mb-4 uppercase tracking-tighter">IntelliTrade</h3>
+              <p className="text-gray-400 text-sm leading-relaxed mb-6">
+                The elite counterparty terminal. Streamlined OTC order placement, precise portfolio tracking, and secure institutional communication.
+              </p>
+              <ul className="space-y-2 text-xs font-mono text-blue-400/80">
+                <li>{`> One-Click OTC Execution`}</li>
+                <li>{`> Multi-Asset Portfolio View`}</li>
+                <li>{`> Secure Institutional Chat`}</li>
+              </ul>
+            </div>
+          </div>
+          
+          <div className="space-y-8">
+            <div className="p-6 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-md">
+              <div className="flex items-center gap-3 mb-4">
+                <Shield className="w-5 h-5 text-cyan-400" />
+                <h4 className="font-bold uppercase text-sm tracking-widest">zkTLS Attestation</h4>
+              </div>
+              <p className="text-gray-400 text-xs leading-relaxed">
+                Cryptographic proof of funds and identity without exposing sensitive credentials.
+              </p>
+            </div>
+            <div className="p-6 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-md">
+              <div className="flex items-center gap-3 mb-4">
+                <Activity className="w-5 h-5 text-green-400" />
+                <h4 className="font-bold uppercase text-sm tracking-widest">Solvency Heartbeat</h4>
+              </div>
+              <p className="text-gray-400 text-xs leading-relaxed">
+                Automated periodic verification of user solvency to maintain ecosystem trust.
+              </p>
+            </div>
+            <div className="p-6 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-md">
+              <div className="flex items-center gap-3 mb-4">
+                <Lock className="w-5 h-5 text-red-400" />
+                <h4 className="font-bold uppercase text-sm tracking-widest">Multisig Approval</h4>
+              </div>
+              <p className="text-gray-400 text-xs leading-relaxed">
+                Mandatory multi-admin sign-off for all high-value asset settlements &gt; $100k.
+              </p>
+            </div>
+          </div>
         </div>
       </section>
+
 
       {/* Security Section */}
       <section id="security" className="relative z-10 bg-white/[0.02] border-y border-white/5 backdrop-blur-md py-32">

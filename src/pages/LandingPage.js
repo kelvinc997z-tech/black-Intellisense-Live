@@ -1,9 +1,54 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import NetworkBackground from '../components/ui/NetworkNodes';
 import { ArrowRight, Shield, Zap, Globe, Lock } from 'lucide-react';
 
 const LandingPage = ({ onGetStarted }) => {
+  const [prices, setPrices] = useState([
+    { symbol: 'BTC/USDT', price: 'Loading...', change: '...', color: 'text-gray-400' },
+    { symbol: 'ETH/USDT', price: 'Loading...', change: '...', color: 'text-gray-400' },
+    { symbol: 'USDT/USD', price: '1.0000', change: '0.00%', color: 'text-gray-400' },
+  ]);
+
+  useEffect(() => {
+    const fetchPrices = async () => {
+      try {
+        const response = await fetch('https://api.binance.com/api/v3/ticker/24hr');
+        const data = await response.json();
+        
+        const btc = data.find(i => i.symbol === 'BTCUSDT');
+        const eth = data.find(i => i.symbol === 'ETHUSDT');
+        
+        setPrices([
+          { 
+            symbol: 'BTC/USDT', 
+            price: parseFloat(btc.lastPrice).toLocaleString(undefined, { minimumFractionDigits: 2 }), 
+            change: `${parseFloat(btc.priceChangePercent).toFixed(2)}%`, 
+            color: parseFloat(btc.priceChangePercent) >= 0 ? 'text-green-400' : 'text-red-400' 
+          },
+          { 
+            symbol: 'ETH/USDT', 
+            price: parseFloat(eth.lastPrice).toLocaleString(undefined, { minimumFractionDigits: 2 }), 
+            change: `${parseFloat(eth.priceChangePercent).toFixed(2)}%`, 
+            color: parseFloat(eth.priceChangePercent) >= 0 ? 'text-green-400' : 'text-red-400' 
+          },
+          { 
+            symbol: 'USDT/USD', 
+            price: '1.0000', 
+            change: '0.00%', 
+            color: 'text-gray-400' 
+          },
+        ]);
+      } catch (error) {
+        console.error('Price fetch error:', error);
+      }
+    };
+
+    fetchPrices();
+    const interval = setInterval(fetchPrices, 10000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <div className="relative min-h-screen text-white font-sans selection:bg-cyan-500/30">
       <NetworkBackground />
@@ -81,11 +126,7 @@ const LandingPage = ({ onGetStarted }) => {
                   <div className="h-4 w-32 bg-white/10 rounded-full" />
                   <div className="h-4 w-16 bg-cyan-500/40 rounded-full" />
                 </div>
-                {[
-                  { symbol: 'BTC/USDT', price: '64,231.50', change: '+2.4%', color: 'text-green-400' },
-                  { symbol: 'ETH/USDT', price: '3,452.12', change: '-1.2%', color: 'text-red-400' },
-                  { symbol: 'USDT/USD', price: '1.0000', change: '0.00%', color: 'text-gray-400' },
-                ].map((pair, i) => (
+                {prices.map((pair, i) => (
                   <div key={i} className="h-20 w-full bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center gap-4 hover:border-cyan-500/30 transition-colors">
                     <div className="w-10 h-10 rounded-lg bg-cyan-500/20 flex items-center justify-center font-bold text-xs text-cyan-400">
                       {pair.symbol.split('/')[0]}

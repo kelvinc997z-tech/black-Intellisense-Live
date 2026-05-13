@@ -183,13 +183,14 @@ const LandingPage = ({ onGetStarted }) => {
                     <motion.span 
                       key={i} 
                       className="inline-block"
-                      whileHover={{ y: -10, color: '#22d3ee', transition: { type: 'spring', stiffness: 300 } }}
+                      whileHover={{ y: -10, scale: 1.2, color: '#22d3ee', transition: { type: 'spring', stiffness: 300 } }}
                     >
                       {char === ' ' ? '\u00A0' : char}
                     </motion.span>
                   ))}
                   <br />
-                  <div className="h-32 lg:h-48 w-full flex items-center justify-center">
+                  <div className="h-32 lg:h-48 w-full flex items-center justify-center relative">
+                    <div className="absolute inset-0 bg-cyan-500/10 blur-3xl animate-pulse" />
                     <ThreeText />
                   </div>
                 </span>
